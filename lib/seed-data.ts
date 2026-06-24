@@ -43,7 +43,8 @@ export const appData: AppData = {
       phone: "+502 5550 1003",
       role: "groomer",
       branchIds: ["branch-z10"],
-      active: true
+      active: true,
+      calendarColor: "#0F766E"
     },
     {
       id: "user-sofia",
@@ -52,7 +53,8 @@ export const appData: AppData = {
       phone: "+502 5550 1004",
       role: "groomer",
       branchIds: ["branch-antigua"],
-      active: true
+      active: true,
+      calendarColor: "#7C3AED"
     },
     {
       id: "user-carlos",

@@ -5,13 +5,19 @@ import { AlertTriangle, CalendarPlus, CheckCircle2, Wand2 } from "lucide-react";
 import { buildReminderMessage, hasGroomerConflict } from "@/lib/business-rules";
 import { appData } from "@/lib/seed-data";
 
-export function ScheduleForm() {
+export function ScheduleForm({
+  initialDate = "2026-06-23",
+  initialTime = "15:00"
+}: {
+  initialDate?: string;
+  initialTime?: string;
+}) {
   const [branchId, setBranchId] = useState(appData.branches[0].id);
   const [petId, setPetId] = useState(appData.pets[0].id);
   const [groomerId, setGroomerId] = useState("user-luis");
   const [serviceId, setServiceId] = useState("service-full");
-  const [date, setDate] = useState("2026-06-23");
-  const [time, setTime] = useState("15:00");
+  const [date, setDate] = useState(initialDate);
+  const [time, setTime] = useState(initialTime);
   const [source, setSource] = useState("whatsapp");
 
   const selectedService = appData.services.find((service) => service.id === serviceId)!;
@@ -46,7 +52,7 @@ export function ScheduleForm() {
   );
 
   return (
-    <section id="agenda" className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+    <section id="agenda" className="rounded-lg bg-white">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-ink">Nueva cita</h2>
