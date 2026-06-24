@@ -34,3 +34,54 @@ textarea {
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-jade focus:ring-offset-2;
 }
+
+.rbc-calendar {
+  min-height: 100%;
+  color: #1f2933;
+}
+
+.rbc-toolbar {
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.rbc-toolbar button {
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.rbc-toolbar button:hover,
+.rbc-toolbar button:focus,
+.rbc-toolbar button.rbc-active {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.rbc-toolbar-label {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.rbc-header {
+  padding: 0.65rem 0.5rem;
+  color: #334155;
+  font-size: 0.82rem;
+  text-transform: capitalize;
+}
+
+.rbc-event {
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.rbc-event:focus {
+  outline: 2px solid #0f766e;
+}
+
+.rbc-today {
+  background: rgba(15, 118, 110, 0.06);
+}
+
+.rbc-off-range-bg {
+  background: #f8fafc;
+}
