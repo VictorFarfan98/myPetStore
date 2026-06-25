@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { getPetHistory } from "@/lib/business-rules";
-import { sizeLabels, speciesLabels } from "@/lib/labels";
+import { sizeLabels, speciesLabels, statusLabels } from "@/lib/labels";
 import { appData } from "@/lib/seed-data";
 
 export default function MascotasPage() {
@@ -88,7 +88,7 @@ export default function MascotasPage() {
                       <p className="font-semibold text-ink">Historial reciente</p>
                       {history.slice(0, 2).map((appointment) => (
                         <p key={appointment.id}>
-                          {appointment.scheduledStart.slice(0, 10)} · {appointment.status}
+                          {appointment.scheduledStart.slice(0, 10)} · {statusLabels[appointment.status]}
                         </p>
                       ))}
                     </div>
