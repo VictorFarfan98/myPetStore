@@ -14,8 +14,8 @@ export function ScheduleForm({
 }) {
   const [branchId, setBranchId] = useState(appData.branches[0].id);
   const [petId, setPetId] = useState(appData.pets[0].id);
-  const [groomerId, setGroomerId] = useState("user-luis");
-  const [serviceId, setServiceId] = useState("service-full");
+  const [groomerId, setGroomerId] = useState(3);
+  const [serviceId, setServiceId] = useState(2);
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState(initialTime);
   const [source, setSource] = useState("whatsapp");
@@ -64,7 +64,7 @@ export function ScheduleForm({
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           Sucursal
-          <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={branchId} onChange={(event) => setBranchId(event.target.value)}>
+          <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={branchId} onChange={(event) => setBranchId(Number(event.target.value))}>
             {appData.branches.map((branch) => (
               <option key={branch.id} value={branch.id}>{branch.name}</option>
             ))}
@@ -72,7 +72,7 @@ export function ScheduleForm({
         </label>
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           Mascota
-          <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={petId} onChange={(event) => setPetId(event.target.value)}>
+          <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={petId} onChange={(event) => setPetId(Number(event.target.value))}>
             {appData.pets.map((pet) => (
               <option key={pet.id} value={pet.id}>{pet.name}</option>
             ))}
@@ -80,7 +80,7 @@ export function ScheduleForm({
         </label>
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           Groomer
-          <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={groomerId} onChange={(event) => setGroomerId(event.target.value)}>
+          <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={groomerId} onChange={(event) => setGroomerId(Number(event.target.value))}>
             {groomers.map((groomer) => (
               <option key={groomer.id} value={groomer.id}>{groomer.name}</option>
             ))}
@@ -88,7 +88,7 @@ export function ScheduleForm({
         </label>
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           Servicio
-          <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={serviceId} onChange={(event) => setServiceId(event.target.value)}>
+          <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={serviceId} onChange={(event) => setServiceId(Number(event.target.value))}>
             {appData.services.map((service) => (
               <option key={service.id} value={service.id}>{service.name} · {service.estimatedDurationMinutes} min</option>
             ))}

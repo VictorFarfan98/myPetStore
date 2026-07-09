@@ -13,7 +13,7 @@ import type { Appointment } from "@/lib/types";
 import { ScheduleForm } from "./schedule-form";
 
 type GroomingCalendarEvent = {
-  id: string;
+  id: number;
   title: string;
   start: Date;
   end: Date;
@@ -109,8 +109,8 @@ function buildEvent(appointment: Appointment): GroomingCalendarEvent {
 }
 
 export function AgendaCalendar() {
-  const [selectedBranchId, setSelectedBranchId] = useState("all");
-  const [selectedGroomerId, setSelectedGroomerId] = useState("all");
+  const [selectedBranchId, setSelectedBranchId] = useState<number | "all">("all");
+  const [selectedGroomerId, setSelectedGroomerId] = useState<number | "all">("all");
   const [selectedDate, setSelectedDate] = useState(new Date("2026-06-23T12:00:00-06:00"));
   const [selectedView, setSelectedView] = useState<View>("day");
   const [modalState, setModalState] = useState<{ date: string; time: string } | null>(null);
@@ -196,7 +196,7 @@ export function AgendaCalendar() {
               className="focus-ring rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
               value={selectedBranchId}
               onChange={(event) => {
-                setSelectedBranchId(event.target.value);
+                setSelectedBranchId(event.target.value === "all" ? "all" : Number(event.target.value));
                 setSelectedGroomerId("all");
               }}
             >
@@ -210,7 +210,7 @@ export function AgendaCalendar() {
             <select
               className="focus-ring rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
               value={selectedGroomerId}
-              onChange={(event) => setSelectedGroomerId(event.target.value)}
+              onChange={(event) => setSelectedGroomerId(event.target.value === "all" ? "all" : Number(event.target.value))}
             >
               <option value="all">Todos los groomers</option>
               {groomers.map((groomer) => (

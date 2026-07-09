@@ -16,7 +16,7 @@ export type PetSize = "pequeno" | "mediano" | "grande" | "gigante";
 export type Species = "perro" | "gato" | "otro";
 
 export type Branch = {
-  id: string;
+  id: number;
   name: string;
   address: string;
   phone: string;
@@ -24,18 +24,18 @@ export type Branch = {
 };
 
 export type User = {
-  id: string;
+  id: number;
   name: string;
   email: string;
   phone: string;
   role: Role;
-  branchIds: string[];
+  branchIds: number[];
   active: boolean;
   calendarColor?: `#${string}`;
 };
 
 export type Customer = {
-  id: string;
+  id: number;
   name: string;
   phone: string;
   whatsappOptIn: boolean;
@@ -43,12 +43,13 @@ export type Customer = {
 };
 
 export type Pet = {
-  id: string;
-  customerId: string;
+  id: number;
+  customerId: number;
   name: string;
   species: Species;
   breed: string;
   size: PetSize;
+  profilePhotoUrl?: string;
   birthdate?: string;
   ageEstimate?: string;
   healthNotes: string;
@@ -56,40 +57,45 @@ export type Pet = {
 };
 
 export type Service = {
-  id: string;
+  id: number;
   name: string;
   estimatedDurationMinutes: number;
   active: boolean;
 };
 
 export type Appointment = {
-  id: string;
-  branchId: string;
-  petId: string;
-  groomerId: string;
-  serviceIds: string[];
+  id: number;
+  branchId: number;
+  petId: number;
+  groomerId: number;
+  serviceIds: number[];
   scheduledStart: string;
   scheduledEnd: string;
   status: AppointmentStatus;
   source: AppointmentSource;
   notes: string;
-  createdById: string;
+  createdById: number;
 };
 
 export type GroomingRecord = {
-  id: string;
-  appointmentId: string;
+  id: number;
+  appointmentId: number;
   actualStart?: string;
   actualEnd?: string;
   groomerNotes: string;
   outcome: string;
+  intakeSignatureName?: string;
+  intakeSignedAt?: string;
+  completionSignatureName?: string;
+  completionSignedAt?: string;
+  satisfactionNotes: string;
   beforePhotoUrl?: string;
   afterPhotoUrl?: string;
 };
 
 export type ReminderLog = {
-  id: string;
-  appointmentId: string;
+  id: number;
+  appointmentId: number;
   channel: "whatsapp";
   messageTemplate: string;
   manualStatus: "drafted" | "sent" | "skipped";

@@ -32,7 +32,7 @@ export function isTerminalStatus(status: AppointmentStatus) {
 
 export function hasGroomerConflict(
   appointments: Appointment[],
-  candidate: Pick<Appointment, "groomerId" | "scheduledStart" | "scheduledEnd"> & { id?: string }
+  candidate: Pick<Appointment, "groomerId" | "scheduledStart" | "scheduledEnd"> & { id?: number }
 ) {
   const start = new Date(candidate.scheduledStart).getTime();
   const end = new Date(candidate.scheduledEnd).getTime();
@@ -144,7 +144,7 @@ export function getCompletedByBranch(data: AppData) {
   }));
 }
 
-export function getPetHistory(data: AppData, petId: string) {
+export function getPetHistory(data: AppData, petId: number) {
   return data.appointments
     .filter((appointment) => appointment.petId === petId)
     .sort(

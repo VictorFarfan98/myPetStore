@@ -20,7 +20,7 @@ describe("grooming business rules", () => {
 
   it("detects groomer double-booking for active appointments", () => {
     const conflict = hasGroomerConflict(appData.appointments, {
-      groomerId: "user-luis",
+      groomerId: 3,
       scheduledStart: "2026-06-23T13:30:00-06:00",
       scheduledEnd: "2026-06-23T14:00:00-06:00"
     });
@@ -30,7 +30,7 @@ describe("grooming business rules", () => {
 
   it("ignores completed appointments when checking conflicts", () => {
     const conflict = hasGroomerConflict(appData.appointments, {
-      groomerId: "user-luis",
+      groomerId: 3,
       scheduledStart: "2026-06-23T09:30:00-06:00",
       scheduledEnd: "2026-06-23T10:00:00-06:00"
     });
@@ -57,7 +57,7 @@ describe("grooming business rules", () => {
     expect(getCompletedByGroomer(appData)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          groomer: expect.objectContaining({ id: "user-luis" }),
+          groomer: expect.objectContaining({ id: 3 }),
           completed: 1,
           averageDuration: 110
         })
@@ -67,7 +67,7 @@ describe("grooming business rules", () => {
     expect(getCompletedByBranch(appData)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          branch: expect.objectContaining({ id: "branch-z10" }),
+          branch: expect.objectContaining({ id: 1 }),
           completed: 1
         })
       ])

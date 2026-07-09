@@ -3,11 +3,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarDays, ClipboardList, PawPrint, Scissors, UsersRound } from "lucide-react";
+import { BarChart3, CalendarDays, ClipboardCheck, ClipboardList, PawPrint, Scissors, UsersRound } from "lucide-react";
 
 const navItems = [
   { label: "Panel", href: "/", icon: BarChart3 },
   { label: "Agenda", href: "/agenda", icon: CalendarDays },
+  { label: "Hojas", href: "/hojas", icon: ClipboardCheck },
   { label: "Mascotas", href: "/mascotas", icon: PawPrint },
   { label: "Clientes", href: "/clientes", icon: UsersRound },
   { label: "Servicios", href: "/servicios", icon: Scissors },
