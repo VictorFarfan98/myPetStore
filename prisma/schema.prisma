@@ -167,8 +167,10 @@ model GroomingRecord {
   groomerNotes            String      @default("")
   outcome                 String      @default("")
   intakeSignatureName     String?
+  intakeSignatureImageUrl String?
   intakeSignedAt          DateTime?
   completionSignatureName String?
+  completionSignatureImageUrl String?
   completionSignedAt      DateTime?
   satisfactionNotes       String      @default("")
   beforePhotoUrl          String?

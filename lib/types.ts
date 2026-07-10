@@ -85,8 +85,10 @@ export type GroomingRecord = {
   groomerNotes: string;
   outcome: string;
   intakeSignatureName?: string;
+  intakeSignatureImageUrl?: string;
   intakeSignedAt?: string;
   completionSignatureName?: string;
+  completionSignatureImageUrl?: string;
   completionSignedAt?: string;
   satisfactionNotes: string;
   beforePhotoUrl?: string;

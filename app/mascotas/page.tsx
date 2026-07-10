@@ -39,7 +39,7 @@ export default function MascotasPage() {
         <PageHeader
           eyebrow="Expedientes"
           title="Mascotas"
-          description="Busca mascotas por nombre o por su owner, y abre su expediente con datos de grooming, salud y comportamiento."
+          description="Busca mascotas por nombre o por su dueño, y abre su expediente con datos de grooming, salud y comportamiento."
         />
 
         <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
@@ -57,7 +57,7 @@ export default function MascotasPage() {
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Buscar por mascota, owner o telefono"
+                placeholder="Buscar por mascota, dueño o telefono"
               />
             </label>
           </div>

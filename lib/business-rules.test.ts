@@ -44,7 +44,7 @@ describe("grooming business rules", () => {
       petName: "Max",
       branchName: "Sucursal Zona 10",
       appointmentStart: "2026-06-23T13:00:00-06:00",
-      serviceNames: ["Bano medicado", "Corte de unas"]
+      serviceNames: ["Baño medicado", "Corte de uñas"]
     });
 
     expect(message).toContain("Hola Roberto");

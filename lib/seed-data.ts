@@ -93,7 +93,7 @@ export const appData: AppData = {
       name: "Roberto Chacon",
       phone: "+502 5200 8899",
       whatsappOptIn: true,
-      notes: "Cliente frecuente de banos medicados."
+      notes: "Cliente frecuente de baños medicados."
     },
     {
       id: 3,
@@ -126,7 +126,7 @@ export const appData: AppData = {
       profilePhotoUrl: "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=320&q=80",
       ageEstimate: "5 anos",
       healthNotes: "Revisar orejas por historial de infeccion.",
-      behaviorNotes: "Amigable, tolera bien corte de unas."
+      behaviorNotes: "Amigable, tolera bien corte de uñas."
     },
     {
       id: 3,
@@ -144,7 +144,7 @@ export const appData: AppData = {
   services: [
     {
       id: 1,
-      name: "Bano y cepillado",
+      name: "Baño y cepillado",
       estimatedDurationMinutes: 60,
       active: true
     },
@@ -156,13 +156,13 @@ export const appData: AppData = {
     },
     {
       id: 3,
-      name: "Corte de unas",
+      name: "Corte de uñas",
       estimatedDurationMinutes: 20,
       active: true
     },
     {
       id: 4,
-      name: "Bano medicado",
+      name: "Baño medicado",
       estimatedDurationMinutes: 75,
       active: true
     }
@@ -233,7 +233,7 @@ export const appData: AppData = {
       intakeSignedAt: "2026-06-23T09:02:00-06:00",
       completionSignatureName: "Valeria Castillo",
       completionSignedAt: "2026-06-23T11:04:00-06:00",
-      satisfactionNotes: "Owner conforme con largo, limpieza y trato recibido.",
+      satisfactionNotes: "Dueño conforme con largo, limpieza y trato recibido.",
       beforePhotoUrl: "https://images.unsplash.com/photo-1600804340584-c7db2eacf0bf?auto=format&fit=crop&w=640&q=80",
       afterPhotoUrl: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=640&q=80"
     },
@@ -256,7 +256,7 @@ export const appData: AppData = {
       appointmentId: 2,
       channel: "whatsapp",
       messageTemplate:
-        "Hola Roberto, le recordamos la cita de grooming de Max para Bano medicado, Corte de unas en Sucursal Zona 10, mar, 23 jun, 13:00. Responda CONFIRMAR para confirmar o REPROGRAMAR si necesita otra hora.",
+        "Hola Roberto, le recordamos la cita de grooming de Max para Baño medicado, Corte de uñas en Sucursal Zona 10, mar, 23 jun, 13:00. Responda CONFIRMAR para confirmar o REPROGRAMAR si necesita otra hora.",
       manualStatus: "drafted",
       timestamp: "2026-06-22T16:00:00-06:00"
     }
