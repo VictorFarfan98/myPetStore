@@ -2,13 +2,14 @@ import { MapPin, Scissors } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
+import { getAppData } from "@/lib/app-data";
 import { getCompletedByBranch, getCompletedByGroomer } from "@/lib/business-rules";
-import { appData } from "@/lib/seed-data";
 
-const completedByGroomer = getCompletedByGroomer(appData);
-const completedByBranch = getCompletedByBranch(appData);
+export default async function ReportesPage() {
+  const data = await getAppData();
+  const completedByGroomer = getCompletedByGroomer(data);
+  const completedByBranch = getCompletedByBranch(data);
 
-export default function ReportesPage() {
   return (
     <AppShell>
       <PageContainer>

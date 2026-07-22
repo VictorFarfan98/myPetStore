@@ -3,28 +3,30 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, CalendarPlus, CheckCircle2, Wand2 } from "lucide-react";
 import { buildReminderMessage, hasGroomerConflict } from "@/lib/business-rules";
-import { appData } from "@/lib/seed-data";
+import type { AppData } from "@/lib/types";
 
 export function ScheduleForm({
+  data,
   initialDate = "2026-06-23",
   initialTime = "15:00"
 }: {
+  data: AppData;
   initialDate?: string;
   initialTime?: string;
 }) {
-  const [branchId, setBranchId] = useState(appData.branches[0].id);
-  const [petId, setPetId] = useState(appData.pets[0].id);
+  const [branchId, setBranchId] = useState(data.branches[0].id);
+  const [petId, setPetId] = useState(data.pets[0].id);
   const [groomerId, setGroomerId] = useState(3);
   const [serviceId, setServiceId] = useState(2);
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState(initialTime);
   const [source, setSource] = useState("whatsapp");
 
-  const selectedService = appData.services.find((service) => service.id === serviceId)!;
-  const selectedPet = appData.pets.find((pet) => pet.id === petId)!;
-  const selectedCustomer = appData.customers.find((customer) => customer.id === selectedPet.customerId)!;
-  const selectedBranch = appData.branches.find((branch) => branch.id === branchId)!;
-  const groomers = appData.users.filter((user) => user.role === "groomer" && user.branchIds.includes(branchId));
+  const selectedService = data.services.find((service) => service.id === serviceId)!;
+  const selectedPet = data.pets.find((pet) => pet.id === petId)!;
+  const selectedCustomer = data.customers.find((customer) => customer.id === selectedPet.customerId)!;
+  const selectedBranch = data.branches.find((branch) => branch.id === branchId)!;
+  const groomers = data.users.filter((user) => user.role === "groomer" && user.branchIds.includes(branchId));
 
   const startIso = `${date}T${time}:00-06:00`;
   const [hours, minutes] = time.split(":").map(Number);
@@ -33,7 +35,7 @@ export function ScheduleForm({
   const endMinutes = String(endTotalMinutes % 60).padStart(2, "0");
   const endIso = `${date}T${endHours}:${endMinutes}:00-06:00`;
 
-  const hasConflict = hasGroomerConflict(appData.appointments, {
+  const hasConflict = hasGroomerConflict(data.appointments, {
     groomerId,
     scheduledStart: startIso,
     scheduledEnd: endIso
@@ -65,16 +67,20 @@ export function ScheduleForm({
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           Sucursal
           <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={branchId} onChange={(event) => setBranchId(Number(event.target.value))}>
-            {appData.branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>{branch.name}</option>
+            {data.branches.map((branch) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
             ))}
           </select>
         </label>
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           Mascota
           <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={petId} onChange={(event) => setPetId(Number(event.target.value))}>
-            {appData.pets.map((pet) => (
-              <option key={pet.id} value={pet.id}>{pet.name}</option>
+            {data.pets.map((pet) => (
+              <option key={pet.id} value={pet.id}>
+                {pet.name}
+              </option>
             ))}
           </select>
         </label>
@@ -89,8 +95,10 @@ export function ScheduleForm({
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           Servicio
           <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={serviceId} onChange={(event) => setServiceId(Number(event.target.value))}>
-            {appData.services.map((service) => (
-              <option key={service.id} value={service.id}>{service.name} · {service.estimatedDurationMinutes} min</option>
+            {data.services.map((service) => (
+              <option key={service.id} value={service.id}>
+                {service.name} · {service.estimatedDurationMinutes} min
+              </option>
             ))}
           </select>
         </label>

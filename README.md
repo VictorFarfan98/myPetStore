@@ -18,7 +18,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Database setup later
+## Database setup
 
 Copy `.env.example` to `.env`, set `DATABASE_URL`, then run:
 
@@ -27,4 +27,4 @@ npx prisma generate
 npx prisma migrate dev
 ```
 
-The current UI reads from `lib/seed-data.ts` so the first prototype can run before PostgreSQL is available.
+Most pages now read through `lib/app-data.ts`, which queries Prisma when `DATABASE_URL` is set and falls back to `lib/seed-data.ts` when it is not.

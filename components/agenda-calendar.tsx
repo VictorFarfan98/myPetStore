@@ -8,8 +8,7 @@ import { addDays, addMonths, addWeeks, format, getDay, parse, startOfWeek } from
 import { es } from "date-fns/locale/es";
 import { CalendarPlus, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
 import { getAppointmentDetails } from "@/lib/business-rules";
-import { appData } from "@/lib/seed-data";
-import type { Appointment } from "@/lib/types";
+import type { AppData, Appointment } from "@/lib/types";
 import { ScheduleForm } from "./schedule-form";
 
 type GroomingCalendarEvent = {
@@ -96,8 +95,8 @@ function eventStyle(calendarColor?: string): CSSProperties {
   };
 }
 
-function buildEvent(appointment: Appointment): GroomingCalendarEvent {
-  const { branch, pet, services, groomer } = getAppointmentDetails(appData, appointment);
+function buildEvent(data: AppData, appointment: Appointment): GroomingCalendarEvent {
+  const { branch, pet, services, groomer } = getAppointmentDetails(data, appointment);
   return {
     id: appointment.id,
     title: `${pet.name} · ${groomer.name} · ${branch.name} · ${services.map((service) => service.name).join(", ")}`,
@@ -108,24 +107,24 @@ function buildEvent(appointment: Appointment): GroomingCalendarEvent {
   };
 }
 
-export function AgendaCalendar() {
+export function AgendaCalendar({ data }: { data: AppData }) {
   const [selectedBranchId, setSelectedBranchId] = useState<number | "all">("all");
   const [selectedGroomerId, setSelectedGroomerId] = useState<number | "all">("all");
   const [selectedDate, setSelectedDate] = useState(new Date("2026-06-23T12:00:00-06:00"));
   const [selectedView, setSelectedView] = useState<View>("day");
   const [modalState, setModalState] = useState<{ date: string; time: string } | null>(null);
 
-  const selectedBranch = appData.branches.find((branch) => branch.id === selectedBranchId);
-  const groomers = appData.users.filter(
+  const selectedBranch = data.branches.find((branch) => branch.id === selectedBranchId);
+  const groomers = data.users.filter(
     (user) => user.role === "groomer" && (selectedBranchId === "all" || user.branchIds.includes(selectedBranchId))
   );
   const events = useMemo(
     () =>
-      appData.appointments
+      data.appointments
         .filter((appointment) => selectedBranchId === "all" || appointment.branchId === selectedBranchId)
         .filter((appointment) => selectedGroomerId === "all" || appointment.groomerId === selectedGroomerId)
-        .map(buildEvent),
-    [selectedBranchId, selectedGroomerId]
+        .map((appointment) => buildEvent(data, appointment)),
+    [data, selectedBranchId, selectedGroomerId]
   );
 
   const calendarEventStyle: EventPropGetter<GroomingCalendarEvent> = (event) => ({
@@ -201,7 +200,7 @@ export function AgendaCalendar() {
               }}
             >
               <option value="all">Todas las sucursales</option>
-              {appData.branches.map((branch) => (
+              {data.branches.map((branch) => (
                 <option key={branch.id} value={branch.id}>
                   {branch.name}
                 </option>
@@ -306,6 +305,7 @@ export function AgendaCalendar() {
             </div>
             <ScheduleForm
               key={`${modalState.date}-${modalState.time}`}
+              data={data}
               initialDate={modalState.date}
               initialTime={modalState.time}
             />

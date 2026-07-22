@@ -4,19 +4,19 @@ import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { StatusPill } from "@/components/status-pill";
+import { getAppData } from "@/lib/app-data";
 import { getCompletedByBranch, getCompletedByGroomer, getStatusCounts } from "@/lib/business-rules";
 import { roleLabels, statusLabels } from "@/lib/labels";
-import { appData } from "@/lib/seed-data";
+export default async function DashboardPage() {
+  const data = await getAppData();
+  const today = "2026-06-23";
+  const todaysAppointments = data.appointments.filter((appointment) =>
+    appointment.scheduledStart.startsWith(today)
+  );
+  const statusCounts = getStatusCounts(todaysAppointments);
+  const completedByGroomer = getCompletedByGroomer(data);
+  const completedByBranch = getCompletedByBranch(data);
 
-const today = "2026-06-23";
-const todaysAppointments = appData.appointments.filter((appointment) =>
-  appointment.scheduledStart.startsWith(today)
-);
-const statusCounts = getStatusCounts(todaysAppointments);
-const completedByGroomer = getCompletedByGroomer(appData);
-const completedByBranch = getCompletedByBranch(appData);
-
-export default function DashboardPage() {
   const totalCompleted = completedByGroomer.reduce((total, item) => total + item.completed, 0);
   const upcoming = completedByBranch.reduce((total, item) => total + item.upcoming, 0);
 
@@ -93,7 +93,7 @@ export default function DashboardPage() {
               <UsersRound className="h-5 w-5 text-jade" aria-hidden="true" />
             </div>
             <div className="mt-4 space-y-3">
-              {appData.users.slice(0, 4).map((user) => (
+              {data.users.slice(0, 4).map((user) => (
                 <div key={user.id} className="flex items-center justify-between gap-3 rounded-lg bg-cloud px-3 py-2">
                   <div>
                     <p className="font-medium text-ink">{user.name}</p>

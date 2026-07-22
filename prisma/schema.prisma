@@ -67,6 +67,7 @@ model User {
   email               String        @unique
   phone               String
   role                Role
+  calendarColor       String?
   active              Boolean       @default(true)
   appointments        Appointment[] @relation("GroomerAppointments")
   createdAppointments Appointment[] @relation("CreatedAppointments")

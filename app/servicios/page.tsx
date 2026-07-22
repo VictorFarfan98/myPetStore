@@ -2,9 +2,11 @@ import { Scissors } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
-import { appData } from "@/lib/seed-data";
+import { getAppData } from "@/lib/app-data";
 
-export default function ServiciosPage() {
+export default async function ServiciosPage() {
+  const data = await getAppData();
+
   return (
     <AppShell>
       <PageContainer>
@@ -23,7 +25,7 @@ export default function ServiciosPage() {
             <Scissors className="h-5 w-5 text-jade" aria-hidden="true" />
           </div>
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {appData.services.map((service) => (
+            {data.services.map((service) => (
               <article key={service.id} className="rounded-lg border border-slate-200 p-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cloud text-jade">
                   <Scissors className="h-5 w-5" aria-hidden="true" />
