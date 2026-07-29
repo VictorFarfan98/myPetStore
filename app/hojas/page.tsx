@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, PointerEvent } from "react";
 import {
   CalendarDays,
@@ -20,7 +20,7 @@ import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { StatusPill } from "@/components/status-pill";
 import { formatGuatemalaDateTime, getAppointmentDetails, minutesBetween } from "@/lib/business-rules";
-import { appData } from "@/lib/seed-data";
+import { emptyAppData } from "@/lib/empty-app-data";
 import type { AppData, AppointmentSource } from "@/lib/types";
 
 const mainServiceOptions = [
@@ -649,8 +649,40 @@ function NewServiceModal({
 }
 
 export default function HojasPage() {
-  const [data, setData] = useState<AppData>(appData);
+  const [data, setData] = useState<AppData>(emptyAppData);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [showNewService, setShowNewService] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadData() {
+      try {
+        const response = await fetch("/api/app-data", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`Failed to load app data: ${response.status}`);
+        }
+
+        const nextData = (await response.json()) as AppData;
+        if (!cancelled) {
+          setData(nextData);
+          setIsLoaded(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error(error);
+          setIsLoaded(true);
+        }
+      }
+    }
+
+    void loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const serviceSheets = useMemo(
     () =>
       data.appointments
@@ -678,12 +710,19 @@ export default function HojasPage() {
               className="focus-ring inline-flex h-10 items-center gap-2 rounded-lg bg-jade px-4 text-sm font-semibold text-white shadow-panel hover:bg-emerald-700"
               type="button"
               onClick={() => setShowNewService(true)}
+              disabled={!isLoaded}
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               Nuevo servicio
             </button>
           }
         />
+
+        {!isLoaded && (
+          <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">
+            Cargando datos de produccion...
+          </div>
+        )}
 
         <section className="mt-6 space-y-4">
           {serviceSheets.map(({ appointment, branch, customer, groomer, groomingRecord, pet, services }) => {

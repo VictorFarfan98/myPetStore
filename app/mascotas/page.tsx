@@ -4,6 +4,8 @@ import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { getAppData } from "@/lib/app-data";
 
+export const dynamic = "force-dynamic";
+
 export default async function MascotasPage() {
   const data = await getAppData();
 

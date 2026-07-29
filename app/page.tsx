@@ -7,6 +7,9 @@ import { StatusPill } from "@/components/status-pill";
 import { getAppData } from "@/lib/app-data";
 import { getCompletedByBranch, getCompletedByGroomer, getStatusCounts } from "@/lib/business-rules";
 import { roleLabels, statusLabels } from "@/lib/labels";
+
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const data = await getAppData();
   const today = "2026-06-23";

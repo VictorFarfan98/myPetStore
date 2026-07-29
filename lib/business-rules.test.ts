@@ -6,7 +6,78 @@ import {
   getCompletedByGroomer,
   hasGroomerConflict
 } from "./business-rules";
-import { appData } from "./seed-data";
+
+const appData = {
+  branches: [
+    { id: 1, name: "Sucursal Zona 10", address: "Guatemala", phone: "+50220000001", active: true }
+  ],
+  users: [
+    {
+      id: 3,
+      name: "Luis Gomez",
+      email: "luis@petstore.gt",
+      phone: "+50220000004",
+      role: "groomer" as const,
+      branchIds: [1],
+      active: true,
+      calendarColor: "#0F766E"
+    }
+  ],
+  customers: [{ id: 1, name: "Valeria Castillo", phone: "+50255555555", whatsappOptIn: true, notes: "" }],
+  pets: [
+    {
+      id: 1,
+      customerId: 1,
+      name: "Luna",
+      species: "perro" as const,
+      breed: "Poodle",
+      size: "mediano" as const,
+      healthNotes: "",
+      behaviorNotes: ""
+    }
+  ],
+  services: [{ id: 2, name: "Grooming completo", estimatedDurationMinutes: 120, active: true }],
+  appointments: [
+    {
+      id: 1,
+      branchId: 1,
+      petId: 1,
+      groomerId: 3,
+      serviceIds: [2],
+      scheduledStart: "2026-06-23T09:00:00-06:00",
+      scheduledEnd: "2026-06-23T10:50:00-06:00",
+      status: "completed" as const,
+      source: "whatsapp" as const,
+      notes: "",
+      createdById: 3
+    },
+    {
+      id: 2,
+      branchId: 1,
+      petId: 1,
+      groomerId: 3,
+      serviceIds: [2],
+      scheduledStart: "2026-06-23T13:00:00-06:00",
+      scheduledEnd: "2026-06-23T14:00:00-06:00",
+      status: "scheduled" as const,
+      source: "whatsapp" as const,
+      notes: "",
+      createdById: 3
+    }
+  ],
+  groomingRecords: [
+    {
+      id: 1,
+      appointmentId: 1,
+      actualStart: "2026-06-23T09:00:00-06:00",
+      actualEnd: "2026-06-23T10:50:00-06:00",
+      groomerNotes: "",
+      outcome: "",
+      satisfactionNotes: ""
+    }
+  ],
+  reminderLogs: []
+};
 
 describe("grooming business rules", () => {
   it("allows only supported appointment lifecycle transitions", () => {

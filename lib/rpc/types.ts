@@ -304,15 +304,15 @@ export type CuponUpdateParams = CuponInsertParams;
 
 export type CitaRow = {
   id: number;
-  sucursal_id: number;
   mascota_id: number;
-  servicio_id: number | null;
+  sucursal_id: number;
+  servicio_id: number;
   peluquero_id: number | null;
+  creada_por_usuario_id: string;
   inicio_programado: DateString;
   fin_programado: DateString;
   estado: string;
   origen: string;
-  notas: string | null;
   activo: boolean;
 };
 
@@ -348,6 +348,17 @@ export type RegistroServicioRow = {
   cupon_id: string | null;
   estado: string;
   activo: boolean;
+  inicio_real: DateString;
+  fin_real: DateString | null;
+  observaciones_ingreso: string;
+  notas_servicio: string | null;
+  comentario_satisfaccion: string | null;
+  firma_ingreso_url: string | null;
+  firma_ingreso_en: DateString | null;
+  firma_entrega_url: string | null;
+  firma_entrega_en: DateString | null;
+  foto_antes_url: string | null;
+  foto_despues_url: string | null;
   precio_base: string | null;
   recargo_shampoo: string | null;
   descuento_cupon: string | null;
@@ -438,6 +449,7 @@ export type RecordatorioCitaRow = {
   canal: string;
   numero_destino: string;
   mensaje: string;
+  enviado_en: DateString;
   activo: boolean;
 };
 

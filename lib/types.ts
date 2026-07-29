@@ -31,7 +31,7 @@ export type User = {
   role: Role;
   branchIds: number[];
   active: boolean;
-  calendarColor?: `#${string}`;
+  calendarColor?: string;
 };
 
 export type Customer = {

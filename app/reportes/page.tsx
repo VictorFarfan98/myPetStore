@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/page-header";
 import { getAppData } from "@/lib/app-data";
 import { getCompletedByBranch, getCompletedByGroomer } from "@/lib/business-rules";
 
+export const dynamic = "force-dynamic";
+
 export default async function ReportesPage() {
   const data = await getAppData();
   const completedByGroomer = getCompletedByGroomer(data);

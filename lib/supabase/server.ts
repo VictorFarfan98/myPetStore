@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 function requireEnv(name: string) {
@@ -32,5 +33,12 @@ export async function createUserSupabaseClient() {
         }
       }
     }
+  );
+}
+
+export function createServiceSupabaseClient() {
+  return createClient(
+    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requireEnv("SUPABASE_SERVICE_ROLE_KEY")
   );
 }

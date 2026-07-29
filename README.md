@@ -5,8 +5,7 @@ Spanish-first grooming operations app for a Guatemala pet store chain.
 ## What is included
 
 - Next.js App Router dashboard for grooming operations.
-- Seeded in-memory data for branches, users, customers, pets, services, appointments, records, and WhatsApp reminder logs.
-- Prisma PostgreSQL schema for the planned production data model.
+- Live Supabase RPC data access for branches, users, customers, pets, services, appointments, records, and WhatsApp reminder logs.
 - Business-rule tests for appointment status transitions, groomer conflicts, reports, and reminder messages.
 
 ## Run locally
@@ -20,14 +19,9 @@ Open `http://localhost:3000`.
 
 ## Database setup
 
-Copy `.env.example` to `.env`, set `DATABASE_URL`, then run:
+Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
 
-```bash
-npx prisma generate
-npx prisma migrate dev
-```
-
-Most pages now read through `lib/app-data.ts`, which queries Prisma when `DATABASE_URL` is set and falls back to `lib/seed-data.ts` when it is not.
+Most pages now read through `lib/app-data.ts`, which loads live data through Supabase RPC.
 
 
 ## CRUD INFO
@@ -104,7 +98,7 @@ service_role queda reservado para procesos internos como recordatorios automáti
 
 Acceso directo a tablas
 
-authenticated tiene acceso directo a tablas bajo RLS. La aplicación puede usar .from(...) cuando resulte conveniente, pero las RPC son la interfaz principal.
+authenticated tiene acceso directo a tablas bajo RLS. La aplicación puede usar `.from(...)` cuando resulte conveniente, pero las RPC son la interfaz principal.
 
 El acceso directo puede omitir:
 
