@@ -500,1143 +500,1926 @@ services/
 
 Las carpetas son prefijos lógicos y aparecen cuando se sube el primer objeto. La aplicación debe usar el backend para subir, reemplazar y firmar URLs.
 
-Catálogo completo de RPC
+Referencia organizada de RPC
 
-Las firmas siguientes se extraen del rpc.sql generado. Los retornos tipados devuelven filas PostgreSQL; los retornos JSONB contienen objetos o listas anidadas.
+rpc.sql expone 118 funciones públicas. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
 
-Asignaciones de usuarios a sucursales
+Convención de esta sección
 
-Función y parámetros
+Cada tabla incluye:
 
-Retorno
+una fila en el índice general con las operaciones disponibles;
 
-Propósito
+un bloque de acciones ordenado por uso;
 
-Acceso
+la firma exacta de PostgreSQL;
 
-usuarios_sucursales_insertar(p_usuario_id UUID, p_sucursal_id BIGINT, p_activo BOOLEAN)
+el tipo de retorno;
 
-public.usuarios_sucursales
+los roles o contextos permitidos;
 
-Inserta una fila y devuelve la fila creada.
+el comportamiento principal de la RPC.
 
-Administrador/propietario; service_role
+Las funciones de listado mantienen el contrato estándar:
 
-usuarios_sucursales_obtener_por_id(p_usuario_id UUID, p_sucursal_id BIGINT)
+{
+  "datos": [],
+  "total": 0,
+  "limite": null,
+  "offset": 0
+}
 
-public.usuarios_sucursales
+Índice general
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Dominio
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Tabla o recurso
 
-usuarios_sucursales_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+RPC estándar
 
-JSONB
+Operaciones específicas
 
-Lista únicamente registros activos con paginación opcional.
+Total
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Identidad y acceso
 
-usuarios_sucursales_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+usuarios
 
-JSONB
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Lista registros activos e inactivos con paginación opcional.
+Obtener perfil actual, Listar usuarios asignables
 
-Administrador/propietario; service_role
+8
 
-usuarios_sucursales_actualizar(p_usuario_id UUID, p_sucursal_id BIGINT, p_activo BOOLEAN)
 
-public.usuarios_sucursales
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+usuarios_sucursales
 
-Administrador/propietario; service_role
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-usuarios_sucursales_eliminar(p_usuario_id UUID, p_sucursal_id BIGINT)
+—
 
-public.usuarios_sucursales
+6
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Clientes y mascotas
 
-Administrador/propietario; service_role
+clientes
 
-Precios y duraciones de servicios
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Función y parámetros
+Obtener detalle del cliente
 
-Retorno
+7
 
-Propósito
 
-Acceso
 
-precios_servicios_insertar(p_servicio_id BIGINT, p_tamano_id BIGINT, p_precio NUMERIC(10, 2), p_duracion_minutos INTEGER, p_activo BOOLEAN)
+mascotas
 
-public.precios_servicios
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Inserta una fila y devuelve la fila creada.
+Transferir cliente, Obtener historial activo, Obtener historial completo
 
-Administrador/propietario; service_role
+9
 
-precios_servicios_obtener_por_id(p_servicio_id BIGINT, p_tamano_id BIGINT)
+Sucursales y catálogos
 
-public.precios_servicios
+sucursales
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+—
 
-precios_servicios_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+6
 
-JSONB
 
-Lista únicamente registros activos con paginación opcional.
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+peluqueros
 
-precios_servicios_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-JSONB
+—
 
-Lista registros activos e inactivos con paginación opcional.
+6
 
-Administrador/propietario; service_role
 
-precios_servicios_actualizar(p_servicio_id BIGINT, p_tamano_id BIGINT, p_precio NUMERIC(10, 2), p_duracion_minutos INTEGER, p_activo BOOLEAN)
 
-public.precios_servicios
+tamanos
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Administrador/propietario; service_role
+—
 
-precios_servicios_eliminar(p_servicio_id BIGINT, p_tamano_id BIGINT)
+6
 
-public.precios_servicios
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
 
-Administrador/propietario; service_role
+servicios
 
-Opciones de shampoo
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Función y parámetros
+—
 
-Retorno
+6
 
-Propósito
 
-Acceso
 
-opciones_shampoo_insertar(p_nombre TEXT, p_activo BOOLEAN)
+precios_servicios
 
-public.opciones_shampoo
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Inserta una fila y devuelve la fila creada.
+—
 
-Administrador/propietario; service_role
+6
 
-opciones_shampoo_obtener_por_id(p_id BIGINT)
 
-public.opciones_shampoo
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+opciones_shampoo
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-opciones_shampoo_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+—
 
-JSONB
+6
 
-Lista únicamente registros activos con paginación opcional.
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
 
-opciones_shampoo_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+precios_shampoo
 
-JSONB
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Lista registros activos e inactivos con paginación opcional.
+—
 
-Administrador/propietario; service_role
+6
 
-opciones_shampoo_actualizar(p_id BIGINT, p_nombre TEXT, p_activo BOOLEAN)
 
-public.opciones_shampoo
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+metodos_pago
 
-Administrador/propietario; service_role
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-opciones_shampoo_eliminar(p_id BIGINT)
+—
 
-public.opciones_shampoo
+6
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Operación comercial
 
-Administrador/propietario; service_role
+cupones
 
-Recargos de shampoo
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Función y parámetros
+Listar por cliente
 
-Retorno
+7
 
-Propósito
 
-Acceso
 
-precios_shampoo_insertar(p_shampoo_id BIGINT, p_tamano_id BIGINT, p_recargo NUMERIC(10, 2), p_activo BOOLEAN)
+citas
 
-public.precios_shampoo
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Inserta una fila y devuelve la fila creada.
+Reprogramar cita, Cancelar cita, Marcar no asistencia, Obtener agenda
 
-Administrador/propietario; service_role
+10
 
-precios_shampoo_obtener_por_id(p_shampoo_id BIGINT, p_tamano_id BIGINT)
 
-public.precios_shampoo
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+registros_servicio
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-precios_shampoo_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Iniciar servicio, Completar servicio, Obtener detalle completo
 
-JSONB
+9
 
-Lista únicamente registros activos con paginación opcional.
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
 
-precios_shampoo_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+pagos
 
-JSONB
+obtener, listar, listar todos
 
-Lista registros activos e inactivos con paginación opcional.
+Reemplazar lista de pagos
 
-Administrador/propietario; service_role
+4
 
-precios_shampoo_actualizar(p_shampoo_id BIGINT, p_tamano_id BIGINT, p_recargo NUMERIC(10, 2), p_activo BOOLEAN)
 
-public.precios_shampoo
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+recordatorios_citas
 
-Administrador/propietario; service_role
+insertar, obtener, listar, listar todos, soft delete
 
-precios_shampoo_eliminar(p_shampoo_id BIGINT, p_tamano_id BIGINT)
+—
 
-public.precios_shampoo
+5
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Configuración y auditoría
 
-Administrador/propietario; service_role
+configuracion_sistema
 
-Configuración del sistema
+actualizar
 
-Función y parámetros
+Obtener configuración, Actualizar configuración
 
-Retorno
+2
 
-Propósito
 
-Acceso
 
-configuracion_sistema_obtener()
+auditorias
 
-public.configuracion_sistema
+obtener, listar, listar todos
 
-Devuelve la única fila de configuración del sistema (id = 1).
+—
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+3
 
-configuracion_sistema_actualizar(p_foto_antes_requerida BOOLEAN, p_foto_despues_requerida BOOLEAN, p_dias_anticipacion_recordatorio INTEGER, p_metodo_pago_cupon_id BIGINT)
+Operaciones estándar
 
-public.configuracion_sistema
+Acción
 
-Actualiza completamente la configuración global.
+Patrón
 
-Administrador/propietario; service_role
+Comportamiento
 
-Registros de servicio
+Insertar
 
-Función y parámetros
+<tabla>_insertar
 
-Retorno
+Crea una fila y devuelve el registro resultante.
 
-Propósito
+Obtener
 
-Acceso
+<tabla>_obtener_por_id
 
-registros_servicio_insertar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
+Devuelve una fila o lanza REGISTRO_NO_ENCONTRADO.
 
-public.registros_servicio
+Listar activos
 
-Inserta una fila y devuelve la fila creada.
+<tabla>_listar
 
-Usuario con acceso a la sucursal; service_role
+Devuelve solo filas con activo = TRUE.
 
-registros_servicio_iniciar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
+Listar todos
 
-public.registros_servicio
+<tabla>_listar_todos
 
-Crea atómicamente el registro de ingreso y cambia la cita a atendida.
+Incluye activos e inactivos; normalmente solo administrador/propietario.
 
-Usuario con acceso a la sucursal; service_role
+Actualizar
 
-registros_servicio_obtener_por_id(p_id BIGINT)
+<tabla>_actualizar
 
-public.registros_servicio
+Actualización completa: se deben enviar todos los campos editables.
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Eliminar
 
-Usuario con acceso a la sucursal; service_role
+<tabla>_eliminar
 
-registros_servicio_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Soft delete: establece activo = FALSE.
 
-JSONB
+RPC por dominio: Identidad y acceso
 
-Lista únicamente registros activos con paginación opcional.
+usuarios — Usuarios
 
-Usuario con acceso a la sucursal; service_role
+Resumen
 
-registros_servicio_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Valor
 
-JSONB
-
-Lista registros activos e inactivos con paginación opcional.
-
-Administrador/propietario; service_role
-
-registros_servicio_actualizar(p_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_cupon_id UUID, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_recargo_shampoo NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_activo BOOLEAN, p_pagos JSONB DEFAULT NULL, p_motivo TEXT DEFAULT NULL)
-
-public.registros_servicio
-
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
-
-Usuario con acceso a la sucursal; service_role
-
-registros_servicio_eliminar(p_id BIGINT)
-
-public.registros_servicio
-
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
-
-Usuario con acceso a la sucursal; service_role
-
-registros_servicio_completar(p_registro_servicio_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_cupon_id UUID, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_recargo_shampoo NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_pagos JSONB)
-
-JSONB
-
-Completa el servicio atómicamente: valida precios, fotos, firma, cupón y pagos; canjea cupón y fija fin_real.
-
-Usuario con acceso a la sucursal; service_role
-
-registros_servicio_obtener_detalle(p_registro_servicio_id BIGINT)
-
-JSONB
-
-Devuelve el detalle anidado del servicio, cita, mascota, cliente, catálogos, cupón y pagos.
-
-Usuario con acceso a la sucursal; service_role
-
-Recordatorios de citas
-
-Función y parámetros
-
-Retorno
-
-Propósito
-
-Acceso
-
-recordatorios_citas_insertar(p_cita_id BIGINT, p_canal public.canal_recordatorio, p_numero_destino TEXT, p_mensaje TEXT)
-
-public.recordatorios_citas
-
-Registra un recordatorio ya enviado; admite usuario autenticado o proceso interno con service_role.
-
-Usuario con acceso a la sucursal; procesos internos con service_role
-
-recordatorios_citas_obtener_por_id(p_id BIGINT)
-
-public.recordatorios_citas
-
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
-
-Usuario con acceso a la sucursal; service_role
-
-recordatorios_citas_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
-
-JSONB
-
-Lista únicamente registros activos con paginación opcional.
-
-Usuario con acceso a la sucursal; service_role
-
-recordatorios_citas_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
-
-JSONB
-
-Lista registros activos e inactivos con paginación opcional.
-
-Administrador/propietario; service_role
-
-recordatorios_citas_eliminar(p_id BIGINT)
-
-public.recordatorios_citas
-
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
-
-Usuario con acceso a la sucursal; service_role
-
-Métodos de pago
-
-Función y parámetros
-
-Retorno
-
-Propósito
-
-Acceso
-
-metodos_pago_insertar(p_nombre TEXT, p_activo BOOLEAN)
-
-public.metodos_pago
-
-Inserta una fila y devuelve la fila creada.
-
-Administrador/propietario; service_role
-
-metodos_pago_obtener_por_id(p_id BIGINT)
-
-public.metodos_pago
-
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
-
-Usuario activo para lectura; administrador/propietario para cambios; service_role
-
-metodos_pago_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
-
-JSONB
-
-Lista únicamente registros activos con paginación opcional.
-
-Usuario activo para lectura; administrador/propietario para cambios; service_role
-
-metodos_pago_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
-
-JSONB
-
-Lista registros activos e inactivos con paginación opcional.
-
-Administrador/propietario; service_role
-
-metodos_pago_actualizar(p_id BIGINT, p_nombre TEXT, p_activo BOOLEAN)
-
-public.metodos_pago
-
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
-
-Administrador/propietario; service_role
-
-metodos_pago_eliminar(p_id BIGINT)
-
-public.metodos_pago
-
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
-
-Administrador/propietario; service_role
-
-Usuarios
-
-Función y parámetros
-
-Retorno
-
-Propósito
-
-Acceso
-
-usuarios_insertar(p_id UUID, p_nombre TEXT, p_nombre_usuario TEXT, p_telefono TEXT, p_rol public.rol_usuario, p_alcance_acceso public.alcance_acceso, p_activo BOOLEAN, p_sucursal_ids BIGINT[] DEFAULT ARRAY[]::BIGINT[])
+Objeto principal
 
 public.usuarios
 
-Inserta una fila y devuelve la fila creada.
+Cantidad de RPC
 
-Administrador/propietario; service_role
+8
 
-usuarios_obtener_por_id(p_id UUID)
+Operaciones estándar
 
-public.usuarios
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Operaciones específicas
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Obtener perfil actual, Listar usuarios asignables
 
-usuarios_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acciones
 
-JSONB
+Insertar — usuarios_insertar
 
-Lista únicamente registros activos con paginación opcional.
+Firma: usuarios_insertar(p_id UUID, p_nombre TEXT, p_nombre_usuario TEXT, p_telefono TEXT, p_rol public.rol_usuario, p_alcance_acceso public.alcance_acceso, p_activo BOOLEAN, p_sucursal_ids BIGINT[] DEFAULT ARRAY[]::BIGINT[])
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Retorno: public.usuarios
 
-usuarios_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acceso: Administrador o propietario; service_role.
 
-JSONB
+Comportamiento: Inserta una fila y devuelve la fila creada.
 
-Lista registros activos e inactivos con paginación opcional.
+Obtener por ID — usuarios_obtener_por_id
 
-Administrador/propietario; service_role
+Firma: usuarios_obtener_por_id(p_id UUID)
 
-usuarios_actualizar(p_id UUID, p_nombre TEXT, p_telefono TEXT, p_rol public.rol_usuario, p_alcance_acceso public.alcance_acceso, p_activo BOOLEAN, p_sucursal_ids BIGINT[] DEFAULT ARRAY[]::BIGINT[])
+Retorno: public.usuarios
 
-public.usuarios
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
 
-Administrador/propietario; service_role
+Listar activos — usuarios_listar
 
-usuarios_eliminar(p_id UUID)
+Firma: usuarios_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-public.usuarios
+Retorno: JSONB
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Administrador/propietario; service_role
+Comportamiento: Lista únicamente registros activos con paginación opcional.
 
-usuarios_obtener_perfil_actual()
+Listar todos — usuarios_listar_todos
 
-JSONB
+Firma: usuarios_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-Devuelve el perfil del usuario autenticado, su rol, alcance y sucursales activas asignadas.
+Retorno: JSONB
 
-authenticated (propio perfil); service_role
+Acceso: Administrador o propietario; service_role.
 
-usuarios_listar_disponibles_para_asignacion()
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
-JSONB
+Actualizar — usuarios_actualizar
 
-Lista usuarios activos con alcance por sucursales para la pantalla de asignación.
+Firma: usuarios_actualizar(p_id UUID, p_nombre TEXT, p_telefono TEXT, p_rol public.rol_usuario, p_alcance_acceso public.alcance_acceso, p_activo BOOLEAN, p_sucursal_ids BIGINT[] DEFAULT ARRAY[]::BIGINT[])
 
-Administrador/propietario; service_role
+Retorno: public.usuarios
 
-Sucursales
+Acceso: Administrador o propietario; service_role.
 
-Función y parámetros
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
 
-Retorno
+Eliminar lógicamente — usuarios_eliminar
 
-Propósito
+Firma: usuarios_eliminar(p_id UUID)
 
-Acceso
+Retorno: public.usuarios
 
-sucursales_insertar(p_nombre TEXT, p_direccion TEXT, p_telefono TEXT, p_activo BOOLEAN)
+Acceso: Administrador o propietario; service_role.
 
-public.sucursales
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
 
-Inserta una fila y devuelve la fila creada.
+Obtener perfil actual — usuarios_obtener_perfil_actual
 
-Administrador/propietario; service_role
+Firma: usuarios_obtener_perfil_actual()
 
-sucursales_obtener_por_id(p_id BIGINT)
+Retorno: JSONB
 
-public.sucursales
+Acceso: authenticated para su propio perfil; service_role.
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Comportamiento: Devuelve el perfil del usuario autenticado, su rol, alcance y sucursales activas asignadas.
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Listar usuarios asignables — usuarios_listar_disponibles_para_asignacion
 
-sucursales_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Firma: usuarios_listar_disponibles_para_asignacion()
 
-JSONB
+Retorno: JSONB
 
-Lista únicamente registros activos con paginación opcional.
+Acceso: Administrador o propietario; service_role.
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Comportamiento: Lista usuarios activos con alcance por sucursales para la pantalla de asignación.
 
-sucursales_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+usuarios_sucursales — Asignaciones de usuarios a sucursales
 
-JSONB
+Resumen
 
-Lista registros activos e inactivos con paginación opcional.
+Valor
 
-Administrador/propietario; service_role
+Objeto principal
 
-sucursales_actualizar(p_id BIGINT, p_nombre TEXT, p_direccion TEXT, p_telefono TEXT, p_activo BOOLEAN)
+public.usuarios_sucursales
 
-public.sucursales
+Cantidad de RPC
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+6
 
-Administrador/propietario; service_role
+Operaciones estándar
 
-sucursales_eliminar(p_id BIGINT)
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-public.sucursales
+Operaciones específicas
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+—
 
-Administrador/propietario; service_role
+Acciones
 
-Clientes
+Insertar — usuarios_sucursales_insertar
 
-Función y parámetros
+Firma: usuarios_sucursales_insertar(p_usuario_id UUID, p_sucursal_id BIGINT, p_activo BOOLEAN)
 
-Retorno
+Retorno: public.usuarios_sucursales
 
-Propósito
+Acceso: Administrador o propietario; service_role.
 
-Acceso
+Comportamiento: Inserta una fila y devuelve la fila creada.
 
-clientes_insertar(p_nombre TEXT, p_telefono TEXT, p_whatsapp_opt_in BOOLEAN, p_sms_opt_in BOOLEAN, p_notas TEXT, p_activo BOOLEAN)
+Obtener por ID — usuarios_sucursales_obtener_por_id
+
+Firma: usuarios_sucursales_obtener_por_id(p_usuario_id UUID, p_sucursal_id BIGINT)
+
+Retorno: public.usuarios_sucursales
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — usuarios_sucursales_listar
+
+Firma: usuarios_sucursales_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — usuarios_sucursales_listar_todos
+
+Firma: usuarios_sucursales_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Actualizar — usuarios_sucursales_actualizar
+
+Firma: usuarios_sucursales_actualizar(p_usuario_id UUID, p_sucursal_id BIGINT, p_activo BOOLEAN)
+
+Retorno: public.usuarios_sucursales
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — usuarios_sucursales_eliminar
+
+Firma: usuarios_sucursales_eliminar(p_usuario_id UUID, p_sucursal_id BIGINT)
+
+Retorno: public.usuarios_sucursales
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+RPC por dominio: Clientes y mascotas
+
+clientes — Clientes
+
+Resumen
+
+Valor
+
+Objeto principal
 
 public.clientes
 
-Inserta una fila y devuelve la fila creada.
+Cantidad de RPC
 
-Usuario activo según visibilidad RLS; service_role
+7
 
-clientes_obtener_por_id(p_id BIGINT)
+Operaciones estándar
 
-public.clientes
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Operaciones específicas
 
-Usuario activo según visibilidad RLS; service_role
+Obtener detalle del cliente
 
-clientes_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acciones
 
-JSONB
+Insertar — clientes_insertar
 
-Lista únicamente registros activos con paginación opcional.
+Firma: clientes_insertar(p_nombre TEXT, p_telefono TEXT, p_whatsapp_opt_in BOOLEAN, p_sms_opt_in BOOLEAN, p_notas TEXT, p_activo BOOLEAN)
 
-Usuario activo según visibilidad RLS; service_role
+Retorno: public.clientes
 
-clientes_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-JSONB
+Comportamiento: Inserta una fila y devuelve la fila creada.
 
-Lista registros activos e inactivos con paginación opcional.
+Obtener por ID — clientes_obtener_por_id
 
-Administrador/propietario; service_role
+Firma: clientes_obtener_por_id(p_id BIGINT)
 
-clientes_actualizar(p_id BIGINT, p_nombre TEXT, p_telefono TEXT, p_whatsapp_opt_in BOOLEAN, p_sms_opt_in BOOLEAN, p_notas TEXT, p_activo BOOLEAN)
+Retorno: public.clientes
 
-public.clientes
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
 
-Usuario activo según visibilidad RLS; service_role
+Listar activos — clientes_listar
 
-clientes_eliminar(p_id BIGINT)
+Firma: clientes_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-public.clientes
+Retorno: JSONB
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-Usuario activo según visibilidad RLS; service_role
+Comportamiento: Lista únicamente registros activos con paginación opcional.
 
-clientes_obtener_detalle(p_cliente_id BIGINT)
+Listar todos — clientes_listar_todos
 
-JSONB
+Firma: clientes_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-Devuelve cliente, mascotas visibles y las últimas 10 citas con resumen del servicio y pagos activos.
+Retorno: JSONB
 
-Usuario activo según visibilidad RLS; service_role
+Acceso: Administrador o propietario; service_role.
 
-Tamaños
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
-Función y parámetros
+Actualizar — clientes_actualizar
 
-Retorno
+Firma: clientes_actualizar(p_id BIGINT, p_nombre TEXT, p_telefono TEXT, p_whatsapp_opt_in BOOLEAN, p_sms_opt_in BOOLEAN, p_notas TEXT, p_activo BOOLEAN)
 
-Propósito
+Retorno: public.clientes
 
-Acceso
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-tamanos_insertar(p_nombre TEXT, p_activo BOOLEAN)
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
 
-public.tamanos
+Eliminar lógicamente — clientes_eliminar
 
-Inserta una fila y devuelve la fila creada.
+Firma: clientes_eliminar(p_id BIGINT)
 
-Administrador/propietario; service_role
+Retorno: public.clientes
 
-tamanos_obtener_por_id(p_id BIGINT)
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-public.tamanos
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Obtener detalle del cliente — clientes_obtener_detalle
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Firma: clientes_obtener_detalle(p_cliente_id BIGINT)
 
-tamanos_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Retorno: JSONB
 
-JSONB
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-Lista únicamente registros activos con paginación opcional.
+Comportamiento: Devuelve el cliente, mascotas visibles y las últimas 10 citas con resumen del servicio y pagos activos.
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+mascotas — Mascotas
 
-tamanos_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Resumen
 
-JSONB
+Valor
 
-Lista registros activos e inactivos con paginación opcional.
-
-Administrador/propietario; service_role
-
-tamanos_actualizar(p_id BIGINT, p_nombre TEXT, p_activo BOOLEAN)
-
-public.tamanos
-
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
-
-Administrador/propietario; service_role
-
-tamanos_eliminar(p_id BIGINT)
-
-public.tamanos
-
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
-
-Administrador/propietario; service_role
-
-Mascotas
-
-Función y parámetros
-
-Retorno
-
-Propósito
-
-Acceso
-
-mascotas_insertar(p_cliente_id BIGINT, p_nombre TEXT, p_especie public.especie_mascota, p_raza TEXT, p_tamano_id BIGINT, p_foto_perfil_url TEXT, p_fecha_nacimiento DATE, p_notas_salud TEXT, p_notas_comportamiento TEXT, p_intervalo_preferido_dias INTEGER, p_activo BOOLEAN)
+Objeto principal
 
 public.mascotas
 
-Inserta una fila y devuelve la fila creada.
+Cantidad de RPC
 
-Usuario activo según visibilidad RLS; service_role
+9
 
-mascotas_obtener_por_id(p_id BIGINT)
+Operaciones estándar
 
-public.mascotas
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Operaciones específicas
 
-Usuario activo según visibilidad RLS; service_role
+Transferir cliente, Obtener historial activo, Obtener historial completo
 
-mascotas_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acciones
 
-JSONB
+Insertar — mascotas_insertar
 
-Lista únicamente registros activos con paginación opcional.
+Firma: mascotas_insertar(p_cliente_id BIGINT, p_nombre TEXT, p_especie public.especie_mascota, p_raza TEXT, p_tamano_id BIGINT, p_foto_perfil_url TEXT, p_fecha_nacimiento DATE, p_notas_salud TEXT, p_notas_comportamiento TEXT, p_intervalo_preferido_dias INTEGER, p_activo BOOLEAN)
 
-Usuario activo según visibilidad RLS; service_role
+Retorno: public.mascotas
 
-mascotas_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-JSONB
+Comportamiento: Inserta una fila y devuelve la fila creada.
 
-Lista registros activos e inactivos con paginación opcional.
+Obtener por ID — mascotas_obtener_por_id
 
-Administrador/propietario; service_role
+Firma: mascotas_obtener_por_id(p_id BIGINT)
 
-mascotas_actualizar(p_id BIGINT, p_cliente_id BIGINT, p_nombre TEXT, p_especie public.especie_mascota, p_raza TEXT, p_tamano_id BIGINT, p_foto_perfil_url TEXT, p_fecha_nacimiento DATE, p_notas_salud TEXT, p_notas_comportamiento TEXT, p_intervalo_preferido_dias INTEGER, p_activo BOOLEAN)
+Retorno: public.mascotas
 
-public.mascotas
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
 
-Usuario activo según visibilidad RLS; service_role
+Listar activos — mascotas_listar
 
-mascotas_eliminar(p_id BIGINT)
+Firma: mascotas_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-public.mascotas
+Retorno: JSONB
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-Usuario activo según visibilidad RLS; service_role
+Comportamiento: Lista únicamente registros activos con paginación opcional.
 
-mascotas_transferir_cliente(p_mascota_id BIGINT, p_nuevo_cliente_id BIGINT, p_motivo TEXT)
+Listar todos — mascotas_listar_todos
 
-public.mascotas
+Firma: mascotas_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-Transfiere una mascota a otro cliente y audita el cambio.
+Retorno: JSONB
 
-Cualquier usuario activo autorizado; service_role
+Acceso: Administrador o propietario; service_role.
 
-mascotas_obtener_historial(p_mascota_id BIGINT)
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
-JSONB
+Actualizar — mascotas_actualizar
 
-Devuelve historial operativo activo de una mascota con citas, servicios, pagos activos y cupón.
+Firma: mascotas_actualizar(p_id BIGINT, p_cliente_id BIGINT, p_nombre TEXT, p_especie public.especie_mascota, p_raza TEXT, p_tamano_id BIGINT, p_foto_perfil_url TEXT, p_fecha_nacimiento DATE, p_notas_salud TEXT, p_notas_comportamiento TEXT, p_intervalo_preferido_dias INTEGER, p_activo BOOLEAN)
 
-Usuario activo según visibilidad RLS; service_role
+Retorno: public.mascotas
 
-mascotas_obtener_historial_completo(p_mascota_id BIGINT)
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-JSONB
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
 
-Devuelve historial completo, incluyendo registros inactivos; solo administrador/propietario.
+Eliminar lógicamente — mascotas_eliminar
 
-Administrador/propietario; service_role
+Firma: mascotas_eliminar(p_id BIGINT)
 
-Peluqueros
+Retorno: public.mascotas
 
-Función y parámetros
+Acceso: Usuario activo según visibilidad RLS; service_role.
 
-Retorno
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
 
-Propósito
+Transferir cliente — mascotas_transferir_cliente
 
-Acceso
+Firma: mascotas_transferir_cliente(p_mascota_id BIGINT, p_nuevo_cliente_id BIGINT, p_motivo TEXT)
 
-peluqueros_insertar(p_nombre TEXT, p_telefono TEXT, p_color_calendario TEXT, p_activo BOOLEAN)
+Retorno: public.mascotas
+
+Acceso: Cualquier usuario activo autorizado; service_role.
+
+Comportamiento: Transfiere una mascota a otro cliente y audita el cambio.
+
+Obtener historial activo — mascotas_obtener_historial
+
+Firma: mascotas_obtener_historial(p_mascota_id BIGINT)
+
+Retorno: JSONB
+
+Acceso: Usuario activo según visibilidad RLS; service_role.
+
+Comportamiento: Devuelve el historial operativo activo de una mascota con citas, servicios, pagos activos y cupón.
+
+Obtener historial completo — mascotas_obtener_historial_completo
+
+Firma: mascotas_obtener_historial_completo(p_mascota_id BIGINT)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Devuelve el historial completo, incluidos registros inactivos; requiere administrador o propietario.
+
+RPC por dominio: Sucursales y catálogos
+
+sucursales — Sucursales
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.sucursales
+
+Cantidad de RPC
+
+6
+
+Operaciones estándar
+
+insertar, obtener, listar, listar todos, actualizar, soft delete
+
+Operaciones específicas
+
+—
+
+Acciones
+
+Insertar — sucursales_insertar
+
+Firma: sucursales_insertar(p_nombre TEXT, p_direccion TEXT, p_telefono TEXT, p_activo BOOLEAN)
+
+Retorno: public.sucursales
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Inserta una fila y devuelve la fila creada.
+
+Obtener por ID — sucursales_obtener_por_id
+
+Firma: sucursales_obtener_por_id(p_id BIGINT)
+
+Retorno: public.sucursales
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — sucursales_listar
+
+Firma: sucursales_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — sucursales_listar_todos
+
+Firma: sucursales_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Actualizar — sucursales_actualizar
+
+Firma: sucursales_actualizar(p_id BIGINT, p_nombre TEXT, p_direccion TEXT, p_telefono TEXT, p_activo BOOLEAN)
+
+Retorno: public.sucursales
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — sucursales_eliminar
+
+Firma: sucursales_eliminar(p_id BIGINT)
+
+Retorno: public.sucursales
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+peluqueros — Peluqueros
+
+Resumen
+
+Valor
+
+Objeto principal
 
 public.peluqueros
 
-Inserta una fila y devuelve la fila creada.
+Cantidad de RPC
 
-Administrador/propietario; service_role
+6
 
-peluqueros_obtener_por_id(p_id BIGINT)
+Operaciones estándar
 
-public.peluqueros
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Operaciones específicas
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+—
 
-peluqueros_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acciones
 
-JSONB
+Insertar — peluqueros_insertar
 
-Lista únicamente registros activos con paginación opcional.
+Firma: peluqueros_insertar(p_nombre TEXT, p_telefono TEXT, p_color_calendario TEXT, p_activo BOOLEAN)
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Retorno: public.peluqueros
 
-peluqueros_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acceso: Administrador o propietario; service_role.
 
-JSONB
+Comportamiento: Inserta una fila y devuelve la fila creada.
 
-Lista registros activos e inactivos con paginación opcional.
+Obtener por ID — peluqueros_obtener_por_id
 
-Administrador/propietario; service_role
+Firma: peluqueros_obtener_por_id(p_id BIGINT)
 
-peluqueros_actualizar(p_id BIGINT, p_nombre TEXT, p_telefono TEXT, p_color_calendario TEXT, p_activo BOOLEAN)
+Retorno: public.peluqueros
 
-public.peluqueros
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
 
-Administrador/propietario; service_role
+Listar activos — peluqueros_listar
 
-peluqueros_eliminar(p_id BIGINT)
+Firma: peluqueros_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-public.peluqueros
+Retorno: JSONB
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Administrador/propietario; service_role
+Comportamiento: Lista únicamente registros activos con paginación opcional.
 
-Servicios
+Listar todos — peluqueros_listar_todos
 
-Función y parámetros
+Firma: peluqueros_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-Retorno
+Retorno: JSONB
 
-Propósito
+Acceso: Administrador o propietario; service_role.
 
-Acceso
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
-servicios_insertar(p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_activo BOOLEAN)
+Actualizar — peluqueros_actualizar
+
+Firma: peluqueros_actualizar(p_id BIGINT, p_nombre TEXT, p_telefono TEXT, p_color_calendario TEXT, p_activo BOOLEAN)
+
+Retorno: public.peluqueros
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — peluqueros_eliminar
+
+Firma: peluqueros_eliminar(p_id BIGINT)
+
+Retorno: public.peluqueros
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+tamanos — Tamaños
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.tamanos
+
+Cantidad de RPC
+
+6
+
+Operaciones estándar
+
+insertar, obtener, listar, listar todos, actualizar, soft delete
+
+Operaciones específicas
+
+—
+
+Acciones
+
+Insertar — tamanos_insertar
+
+Firma: tamanos_insertar(p_nombre TEXT, p_activo BOOLEAN)
+
+Retorno: public.tamanos
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Inserta una fila y devuelve la fila creada.
+
+Obtener por ID — tamanos_obtener_por_id
+
+Firma: tamanos_obtener_por_id(p_id BIGINT)
+
+Retorno: public.tamanos
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — tamanos_listar
+
+Firma: tamanos_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — tamanos_listar_todos
+
+Firma: tamanos_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Actualizar — tamanos_actualizar
+
+Firma: tamanos_actualizar(p_id BIGINT, p_nombre TEXT, p_activo BOOLEAN)
+
+Retorno: public.tamanos
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — tamanos_eliminar
+
+Firma: tamanos_eliminar(p_id BIGINT)
+
+Retorno: public.tamanos
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+servicios — Servicios
+
+Resumen
+
+Valor
+
+Objeto principal
 
 public.servicios
 
-Inserta una fila y devuelve la fila creada.
+Cantidad de RPC
 
-Administrador/propietario; service_role
+6
 
-servicios_obtener_por_id(p_id BIGINT)
+Operaciones estándar
 
-public.servicios
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Operaciones específicas
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+—
 
-servicios_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acciones
 
-JSONB
+Insertar — servicios_insertar
 
-Lista únicamente registros activos con paginación opcional.
+Firma: servicios_insertar(p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_activo BOOLEAN)
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Retorno: public.servicios
 
-servicios_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acceso: Administrador o propietario; service_role.
 
-JSONB
+Comportamiento: Inserta una fila y devuelve la fila creada.
 
-Lista registros activos e inactivos con paginación opcional.
+Obtener por ID — servicios_obtener_por_id
 
-Administrador/propietario; service_role
+Firma: servicios_obtener_por_id(p_id BIGINT)
 
-servicios_actualizar(p_id BIGINT, p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_activo BOOLEAN)
+Retorno: public.servicios
 
-public.servicios
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
 
-Administrador/propietario; service_role
+Listar activos — servicios_listar
 
-servicios_eliminar(p_id BIGINT)
+Firma: servicios_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-public.servicios
+Retorno: JSONB
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Administrador/propietario; service_role
+Comportamiento: Lista únicamente registros activos con paginación opcional.
 
-Cupones
+Listar todos — servicios_listar_todos
 
-Función y parámetros
+Firma: servicios_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-Retorno
+Retorno: JSONB
 
-Propósito
+Acceso: Administrador o propietario; service_role.
 
-Acceso
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
-cupones_insertar(p_id UUID, p_cliente_id BIGINT, p_servicio_id BIGINT, p_tipo_descuento public.tipo_descuento_cupon, p_valor NUMERIC(10, 2), p_fecha_expiracion DATE, p_activo BOOLEAN)
+Actualizar — servicios_actualizar
+
+Firma: servicios_actualizar(p_id BIGINT, p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_activo BOOLEAN)
+
+Retorno: public.servicios
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — servicios_eliminar
+
+Firma: servicios_eliminar(p_id BIGINT)
+
+Retorno: public.servicios
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+precios_servicios — Precios y duraciones de servicios
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.precios_servicios
+
+Cantidad de RPC
+
+6
+
+Operaciones estándar
+
+insertar, obtener, listar, listar todos, actualizar, soft delete
+
+Operaciones específicas
+
+—
+
+Acciones
+
+Insertar — precios_servicios_insertar
+
+Firma: precios_servicios_insertar(p_servicio_id BIGINT, p_tamano_id BIGINT, p_precio NUMERIC(10, 2), p_duracion_minutos INTEGER, p_activo BOOLEAN)
+
+Retorno: public.precios_servicios
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Inserta una fila y devuelve la fila creada.
+
+Obtener por ID — precios_servicios_obtener_por_id
+
+Firma: precios_servicios_obtener_por_id(p_servicio_id BIGINT, p_tamano_id BIGINT)
+
+Retorno: public.precios_servicios
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — precios_servicios_listar
+
+Firma: precios_servicios_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — precios_servicios_listar_todos
+
+Firma: precios_servicios_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Actualizar — precios_servicios_actualizar
+
+Firma: precios_servicios_actualizar(p_servicio_id BIGINT, p_tamano_id BIGINT, p_precio NUMERIC(10, 2), p_duracion_minutos INTEGER, p_activo BOOLEAN)
+
+Retorno: public.precios_servicios
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — precios_servicios_eliminar
+
+Firma: precios_servicios_eliminar(p_servicio_id BIGINT, p_tamano_id BIGINT)
+
+Retorno: public.precios_servicios
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+opciones_shampoo — Opciones de shampoo
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.opciones_shampoo
+
+Cantidad de RPC
+
+6
+
+Operaciones estándar
+
+insertar, obtener, listar, listar todos, actualizar, soft delete
+
+Operaciones específicas
+
+—
+
+Acciones
+
+Insertar — opciones_shampoo_insertar
+
+Firma: opciones_shampoo_insertar(p_nombre TEXT, p_activo BOOLEAN)
+
+Retorno: public.opciones_shampoo
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Inserta una fila y devuelve la fila creada.
+
+Obtener por ID — opciones_shampoo_obtener_por_id
+
+Firma: opciones_shampoo_obtener_por_id(p_id BIGINT)
+
+Retorno: public.opciones_shampoo
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — opciones_shampoo_listar
+
+Firma: opciones_shampoo_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — opciones_shampoo_listar_todos
+
+Firma: opciones_shampoo_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Actualizar — opciones_shampoo_actualizar
+
+Firma: opciones_shampoo_actualizar(p_id BIGINT, p_nombre TEXT, p_activo BOOLEAN)
+
+Retorno: public.opciones_shampoo
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — opciones_shampoo_eliminar
+
+Firma: opciones_shampoo_eliminar(p_id BIGINT)
+
+Retorno: public.opciones_shampoo
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+precios_shampoo — Recargos de shampoo
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.precios_shampoo
+
+Cantidad de RPC
+
+6
+
+Operaciones estándar
+
+insertar, obtener, listar, listar todos, actualizar, soft delete
+
+Operaciones específicas
+
+—
+
+Acciones
+
+Insertar — precios_shampoo_insertar
+
+Firma: precios_shampoo_insertar(p_shampoo_id BIGINT, p_tamano_id BIGINT, p_recargo NUMERIC(10, 2), p_activo BOOLEAN)
+
+Retorno: public.precios_shampoo
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Inserta una fila y devuelve la fila creada.
+
+Obtener por ID — precios_shampoo_obtener_por_id
+
+Firma: precios_shampoo_obtener_por_id(p_shampoo_id BIGINT, p_tamano_id BIGINT)
+
+Retorno: public.precios_shampoo
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — precios_shampoo_listar
+
+Firma: precios_shampoo_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — precios_shampoo_listar_todos
+
+Firma: precios_shampoo_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Actualizar — precios_shampoo_actualizar
+
+Firma: precios_shampoo_actualizar(p_shampoo_id BIGINT, p_tamano_id BIGINT, p_recargo NUMERIC(10, 2), p_activo BOOLEAN)
+
+Retorno: public.precios_shampoo
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — precios_shampoo_eliminar
+
+Firma: precios_shampoo_eliminar(p_shampoo_id BIGINT, p_tamano_id BIGINT)
+
+Retorno: public.precios_shampoo
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+metodos_pago — Métodos de pago
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.metodos_pago
+
+Cantidad de RPC
+
+6
+
+Operaciones estándar
+
+insertar, obtener, listar, listar todos, actualizar, soft delete
+
+Operaciones específicas
+
+—
+
+Acciones
+
+Insertar — metodos_pago_insertar
+
+Firma: metodos_pago_insertar(p_nombre TEXT, p_activo BOOLEAN)
+
+Retorno: public.metodos_pago
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Inserta una fila y devuelve la fila creada.
+
+Obtener por ID — metodos_pago_obtener_por_id
+
+Firma: metodos_pago_obtener_por_id(p_id BIGINT)
+
+Retorno: public.metodos_pago
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — metodos_pago_listar
+
+Firma: metodos_pago_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — metodos_pago_listar_todos
+
+Firma: metodos_pago_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Actualizar — metodos_pago_actualizar
+
+Firma: metodos_pago_actualizar(p_id BIGINT, p_nombre TEXT, p_activo BOOLEAN)
+
+Retorno: public.metodos_pago
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — metodos_pago_eliminar
+
+Firma: metodos_pago_eliminar(p_id BIGINT)
+
+Retorno: public.metodos_pago
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+RPC por dominio: Operación comercial
+
+cupones — Cupones
+
+Resumen
+
+Valor
+
+Objeto principal
 
 public.cupones
 
-Inserta una fila y devuelve la fila creada.
+Cantidad de RPC
 
-Administrador/propietario; service_role
+7
 
-cupones_obtener_por_id(p_id UUID)
+Operaciones estándar
 
-public.cupones
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Operaciones específicas
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Listar por cliente
 
-cupones_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acciones
 
-JSONB
+Insertar — cupones_insertar
 
-Lista únicamente registros activos con paginación opcional.
+Firma: cupones_insertar(p_id UUID, p_cliente_id BIGINT, p_servicio_id BIGINT, p_tipo_descuento public.tipo_descuento_cupon, p_valor NUMERIC(10, 2), p_fecha_expiracion DATE, p_activo BOOLEAN)
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Retorno: public.cupones
 
-cupones_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acceso: Administrador o propietario; service_role.
 
-JSONB
+Comportamiento: Inserta una fila y devuelve la fila creada.
 
-Lista registros activos e inactivos con paginación opcional.
+Obtener por ID — cupones_obtener_por_id
 
-Administrador/propietario; service_role
+Firma: cupones_obtener_por_id(p_id UUID)
 
-cupones_actualizar(p_id UUID, p_cliente_id BIGINT, p_servicio_id BIGINT, p_tipo_descuento public.tipo_descuento_cupon, p_valor NUMERIC(10, 2), p_fecha_expiracion DATE, p_activo BOOLEAN)
+Retorno: public.cupones
 
-public.cupones
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
 
-Administrador/propietario; service_role
+Listar activos — cupones_listar
 
-cupones_eliminar(p_id UUID)
+Firma: cupones_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-public.cupones
+Retorno: JSONB
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Administrador/propietario; service_role
+Comportamiento: Lista únicamente registros activos con paginación opcional.
 
-cupones_listar_por_cliente(p_cliente_id BIGINT)
+Listar todos — cupones_listar_todos
 
-JSONB
+Firma: cupones_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-Lista los cupones reales almacenados de un cliente, sin estado derivado.
+Retorno: JSONB
 
-Usuario activo para lectura; administrador/propietario para cambios; service_role
+Acceso: Administrador o propietario; service_role.
 
-Citas
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
-Función y parámetros
+Actualizar — cupones_actualizar
 
-Retorno
+Firma: cupones_actualizar(p_id UUID, p_cliente_id BIGINT, p_servicio_id BIGINT, p_tipo_descuento public.tipo_descuento_cupon, p_valor NUMERIC(10, 2), p_fecha_expiracion DATE, p_activo BOOLEAN)
 
-Propósito
+Retorno: public.cupones
 
-Acceso
+Acceso: Administrador o propietario; service_role.
 
-citas_insertar(p_mascota_id BIGINT, p_sucursal_id BIGINT, p_peluquero_id BIGINT, p_servicio_id BIGINT, p_inicio_programado TIMESTAMPTZ, p_origen public.origen_cita)
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
 
-public.citas
+Eliminar lógicamente — cupones_eliminar
 
-Inserta una fila y devuelve la fila creada.
+Firma: cupones_eliminar(p_id UUID)
 
-Usuario con acceso a la sucursal; service_role
+Retorno: public.cupones
 
-citas_obtener_por_id(p_id BIGINT)
+Acceso: Administrador o propietario; service_role.
 
-public.citas
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Listar por cliente — cupones_listar_por_cliente
 
-Usuario con acceso a la sucursal; service_role
+Firma: cupones_listar_por_cliente(p_cliente_id BIGINT)
 
-citas_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Retorno: JSONB
 
-JSONB
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Lista únicamente registros activos con paginación opcional.
+Comportamiento: Lista los cupones almacenados de un cliente sin calcular un estado derivado.
 
-Usuario con acceso a la sucursal; service_role
+citas — Citas
 
-citas_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Resumen
 
-JSONB
+Valor
 
-Lista registros activos e inactivos con paginación opcional.
-
-Administrador/propietario; service_role
-
-citas_actualizar(p_id BIGINT, p_mascota_id BIGINT, p_sucursal_id BIGINT, p_peluquero_id BIGINT, p_servicio_id BIGINT, p_inicio_programado TIMESTAMPTZ, p_fin_programado TIMESTAMPTZ, p_estado public.estado_cita, p_origen public.origen_cita, p_activo BOOLEAN)
+Objeto principal
 
 public.citas
 
-Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+Cantidad de RPC
 
-Usuario con acceso a la sucursal; service_role
+10
 
-citas_eliminar(p_id BIGINT)
+Operaciones estándar
 
-public.citas
+insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+Operaciones específicas
 
-Usuario con acceso a la sucursal; service_role
+Reprogramar cita, Cancelar cita, Marcar no asistencia, Obtener agenda
 
-citas_reprogramar(p_cita_id BIGINT, p_inicio_programado TIMESTAMPTZ, p_servicio_id BIGINT, p_peluquero_id BIGINT)
+Acciones
 
-public.citas
+Insertar — citas_insertar
 
-Reprograma una cita, puede cambiar servicio y peluquero, y recalcula fin_programado con la duración vigente.
+Firma: citas_insertar(p_mascota_id BIGINT, p_sucursal_id BIGINT, p_peluquero_id BIGINT, p_servicio_id BIGINT, p_inicio_programado TIMESTAMPTZ, p_origen public.origen_cita)
 
-Usuario con acceso a la sucursal; service_role
+Retorno: public.citas
 
-citas_cancelar(p_cita_id BIGINT, p_motivo TEXT)
+Acceso: Usuario con acceso a la sucursal; service_role.
 
-public.citas
+Comportamiento: Inserta una fila y devuelve la fila creada.
 
-Cambia la cita a cancelada y registra la auditoría con el motivo.
+Obtener por ID — citas_obtener_por_id
 
-Usuario con acceso a la sucursal; service_role
+Firma: citas_obtener_por_id(p_id BIGINT)
 
-citas_marcar_no_asistio(p_cita_id BIGINT, p_motivo TEXT)
+Retorno: public.citas
 
-public.citas
+Acceso: Usuario con acceso a la sucursal; service_role.
 
-Cambia la cita a no_asistio y registra la auditoría con el motivo.
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
 
-Usuario con acceso a la sucursal; service_role
+Listar activos — citas_listar
 
-citas_obtener_agenda(p_sucursal_id BIGINT, p_fecha_desde TIMESTAMPTZ, p_fecha_hasta TIMESTAMPTZ)
+Firma: citas_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-JSONB
+Retorno: JSONB
 
-Devuelve agenda anidada por rango, con mascota, cliente, sucursal, servicio, peluquero y registro de servicio.
+Acceso: Usuario con acceso a la sucursal; service_role.
 
-Usuario con acceso a la sucursal; service_role
+Comportamiento: Lista únicamente registros activos con paginación opcional.
 
-Pagos
+Listar todos — citas_listar_todos
 
-Función y parámetros
+Firma: citas_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 
-Retorno
+Retorno: JSONB
 
-Propósito
+Acceso: Administrador o propietario; service_role.
 
-Acceso
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
-pagos_reemplazar_lista(p_registro_servicio_id BIGINT, p_pagos JSONB, p_motivo TEXT DEFAULT NULL)
+Actualizar — citas_actualizar
 
-JSONB
+Firma: citas_actualizar(p_id BIGINT, p_mascota_id BIGINT, p_sucursal_id BIGINT, p_peluquero_id BIGINT, p_servicio_id BIGINT, p_inicio_programado TIMESTAMPTZ, p_fin_programado TIMESTAMPTZ, p_estado public.estado_cita, p_origen public.origen_cita, p_activo BOOLEAN)
 
-Desactiva los pagos activos anteriores e inserta exactamente la lista JSON enviada; recalcula monto_pagado.
+Retorno: public.citas
 
-Encargado de la sucursal si está en progreso; administrador/propietario si está completado; service_role
+Acceso: Usuario con acceso a la sucursal; service_role.
 
-pagos_obtener_por_id(p_id BIGINT)
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — citas_eliminar
+
+Firma: citas_eliminar(p_id BIGINT)
+
+Retorno: public.citas
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+Reprogramar cita — citas_reprogramar
+
+Firma: citas_reprogramar(p_cita_id BIGINT, p_inicio_programado TIMESTAMPTZ, p_servicio_id BIGINT, p_peluquero_id BIGINT)
+
+Retorno: public.citas
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Reprograma una cita, permite cambiar servicio y peluquero y recalcula fin_programado con la duración vigente.
+
+Cancelar cita — citas_cancelar
+
+Firma: citas_cancelar(p_cita_id BIGINT, p_motivo TEXT)
+
+Retorno: public.citas
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Cambia la cita a cancelada y registra auditoría con el motivo.
+
+Marcar no asistencia — citas_marcar_no_asistio
+
+Firma: citas_marcar_no_asistio(p_cita_id BIGINT, p_motivo TEXT)
+
+Retorno: public.citas
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Cambia la cita a no_asistio y registra auditoría con el motivo.
+
+Obtener agenda — citas_obtener_agenda
+
+Firma: citas_obtener_agenda(p_sucursal_id BIGINT, p_fecha_desde TIMESTAMPTZ, p_fecha_hasta TIMESTAMPTZ)
+
+Retorno: JSONB
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Devuelve la agenda anidada por rango con mascota, cliente, sucursal, servicio, peluquero y registro de servicio.
+
+registros_servicio — Registros de servicio
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.registros_servicio
+
+Cantidad de RPC
+
+9
+
+Operaciones estándar
+
+insertar, obtener, listar, listar todos, actualizar, soft delete
+
+Operaciones específicas
+
+Iniciar servicio, Completar servicio, Obtener detalle completo
+
+Acciones
+
+Insertar — registros_servicio_insertar
+
+Firma: registros_servicio_insertar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
+
+Retorno: public.registros_servicio
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Inserta una fila y devuelve la fila creada.
+
+Iniciar servicio — registros_servicio_iniciar
+
+Firma: registros_servicio_iniciar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
+
+Retorno: public.registros_servicio
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Crea atómicamente el registro de ingreso, fija inicio_real y cambia la cita a atendida.
+
+Obtener por ID — registros_servicio_obtener_por_id
+
+Firma: registros_servicio_obtener_por_id(p_id BIGINT)
+
+Retorno: public.registros_servicio
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — registros_servicio_listar
+
+Firma: registros_servicio_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — registros_servicio_listar_todos
+
+Firma: registros_servicio_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Actualizar — registros_servicio_actualizar
+
+Firma: registros_servicio_actualizar(p_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_cupon_id UUID, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_recargo_shampoo NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_activo BOOLEAN, p_pagos JSONB DEFAULT NULL, p_motivo TEXT DEFAULT NULL)
+
+Retorno: public.registros_servicio
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+
+Eliminar lógicamente — registros_servicio_eliminar
+
+Firma: registros_servicio_eliminar(p_id BIGINT)
+
+Retorno: public.registros_servicio
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+Completar servicio — registros_servicio_completar
+
+Firma: registros_servicio_completar(p_registro_servicio_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_cupon_id UUID, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_recargo_shampoo NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_pagos JSONB)
+
+Retorno: JSONB
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Completa el servicio atómicamente: valida precios, fotos, firma, cupón y pagos; canjea el cupón y fija fin_real.
+
+Obtener detalle completo — registros_servicio_obtener_detalle
+
+Firma: registros_servicio_obtener_detalle(p_registro_servicio_id BIGINT)
+
+Retorno: JSONB
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Devuelve el detalle anidado del servicio, cita, mascota, cliente, catálogos, cupón y pagos.
+
+pagos — Pagos
+
+Resumen
+
+Valor
+
+Objeto principal
 
 public.pagos
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Cantidad de RPC
 
-Usuario con acceso a la sucursal; service_role
+4
 
-pagos_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Operaciones estándar
 
-JSONB
+obtener, listar, listar todos
 
-Lista únicamente registros activos con paginación opcional.
+Operaciones específicas
 
-Usuario con acceso a la sucursal; service_role
+Reemplazar lista de pagos
 
-pagos_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acciones
 
-JSONB
+Reemplazar lista de pagos — pagos_reemplazar_lista
 
-Lista registros activos e inactivos con paginación opcional.
+Firma: pagos_reemplazar_lista(p_registro_servicio_id BIGINT, p_pagos JSONB, p_motivo TEXT DEFAULT NULL)
 
-Administrador/propietario; service_role
+Retorno: JSONB
 
-Auditorías
+Acceso: Encargado de la sucursal durante en_progreso; administrador o propietario si está completado; service_role.
 
-Función y parámetros
+Comportamiento: Desactiva los pagos activos anteriores, inserta exactamente la lista JSON enviada y recalcula monto_pagado.
 
-Retorno
+Obtener por ID — pagos_obtener_por_id
 
-Propósito
+Firma: pagos_obtener_por_id(p_id BIGINT)
 
-Acceso
+Retorno: public.pagos
 
-auditorias_obtener_por_id(p_id BIGINT)
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — pagos_listar
+
+Firma: pagos_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — pagos_listar_todos
+
+Firma: pagos_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+recordatorios_citas — Recordatorios de citas
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.recordatorios_citas
+
+Cantidad de RPC
+
+5
+
+Operaciones estándar
+
+insertar, obtener, listar, listar todos, soft delete
+
+Operaciones específicas
+
+—
+
+Acciones
+
+Insertar — recordatorios_citas_insertar
+
+Firma: recordatorios_citas_insertar(p_cita_id BIGINT, p_canal public.canal_recordatorio, p_numero_destino TEXT, p_mensaje TEXT)
+
+Retorno: public.recordatorios_citas
+
+Acceso: Usuario con acceso a la sucursal; proceso interno con service_role.
+
+Comportamiento: Registra un recordatorio ya enviado; admite un usuario autenticado o un proceso interno con service_role.
+
+Obtener por ID — recordatorios_citas_obtener_por_id
+
+Firma: recordatorios_citas_obtener_por_id(p_id BIGINT)
+
+Retorno: public.recordatorios_citas
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — recordatorios_citas_listar
+
+Firma: recordatorios_citas_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — recordatorios_citas_listar_todos
+
+Firma: recordatorios_citas_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Eliminar lógicamente — recordatorios_citas_eliminar
+
+Firma: recordatorios_citas_eliminar(p_id BIGINT)
+
+Retorno: public.recordatorios_citas
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
+
+RPC por dominio: Configuración y auditoría
+
+configuracion_sistema — Configuración del sistema
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.configuracion_sistema
+
+Cantidad de RPC
+
+2
+
+Operaciones estándar
+
+actualizar
+
+Operaciones específicas
+
+Obtener configuración, Actualizar configuración
+
+Acciones
+
+Obtener configuración — configuracion_sistema_obtener
+
+Firma: configuracion_sistema_obtener()
+
+Retorno: public.configuracion_sistema
+
+Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
+
+Comportamiento: Devuelve la única fila de configuración del sistema (id = 1).
+
+Actualizar configuración — configuracion_sistema_actualizar
+
+Firma: configuracion_sistema_actualizar(p_foto_antes_requerida BOOLEAN, p_foto_despues_requerida BOOLEAN, p_dias_anticipacion_recordatorio INTEGER, p_metodo_pago_cupon_id BIGINT)
+
+Retorno: public.configuracion_sistema
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Actualiza completamente la configuración global.
+
+auditorias — Auditorías
+
+Resumen
+
+Valor
+
+Objeto principal
 
 public.auditorias
 
-Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no es visible o no existe.
+Cantidad de RPC
 
-Usuario activo según RLS; service_role
+3
 
-auditorias_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Operaciones estándar
 
-JSONB
+obtener, listar, listar todos
 
-Lista únicamente registros activos con paginación opcional.
+Operaciones específicas
 
-Usuario activo según RLS; service_role
+—
 
-auditorias_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Acciones
 
-JSONB
+Obtener por ID — auditorias_obtener_por_id
 
-Lista registros activos e inactivos con paginación opcional.
+Firma: auditorias_obtener_por_id(p_id BIGINT)
 
-Administrador/propietario; service_role
+Retorno: public.auditorias
+
+Acceso: Usuario activo según RLS; service_role.
+
+Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
+
+Listar activos — auditorias_listar
+
+Firma: auditorias_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo según RLS; service_role.
+
+Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Listar todos — auditorias_listar_todos
+
+Firma: auditorias_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
 Referencias técnicas
 
