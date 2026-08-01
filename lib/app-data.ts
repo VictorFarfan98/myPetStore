@@ -86,7 +86,7 @@ function colorForIndex(index: number) {
 
 function must<T>(value: RpcResult<RpcListEnvelope<T>>, label: string): T[] {
   if (value.error || value.data === null) {
-    throw new Error(`Failed to load ${label}`);
+    throw new Error(`Failed to load ${label}: ${value.error?.code ?? "UNKNOWN"} ${value.error?.message ?? "Empty response"}`);
   }
 
   return value.data.datos;

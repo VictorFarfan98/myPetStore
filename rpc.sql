@@ -1,3 +1,7 @@
+-- VERIFIED BUILD: rpc_verified_v2_20260731.sql
+-- Fixes PostgreSQL composite-record INTO assignments by selecting composite rows separately.
+-- Generated from the corrected rpc_fixed.sql source.
+
 -- RPC, RLS and permission layer for the pet store grooming application.
 -- IDEMPOTENT FOR ITS OWN OBJECTS: it recreates application RPC functions,
 -- internal authorization helpers, policies and grants without deleting tables or data.
@@ -4930,12 +4934,15 @@ BEGIN
     PERFORM petstore_private.requerir_usuario_activo();
     PERFORM petstore_private.establecer_actor();
     PERFORM SET_CONFIG('app.flujo_registro_servicio', 'eliminar', TRUE);
-    SELECT rs, c.sucursal_id INTO v_anterior, v_sucursal_id
+    SELECT rs.* INTO v_anterior
     FROM public.registros_servicio rs
-    INNER JOIN public.citas c ON c.id = rs.cita_id
     WHERE rs.id = p_id
-    FOR UPDATE OF rs;
+    FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'REGISTRO_NO_ENCONTRADO'; END IF;
+
+    SELECT c.sucursal_id INTO v_sucursal_id
+    FROM public.citas c
+    WHERE c.id = v_anterior.cita_id;
     PERFORM petstore_private.requerir_acceso_sucursal(v_sucursal_id);
     UPDATE public.registros_servicio SET activo = FALSE WHERE id = p_id RETURNING * INTO v_fila;
     PERFORM petstore_private.auditar_cambio(
@@ -5583,13 +5590,17 @@ DECLARE
 BEGIN
     PERFORM petstore_private.requerir_usuario_activo();
 
-    SELECT m, c INTO v_mascota, v_cliente
+    SELECT m.* INTO v_mascota
     FROM public.mascotas m
     INNER JOIN public.clientes c ON c.id = m.cliente_id
     WHERE m.id = p_mascota_id
       AND m.activo = TRUE
       AND c.activo = TRUE;
     IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'MASCOTA_NO_ENCONTRADA'; END IF;
+
+    SELECT c.* INTO v_cliente
+    FROM public.clientes c
+    WHERE c.id = v_mascota.cliente_id;
 
     SELECT JSONB_BUILD_OBJECT(
         'mascota', TO_JSONB(v_mascota),
@@ -5636,11 +5647,15 @@ DECLARE
 BEGIN
     PERFORM petstore_private.requerir_admin_propietario();
 
-    SELECT m, c INTO v_mascota, v_cliente
+    SELECT m.* INTO v_mascota
     FROM public.mascotas m
     INNER JOIN public.clientes c ON c.id = m.cliente_id
     WHERE m.id = p_mascota_id;
     IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'MASCOTA_NO_ENCONTRADA'; END IF;
+
+    SELECT c.* INTO v_cliente
+    FROM public.clientes c
+    WHERE c.id = v_mascota.cliente_id;
 
     SELECT JSONB_BUILD_OBJECT(
         'mascota', TO_JSONB(v_mascota),
@@ -5790,7 +5805,6 @@ $$;
 -- Structural trigger helpers are not public RPC endpoints.
 REVOKE ALL ON FUNCTION public.establecer_actualizado_en() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.obtener_usuario_actual() FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.proteger_ultimo_usuario_privilegiado() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.cancelar_citas_por_sucursal_desactivada() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.cancelar_citas_por_cliente_desactivado() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.cancelar_citas_por_mascota_desactivada() FROM PUBLIC, anon, authenticated;
@@ -5802,11 +5816,9 @@ REVOKE ALL ON FUNCTION public.validar_consistencia_desde_registro() FROM PUBLIC,
 REVOKE ALL ON FUNCTION public.validar_total_pagos_registro(BIGINT) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.validar_total_pagos_desde_registro() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.validar_total_pagos_desde_pago() FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.auditar_eliminacion_fisica() FROM PUBLIC, anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.establecer_actualizado_en() TO service_role;
 GRANT EXECUTE ON FUNCTION public.obtener_usuario_actual() TO service_role;
-GRANT EXECUTE ON FUNCTION public.proteger_ultimo_usuario_privilegiado() TO service_role;
 GRANT EXECUTE ON FUNCTION public.cancelar_citas_por_sucursal_desactivada() TO service_role;
 GRANT EXECUTE ON FUNCTION public.cancelar_citas_por_cliente_desactivado() TO service_role;
 GRANT EXECUTE ON FUNCTION public.cancelar_citas_por_mascota_desactivada() TO service_role;
@@ -5818,6 +5830,5 @@ GRANT EXECUTE ON FUNCTION public.validar_consistencia_desde_registro() TO servic
 GRANT EXECUTE ON FUNCTION public.validar_total_pagos_registro(BIGINT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.validar_total_pagos_desde_registro() TO service_role;
 GRANT EXECUTE ON FUNCTION public.validar_total_pagos_desde_pago() TO service_role;
-GRANT EXECUTE ON FUNCTION public.auditar_eliminacion_fisica() TO service_role;
 
 COMMIT;

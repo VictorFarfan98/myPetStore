@@ -148,6 +148,7 @@ CREATE TABLE public.usuarios_sucursales (
         REFERENCES public.usuarios(id) ON DELETE CASCADE,
     sucursal_id BIGINT NOT NULL
         REFERENCES public.sucursales(id) ON DELETE CASCADE,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     creado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (usuario_id, sucursal_id)
@@ -253,6 +254,7 @@ CREATE TABLE public.precios_servicios (
         CHECK (precio > 0),
     duracion_minutos INTEGER NOT NULL
         CHECK (duracion_minutos > 0),
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     creado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (servicio_id, tamano_id)
@@ -277,6 +279,7 @@ CREATE TABLE public.precios_shampoo (
         REFERENCES public.tamanos(id) ON DELETE RESTRICT,
     recargo NUMERIC(10, 2) NOT NULL
         CHECK (recargo >= 0),
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     creado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (shampoo_id, tamano_id)
@@ -350,6 +353,7 @@ CREATE TABLE public.citas (
     fin_programado TIMESTAMPTZ NOT NULL,
     estado public.estado_cita NOT NULL DEFAULT 'programada',
     origen public.origen_cita NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     creado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CHECK (fin_programado > inicio_programado)
@@ -382,6 +386,7 @@ CREATE TABLE public.registros_servicio (
     cupon_id UUID NULL UNIQUE
         REFERENCES public.cupones(id) ON DELETE RESTRICT,
     estado public.estado_registro_servicio NOT NULL DEFAULT 'en_progreso',
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
 
     inicio_real TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fin_real TIMESTAMPTZ NULL,
@@ -487,6 +492,7 @@ CREATE TABLE public.pagos (
         CHECK (monto >= 0),
     creado_por_usuario_id UUID NOT NULL
         REFERENCES public.usuarios(id) ON DELETE RESTRICT,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     creado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -503,6 +509,7 @@ CREATE TABLE public.recordatorios_citas (
         CHECK (numero_destino ~ '^\+[1-9][0-9]{7,14}$'),
     mensaje TEXT NOT NULL
         CHECK (BTRIM(mensaje) <> ''),
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     enviado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -519,6 +526,8 @@ CREATE TABLE public.auditorias (
         CHECK (BTRIM(accion) <> ''),
     valores_anteriores JSONB NULL,
     valores_nuevos JSONB NULL,
+    sucursal_id BIGINT NULL
+        REFERENCES public.sucursales(id) ON DELETE RESTRICT,
     usuario_id UUID NULL
         REFERENCES public.usuarios(id) ON DELETE RESTRICT,
     motivo TEXT NULL,
@@ -530,6 +539,9 @@ CREATE INDEX ix_auditorias_entidad
 
 CREATE INDEX ix_auditorias_usuario
     ON public.auditorias (usuario_id, creado_en);
+
+CREATE INDEX ix_auditorias_sucursal
+    ON public.auditorias (sucursal_id, creado_en);
 
 -- -----------------------------------------------------------------------------
 -- 4. Shared timestamp and actor helpers
