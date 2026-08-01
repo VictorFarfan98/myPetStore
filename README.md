@@ -19,7 +19,9 @@ Open `http://localhost:3000`.
 
 ## Database setup
 
-Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+
+`SUPABASE_SERVICE_ROLE_KEY` is only needed for trusted internal processes, not for the web application.
 
 Most pages now read through `lib/app-data.ts`, which loads live data through Supabase RPC.
 

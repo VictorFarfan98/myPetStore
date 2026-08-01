@@ -1,5 +1,6 @@
 export * from "./types";
 export * from "./core";
+export * from "./names";
 export * from "./sucursales";
 export * from "./clientes";
 export * from "./tamanos";

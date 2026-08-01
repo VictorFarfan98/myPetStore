@@ -1,8 +1,9 @@
 import "server-only";
 
-import { createServiceSupabaseClient } from "./supabase/server";
+import { createUserSupabaseClient } from "./supabase/server";
 import { emptyAppData } from "./empty-app-data";
 import { rpcCall } from "./rpc/core";
+import { RPC_NAMES } from "./rpc/names";
 import type {
   CitaRow,
   ClienteRow,
@@ -15,6 +16,7 @@ import type {
   TamanoRow,
   UsuarioRow,
   UsuarioSucursalRow,
+  RpcListEnvelope,
   RpcResult
 } from "./rpc/types";
 import type { AppData, AppointmentSource, AppointmentStatus, PetSize, Role, Species } from "./types";
@@ -82,12 +84,12 @@ function colorForIndex(index: number) {
   return palette[index % palette.length];
 }
 
-function must<T>(value: RpcResult<T>, label: string): T {
+function must<T>(value: RpcResult<RpcListEnvelope<T>>, label: string): T[] {
   if (value.error || value.data === null) {
     throw new Error(`Failed to load ${label}`);
   }
 
-  return value.data;
+  return value.data.datos;
 }
 
 function mapBranch(row: SucursalRow) {
@@ -262,7 +264,7 @@ function buildGroomingRecords(args: {
 
 export async function getAppData(): Promise<AppData> {
   try {
-    const supabase = createServiceSupabaseClient();
+    const supabase = await createUserSupabaseClient();
 
     const [
       branchesResult,
@@ -278,18 +280,18 @@ export async function getAppData(): Promise<AppData> {
       registrosResult,
       reminderLogsResult
     ] = await Promise.all([
-      rpcCall<SucursalRow[]>("sucursales_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<UsuarioRow[]>("usuarios_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<PeluqueroRow[]>("peluqueros_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<UsuarioSucursalRow[]>("usuarios_sucursales_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<ClienteRow[]>("clientes_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<MascotaRow[]>("mascotas_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<TamanoRow[]>("tamanos_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<ServicioRow[]>("servicios_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<PrecioServicioRow[]>("precios_servicios_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<CitaRow[]>("citas_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<RegistroServicioRow[]>("registros_servicio_listar_todos", { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<RecordatorioCitaRow[]>("recordatorios_citas_listar_todos", { p_limite: null, p_offset: 0 }, supabase)
+      rpcCall<RpcListEnvelope<SucursalRow>>(RPC_NAMES.branchesList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<UsuarioRow>>(RPC_NAMES.usersList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<PeluqueroRow>>(RPC_NAMES.groomersList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<UsuarioSucursalRow>>(RPC_NAMES.userBranchesList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<ClienteRow>>(RPC_NAMES.customersList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<MascotaRow>>(RPC_NAMES.petsList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<TamanoRow>>(RPC_NAMES.sizesList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<ServicioRow>>(RPC_NAMES.servicesList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<PrecioServicioRow>>(RPC_NAMES.servicePricesList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<CitaRow>>(RPC_NAMES.appointmentsList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<RegistroServicioRow>>(RPC_NAMES.groomingRecordsList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<RecordatorioCitaRow>>(RPC_NAMES.reminderLogsList, { p_limite: null, p_offset: 0 }, supabase)
     ]);
 
     const branches = must(branchesResult, "branches").filter((branch) => branch.activo).map(mapBranch);
