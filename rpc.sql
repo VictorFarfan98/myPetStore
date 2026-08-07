@@ -5825,6 +5825,7 @@ GRANT EXECUTE ON FUNCTION public.cancelar_citas_por_mascota_desactivada() TO ser
 GRANT EXECUTE ON FUNCTION public.desasignar_peluquero_desactivado() TO service_role;
 GRANT EXECUTE ON FUNCTION public.preparar_registro_servicio() TO service_role;
 GRANT EXECUTE ON FUNCTION public.validar_consistencia_cita_registro_id(BIGINT) TO service_role;
+GRANT EXECUTE ON FUNCTION public.validar_consistencia_cita_registro_id(BIGINT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.validar_consistencia_desde_cita() TO service_role;
 GRANT EXECUTE ON FUNCTION public.validar_consistencia_desde_registro() TO service_role;
 GRANT EXECUTE ON FUNCTION public.validar_total_pagos_registro(BIGINT) TO service_role;

@@ -2,17 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { sucursalesActualizar, sucursalesEliminar, sucursalesInsertar } from "@/lib/rpc/sucursales";
+import { toE164 } from "@/lib/phone";
 
 function text(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
-}
-
-function toE164(value: string) {
-  const digits = value.replace(/\D/g, "");
-  if (digits.length === 8) return `+502${digits}`;
-  if (digits.length === 11 && digits.startsWith("502")) return `+${digits}`;
-  if (/^\+[1-9]\d{7,14}$/.test(value.replace(/[\s()-]/g, ""))) return value.replace(/[\s()-]/g, "");
-  throw new Error("Ingresa un teléfono guatemalteco de 8 dígitos o un número E.164 válido.");
 }
 
 function validate(formData: FormData) {

@@ -1,13 +1,25 @@
-import { Scissors } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
-import { getAppData } from "@/lib/app-data";
+import { ServiciosBrowser } from "@/components/servicios-browser";
+import { PreciosServiciosBrowser } from "@/components/precios-servicios-browser";
+import { CatalogBrowser } from "@/components/catalog-browser";
+import { createOpcionShampoo, deleteOpcionShampoo, updateOpcionShampoo } from "@/lib/opciones-shampoo-actions";
+import { preciosServiciosListarTodos } from "@/lib/rpc/precios_servicios";
+import { opcionesShampooListarTodos } from "@/lib/rpc/opciones_shampoo";
+import { serviciosListarTodos } from "@/lib/rpc/servicios";
+import { tamanosListarTodos } from "@/lib/rpc/tamanos";
+import { createTamano, deleteTamano, updateTamano } from "@/lib/tamanos-actions";
+import { usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function ServiciosPage() {
-  const data = await getAppData();
+  const profile = await usuariosObtenerPerfilActual();
+  if (profile.error || !["administrador", "propietario"].includes(String(profile.data?.rol))) redirect("/");
+  const [services, prices, sizes, shampoos] = await Promise.all([serviciosListarTodos(), preciosServiciosListarTodos(), tamanosListarTodos(), opcionesShampooListarTodos()]);
+  if (services.error || !services.data || prices.error || !prices.data || sizes.error || !sizes.data || shampoos.error || !shampoos.data) throw new Error("No se pudo cargar el catálogo de servicios.");
 
   return (
     <AppShell>
@@ -15,36 +27,12 @@ export default async function ServiciosPage() {
         <PageHeader
           eyebrow="Catalogo operativo"
           title="Servicios"
-          description="Servicios de grooming con duracion estimada para calcular disponibilidad de agenda sin incluir pagos en v1."
+          description="Administra los servicios de grooming que ofrece la tienda."
         />
-
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold text-ink">Plantillas de servicio</h2>
-              <p className="text-sm text-slate-500">Base para duracion, agenda y reportes.</p>
-            </div>
-            <Scissors className="h-5 w-5 text-jade" aria-hidden="true" />
-          </div>
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {data.services.map((service) => (
-              <article key={service.id} className="rounded-lg border border-slate-200 p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cloud text-jade">
-                  <Scissors className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold text-ink">{service.name}</h3>
-                <p className="mt-2 text-sm text-slate-500">{service.estimatedDurationMinutes} minutos estimados</p>
-                <span
-                  className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    service.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"
-                  }`}
-                >
-                  {service.active ? "Activo" : "Inactivo"}
-                </span>
-              </article>
-            ))}
-          </div>
-        </section>
+        <ServiciosBrowser rows={services.data.datos} />
+        <CatalogBrowser rows={sizes.data.datos} title="Tamaños" singular="Tamaño" create={createTamano} update={updateTamano} remove={deleteTamano} />
+        <CatalogBrowser rows={shampoos.data.datos} title="Opciones de shampoo" singular="Opción de shampoo" create={createOpcionShampoo} update={updateOpcionShampoo} remove={deleteOpcionShampoo} />
+        <PreciosServiciosBrowser rows={prices.data.datos} services={services.data.datos} sizes={sizes.data.datos} />
       </PageContainer>
     </AppShell>
   );

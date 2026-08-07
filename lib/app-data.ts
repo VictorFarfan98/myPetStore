@@ -108,6 +108,7 @@ function mapCustomer(row: ClienteRow) {
     name: row.nombre,
     phone: row.telefono,
     whatsappOptIn: row.whatsapp_opt_in,
+    smsOptIn: row.sms_opt_in,
     notes: normalizeText(row.notas)
   };
 }
@@ -327,7 +328,7 @@ export async function getAppData(): Promise<AppData> {
       .slice()
       .sort((a, b) => a.nombre.localeCompare(b.nombre))
       .forEach((row, index) => {
-        groomerMap.set(row.id, 1000 + index + 1);
+        groomerMap.set(row.id, row.id);
       });
 
     const appUsers = buildUsers({
@@ -385,6 +386,7 @@ export async function getAppData(): Promise<AppData> {
       users: appUsers,
       customers,
       pets: petsData,
+      sizes: tamanos.filter((tamano) => tamano.activo).map((tamano) => ({ id: tamano.id, name: tamano.nombre })),
       services,
       appointments,
       groomingRecords,

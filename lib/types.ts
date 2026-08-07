@@ -39,6 +39,7 @@ export type Customer = {
   name: string;
   phone: string;
   whatsappOptIn: boolean;
+  smsOptIn?: boolean;
   notes: string;
 };
 
@@ -55,6 +56,13 @@ export type Pet = {
   healthNotes: string;
   behaviorNotes: string;
 };
+
+export type ClientesData = {
+  customers: Customer[];
+  pets: Pick<Pet, "id" | "customerId" | "name" | "breed">[];
+};
+
+export type PetSizeOption = { id: number; name: string };
 
 export type Service = {
   id: number;
@@ -109,6 +117,7 @@ export type AppData = {
   users: User[];
   customers: Customer[];
   pets: Pet[];
+  sizes?: PetSizeOption[];
   services: Service[];
   appointments: Appointment[];
   groomingRecords: GroomingRecord[];

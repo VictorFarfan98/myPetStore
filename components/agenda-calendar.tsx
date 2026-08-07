@@ -112,7 +112,7 @@ export function AgendaCalendar({ data }: { data: AppData }) {
   const [selectedGroomerId, setSelectedGroomerId] = useState<number | "all">("all");
   const [selectedDate, setSelectedDate] = useState(new Date("2026-06-23T12:00:00-06:00"));
   const [selectedView, setSelectedView] = useState<View>("day");
-  const [modalState, setModalState] = useState<{ date: string; time: string } | null>(null);
+  const [modalState, setModalState] = useState<{ date: string; time: string; appointment?: Appointment } | null>(null);
 
   const selectedBranch = data.branches.find((branch) => branch.id === selectedBranchId);
   const groomers = data.users.filter(
@@ -131,10 +131,11 @@ export function AgendaCalendar({ data }: { data: AppData }) {
     style: eventStyle(event.groomerColor)
   });
 
-  const openAppointmentModal = (date: Date) => {
+  const openAppointmentModal = (date: Date, appointment?: Appointment) => {
     setModalState({
       date: dateForInput(date),
-      time: timeForInput(date)
+      time: timeForInput(date),
+      appointment
     });
   };
 
@@ -268,7 +269,7 @@ export function AgendaCalendar({ data }: { data: AppData }) {
             }}
             min={atHour(selectedDate, 8)}
             onNavigate={(date) => setSelectedDate(date)}
-            onSelectEvent={(event) => openAppointmentModal(event.start)}
+            onSelectEvent={(event) => openAppointmentModal(event.start, event.appointment)}
             onSelectSlot={(slotInfo: SlotInfo) => openAppointmentModal(slotInfo.start)}
             onView={(view) => setSelectedView(view)}
             popup
@@ -289,7 +290,7 @@ export function AgendaCalendar({ data }: { data: AppData }) {
           <div className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-lg bg-white p-5 shadow-2xl">
             <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-jade">Nueva cita</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-jade">{modalState.appointment ? "Editar cita" : "Nueva cita"}</p>
                 <h2 className="text-xl font-semibold text-ink">
                   {modalState.date} · {modalState.time}
                 </h2>
@@ -308,6 +309,8 @@ export function AgendaCalendar({ data }: { data: AppData }) {
               data={data}
               initialDate={modalState.date}
               initialTime={modalState.time}
+              appointment={modalState.appointment}
+              onClose={() => setModalState(null)}
             />
           </div>
         </div>

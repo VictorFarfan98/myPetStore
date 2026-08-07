@@ -2,12 +2,12 @@ import { AppShell } from "@/components/app-shell";
 import { ClientesBrowser } from "@/components/clientes-browser";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
-import { getAppData } from "@/lib/app-data";
+import { getClientes } from "@/lib/clientes-actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientesPage() {
-  const data = await getAppData();
+  const data = await getClientes();
 
   return (
     <AppShell>

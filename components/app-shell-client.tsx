@@ -11,7 +11,9 @@ import {
   LogOut,
   PawPrint,
   Scissors,
+  Settings,
   Store,
+  UserCog,
   UsersRound
 } from "lucide-react";
 import { signOut } from "@/lib/auth-actions";
@@ -24,6 +26,8 @@ const navItems = [
   { label: "Clientes", href: "/clientes", icon: UsersRound },
   { label: "Servicios", href: "/servicios", icon: Scissors },
   { label: "Sucursales", href: "/sucursales", icon: Store },
+  { label: "Equipo", href: "/equipo", icon: UserCog },
+  { label: "Configuración", href: "/configuracion", icon: Settings },
   { label: "Reportes", href: "/reportes", icon: ClipboardList }
 ];
 
@@ -44,7 +48,7 @@ export function AppShellClient({ children, role }: { children: ReactNode; role?:
           </div>
         </Link>
         <nav className="mt-8 space-y-1">
-          {navItems.filter((item) => item.href !== "/sucursales" || canManageBranches).map((item) => {
+          {navItems.filter((item) => !["/sucursales", "/equipo", "/configuracion"].includes(item.href) || canManageBranches).map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (

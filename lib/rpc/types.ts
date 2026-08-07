@@ -121,14 +121,14 @@ export type MascotaUpdateParams = MascotaInsertParams & {
 export type PeluqueroRow = {
   id: number;
   nombre: string;
-  telefono: string;
+  telefono: string | null;
   color_calendario: string | null;
   activo: boolean;
 };
 
 export type PeluqueroInsertParams = {
   p_nombre: string;
-  p_telefono: string;
+  p_telefono: string | null;
   p_color_calendario: string | null;
   p_activo: boolean;
 };

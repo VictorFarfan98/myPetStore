@@ -5,6 +5,7 @@ export const emptyAppData: AppData = {
   users: [],
   customers: [],
   pets: [],
+  sizes: [],
   services: [],
   appointments: [],
   groomingRecords: [],
