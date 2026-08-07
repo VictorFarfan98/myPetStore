@@ -112,6 +112,8 @@ canje atómico de cupones;
 
 reemplazo atómico de pagos;
 
+Cuando una hoja en progreso ya tiene firma de entrega y el total de pagos coincide con el monto final, `pagos_reemplazar_lista` la marca como completada dentro de la misma transacción.
+
 sincronización entre citas, mascotas y registros de servicio.
 
 Por eso, las escrituras funcionales de la aplicación deben preferir RPC. El DELETE físico directo está restringido a administrador y propietario; las RPC <tabla>_eliminar realizan soft delete. Aun con permiso RLS, una eliminación física puede ser rechazada por foreign keys ON DELETE RESTRICT cuando exista historial relacionado.
@@ -397,7 +399,7 @@ const { data, error } = await supabase.rpc('pagos_reemplazar_lista', {
   p_motivo: null,
 })
 
-La función desactiva los pagos activos anteriores, inserta los nuevos y recalcula monto_pagado. En un servicio completado, solo administrador o propietario puede modificar la lista y la suma debe coincidir exactamente con monto_final.
+La función desactiva los pagos activos anteriores, inserta los nuevos y recalcula monto_pagado. El registro sincroniza precio_base, recargo_shampoo y monto_final con el servicio, tamaño, shampoo y descuento guardados en la hoja. En un servicio completado, solo administrador o propietario puede modificar la lista y la suma debe coincidir exactamente con monto_final.
 
 Completar un servicio
 
@@ -493,6 +495,8 @@ El bucket petstore es privado. Actualmente no impone límite de tamaño ni tipos
 pets/
 signatures/
 services/
+
+La migración `20260807130000_allow_authenticated_service_photo_storage.sql` permite a usuarios autenticados subir y leer objetos bajo `services/`. Las cargas de fotos de hojas de servicio usan la sesión del usuario y no requieren `SUPABASE_SERVICE_ROLE_KEY`.
 
 Las carpetas son prefijos lógicos y aparecen cuando se sube el primer objeto. La aplicación debe usar el backend para subir, reemplazar y firmar URLs.
 
@@ -2121,13 +2125,13 @@ Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si n
 
 Listar activos — registros_servicio_listar
 
-Firma: registros_servicio_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+Firma: registros_servicio_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0, p_sucursal_id BIGINT DEFAULT NULL)
 
 Retorno: JSONB
 
 Acceso: Usuario con acceso a la sucursal; service_role.
 
-Comportamiento: Lista únicamente registros activos con paginación opcional.
+Comportamiento: Lista únicamente registros activos con paginación opcional. Si `p_sucursal_id` no es NULL, filtra por esa sucursal; el acceso del usuario a la sucursal continúa validándose mediante RLS.
 
 Listar todos — registros_servicio_listar_todos
 

@@ -7,8 +7,11 @@ export const RPC_NAMES = {
   petsList: "mascotas_listar",
   sizesList: "tamanos_listar",
   servicesList: "servicios_listar",
+  shampooOptionsList: "opciones_shampoo_listar",
   servicePricesList: "precios_servicios_listar",
+  paymentMethodsList: "metodos_pago_listar",
   appointmentsList: "citas_listar",
   groomingRecordsList: "registros_servicio_listar",
+  paymentsList: "pagos_listar",
   reminderLogsList: "recordatorios_citas_listar"
 } as const;

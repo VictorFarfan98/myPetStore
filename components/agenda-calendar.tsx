@@ -7,7 +7,7 @@ import type { EventPropGetter, SlotInfo, View } from "react-big-calendar";
 import { addDays, addMonths, addWeeks, format, getDay, parse, startOfWeek } from "date-fns";
 import { es } from "date-fns/locale/es";
 import { CalendarPlus, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
-import { getAppointmentDetails } from "@/lib/business-rules";
+import { getAppointmentDetails, todayInGuatemala } from "@/lib/business-rules";
 import type { AppData, Appointment } from "@/lib/types";
 import { ScheduleForm } from "./schedule-form";
 
@@ -110,7 +110,7 @@ function buildEvent(data: AppData, appointment: Appointment): GroomingCalendarEv
 export function AgendaCalendar({ data }: { data: AppData }) {
   const [selectedBranchId, setSelectedBranchId] = useState<number | "all">("all");
   const [selectedGroomerId, setSelectedGroomerId] = useState<number | "all">("all");
-  const [selectedDate, setSelectedDate] = useState(new Date("2026-06-23T12:00:00-06:00"));
+  const [selectedDate, setSelectedDate] = useState(new Date(`${todayInGuatemala()}T12:00:00-06:00`));
   const [selectedView, setSelectedView] = useState<View>("day");
   const [modalState, setModalState] = useState<{ date: string; time: string; appointment?: Appointment } | null>(null);
 

@@ -9,9 +9,12 @@ import type {
   ClienteRow,
   MascotaRow,
   PrecioServicioRow,
+  MetodoPagoRow,
+  PagoRow,
   RegistroServicioRow,
   RecordatorioCitaRow,
   ServicioRow,
+  OpcionShampooRow,
   SucursalRow,
   TamanoRow,
   UsuarioRow,
@@ -232,20 +235,37 @@ function buildAppointments(args: {
     });
 }
 
-function buildGroomingRecords(args: {
+async function signedStorageUrl(supabase: Awaited<ReturnType<typeof createUserSupabaseClient>>, path: string | null) {
+  if (!path || path.startsWith("data:") || path.startsWith("http")) return path ?? undefined;
+  const { data, error } = await supabase.storage.from("petstore").createSignedUrl(path, 3600);
+  return error ? undefined : data.signedUrl;
+}
+
+async function buildGroomingRecords(args: {
   registros: RegistroServicioRow[];
+  preciosServicios: PrecioServicioRow[];
   citaById: Map<number, CitaRow>;
   customerNameByPetId: Map<number, string>;
+  supabase: Awaited<ReturnType<typeof createUserSupabaseClient>>;
 }) {
-  return args.registros
+  return Promise.all(args.registros
     .filter((registro) => registro.activo)
-    .map((registro) => {
+    .map(async (registro) => {
       const cita = args.citaById.get(registro.cita_id);
       const customerName = cita ? args.customerNameByPetId.get(cita.mascota_id) : undefined;
+      const [beforePhotoUrl, afterPhotoUrl] = await Promise.all([
+        signedStorageUrl(args.supabase, registro.foto_antes_url),
+        signedStorageUrl(args.supabase, registro.foto_despues_url)
+      ]);
+      const configuredPrice = args.preciosServicios.find((price) => price.activo && price.servicio_id === registro.servicio_id && price.tamano_id === registro.tamano_id)?.precio;
 
       return {
         id: registro.id,
         appointmentId: registro.cita_id,
+        serviceId: registro.servicio_id,
+        groomerId: registro.peluquero_id,
+        sizeId: registro.tamano_id,
+        shampooId: registro.shampoo_id ?? undefined,
         actualStart: toIso(registro.inicio_real),
         actualEnd: toIso(registro.fin_real),
         groomerNotes: normalizeText(registro.notas_servicio),
@@ -257,13 +277,33 @@ function buildGroomingRecords(args: {
         completionSignatureImageUrl: registro.firma_entrega_url ?? undefined,
         completionSignedAt: toIso(registro.firma_entrega_en),
         satisfactionNotes: normalizeText(registro.comentario_satisfaccion),
-        beforePhotoUrl: registro.foto_antes_url ?? undefined,
-        afterPhotoUrl: registro.foto_despues_url ?? undefined
+        beforePhotoUrl,
+        afterPhotoUrl,
+        beforePhotoPath: registro.foto_antes_url ?? undefined,
+        afterPhotoPath: registro.foto_despues_url ?? undefined,
+        finalAmount: registro.monto_final ?? configuredPrice ?? undefined,
+        paidAmount: registro.monto_pagado ?? undefined,
+        couponId: registro.cupon_id ?? undefined,
+        discountAmount: registro.descuento_cupon ?? undefined,
+        conditions: [
+          registro.heridas_visibles && "Heridas visibles",
+          registro.raspones && "Raspones",
+          registro.piel_irritada && "Piel irritada / enrojecida",
+          registro.costras && "Costras",
+          registro.inflamacion && "Inflamacion",
+          registro.cojera && "Cojera",
+          registro.dolor_al_tocar && "Dolor al tocar"
+        ].filter((value): value is string => Boolean(value)),
+        parasites: [
+          registro.pulgas && "Pulgas",
+          registro.garrapatas && "Garrapatas",
+          registro.piojos && "Piojos"
+        ].filter((value): value is string => Boolean(value))
       };
-    });
+    }));
 }
 
-export async function getAppData(): Promise<AppData> {
+export async function getAppData(options: { recordsLimit?: number | null; recordsOffset?: number; recordsBranchId?: number | null } = {}): Promise<AppData> {
   try {
     const supabase = await createUserSupabaseClient();
 
@@ -276,9 +316,12 @@ export async function getAppData(): Promise<AppData> {
       petsResult,
       tamanosResult,
       servicesResult,
+      shampooOptionsResult,
       preciosServiciosResult,
+      paymentMethodsResult,
       citasResult,
       registrosResult,
+      paymentsResult,
       reminderLogsResult
     ] = await Promise.all([
       rpcCall<RpcListEnvelope<SucursalRow>>(RPC_NAMES.branchesList, { p_limite: null, p_offset: 0 }, supabase),
@@ -289,9 +332,16 @@ export async function getAppData(): Promise<AppData> {
       rpcCall<RpcListEnvelope<MascotaRow>>(RPC_NAMES.petsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<TamanoRow>>(RPC_NAMES.sizesList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<ServicioRow>>(RPC_NAMES.servicesList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<OpcionShampooRow>>(RPC_NAMES.shampooOptionsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<PrecioServicioRow>>(RPC_NAMES.servicePricesList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<MetodoPagoRow>>(RPC_NAMES.paymentMethodsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<CitaRow>>(RPC_NAMES.appointmentsList, { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<RpcListEnvelope<RegistroServicioRow>>(RPC_NAMES.groomingRecordsList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<RpcListEnvelope<RegistroServicioRow>>(RPC_NAMES.groomingRecordsList, {
+        p_limite: options.recordsLimit ?? null,
+        p_offset: options.recordsOffset ?? 0,
+        p_sucursal_id: options.recordsBranchId ?? null
+      }, supabase),
+      rpcCall<RpcListEnvelope<PagoRow>>(RPC_NAMES.paymentsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<RecordatorioCitaRow>>(RPC_NAMES.reminderLogsList, { p_limite: null, p_offset: 0 }, supabase)
     ]);
 
@@ -303,9 +353,12 @@ export async function getAppData(): Promise<AppData> {
     const tamanos = must(tamanosResult, "tamanos");
     const pets = must(petsResult, "mascotas").filter((pet) => pet.activo);
     const servicesRows = must(servicesResult, "servicios").filter((service) => service.activo);
+    const shampooOptions = must(shampooOptionsResult, "opciones_shampoo").filter((option) => option.activo).map((option) => ({ id: option.id, name: option.nombre }));
     const precioServicios = must(preciosServiciosResult, "precios_servicios");
+    const paymentMethods = must(paymentMethodsResult, "metodos_pago").filter((method) => method.activo).map((method) => ({ id: method.id, name: method.nombre }));
     const citas = must(citasResult, "citas");
     const registros = must(registrosResult, "registros_servicio");
+    const payments = must(paymentsResult, "pagos").map((payment) => ({ id: payment.id, recordId: payment.registro_servicio_id, methodId: payment.metodo_pago_id, amount: payment.monto }));
     const reminderLogs = must(reminderLogsResult, "recordatorios_citas");
 
     const sizeById = new Map(tamanos.map((row) => [row.id, row.nombre]));
@@ -358,10 +411,12 @@ export async function getAppData(): Promise<AppData> {
       groomerMap
     });
 
-    const groomingRecords = buildGroomingRecords({
+    const groomingRecords = await buildGroomingRecords({
       registros,
+      preciosServicios: precioServicios,
       citaById,
-      customerNameByPetId
+      customerNameByPetId,
+      supabase
     });
 
     const serviceDurationById = new Map<number, number>();
@@ -388,8 +443,12 @@ export async function getAppData(): Promise<AppData> {
       pets: petsData,
       sizes: tamanos.filter((tamano) => tamano.activo).map((tamano) => ({ id: tamano.id, name: tamano.nombre })),
       services,
+      shampooOptions,
+      paymentMethods,
+      payments,
       appointments,
       groomingRecords,
+      groomingRecordsTotal: registrosResult.data?.total,
       reminderLogs: reminderLogs.map((log) => ({
         id: log.id,
         appointmentId: log.cita_id,

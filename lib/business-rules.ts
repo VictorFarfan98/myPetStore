@@ -59,6 +59,15 @@ export function formatGuatemalaDateTime(isoDate: string) {
   }).format(new Date(isoDate));
 }
 
+export function todayInGuatemala() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Guatemala",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+}
+
 export function minutesBetween(start?: string, end?: string) {
   if (!start || !end) return null;
   return Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);

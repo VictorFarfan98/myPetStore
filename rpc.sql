@@ -5249,6 +5249,16 @@ BEGIN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'PAGOS_EXCEDEN_MONTO_FINAL';
     END IF;
 
+    IF v_registro.estado = 'en_progreso'
+       AND v_registro.firma_entrega_url IS NOT NULL
+        AND v_registro.monto_final IS NOT NULL
+       AND v_suma = v_registro.monto_final THEN
+        UPDATE public.registros_servicio
+        SET estado = 'completado', monto_pagado = v_suma
+        WHERE id = p_registro_servicio_id
+        RETURNING * INTO v_registro;
+    END IF;
+
     UPDATE public.registros_servicio
     SET monto_pagado = v_suma
     WHERE id = p_registro_servicio_id

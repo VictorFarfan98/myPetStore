@@ -3,14 +3,14 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CalendarPlus, CheckCircle2, Wand2 } from "lucide-react";
-import { buildReminderMessage, hasGroomerConflict } from "@/lib/business-rules";
+import { buildReminderMessage, hasGroomerConflict, todayInGuatemala } from "@/lib/business-rules";
 import type { AppData, Appointment } from "@/lib/types";
 import { createCita, deleteCita, updateCita } from "@/lib/citas-actions";
 import { SearchableSelect } from "./searchable-select";
 
 export function ScheduleForm({
   data,
-  initialDate = "2026-06-23",
+  initialDate = todayInGuatemala(),
   initialTime = "15:00",
   appointment,
   onClose

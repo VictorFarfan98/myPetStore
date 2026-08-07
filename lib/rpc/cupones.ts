@@ -34,6 +34,5 @@ export function cuponesEliminar(p_id: string) {
 }
 
 export function cuponesListarPorCliente(p_cliente_id: number) {
-  return rpcCall<Record<string, unknown>[]>("cupones_listar_por_cliente", { p_cliente_id });
+  return rpcCall<CuponRow[]>("cupones_listar_por_cliente", { p_cliente_id });
 }
-

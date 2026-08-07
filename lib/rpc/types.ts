@@ -364,6 +364,16 @@ export type RegistroServicioRow = {
   descuento_cupon: string | null;
   monto_final: string | null;
   monto_pagado: string | null;
+  heridas_visibles: boolean;
+  raspones: boolean;
+  piel_irritada: boolean;
+  costras: boolean;
+  inflamacion: boolean;
+  cojera: boolean;
+  dolor_al_tocar: boolean;
+  pulgas: boolean;
+  garrapatas: boolean;
+  piojos: boolean;
 };
 
 export type RegistroServicioInsertParams = {
@@ -387,6 +397,8 @@ export type RegistroServicioInsertParams = {
   p_foto_antes_url: string | null;
   p_notas_servicio: string | null;
 };
+
+export type RegistroServicioIniciarParams = RegistroServicioInsertParams;
 
 export type RegistroServicioUpdateParams = {
   p_id: number;

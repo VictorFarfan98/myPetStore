@@ -561,6 +561,8 @@ CREATE FUNCTION public.obtener_usuario_actual()
 RETURNS UUID
 LANGUAGE plpgsql
 STABLE
+SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
     v_usuario_id TEXT;
@@ -1030,6 +1032,48 @@ BEFORE INSERT OR UPDATE ON public.registros_servicio
 FOR EACH ROW
 EXECUTE FUNCTION public.preparar_registro_servicio();
 
+CREATE FUNCTION public.sincronizar_montos_registro_servicio()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_precio NUMERIC(10, 2);
+    v_recargo NUMERIC(10, 2) := 0;
+BEGIN
+    SELECT ps.precio INTO v_precio
+    FROM public.precios_servicios ps
+    WHERE ps.servicio_id = NEW.servicio_id
+      AND ps.tamano_id = NEW.tamano_id
+      AND ps.activo = TRUE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'CONFIGURACION_PRECIO_SERVICIO_NO_ENCONTRADA';
+    END IF;
+
+    IF NEW.shampoo_id IS NOT NULL THEN
+        SELECT ps.recargo INTO v_recargo
+        FROM public.precios_shampoo ps
+        WHERE ps.shampoo_id = NEW.shampoo_id
+          AND ps.tamano_id = NEW.tamano_id
+          AND ps.activo = TRUE;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'CONFIGURACION_PRECIO_SHAMPOO_NO_ENCONTRADA';
+        END IF;
+    END IF;
+
+    NEW.precio_base := v_precio;
+    NEW.recargo_shampoo := v_recargo;
+    NEW.monto_final := v_precio + v_recargo - NEW.descuento_cupon;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_sincronizar_montos_registro_servicio
+BEFORE INSERT OR UPDATE ON public.registros_servicio
+FOR EACH ROW
+EXECUTE FUNCTION public.sincronizar_montos_registro_servicio();
+
 -- -----------------------------------------------------------------------------
 -- 7. Deferred consistency: attended appointments and service records
 -- -----------------------------------------------------------------------------
@@ -1123,6 +1167,8 @@ EXECUTE FUNCTION public.validar_consistencia_desde_registro();
 CREATE FUNCTION public.validar_total_pagos_registro(p_registro_servicio_id BIGINT)
 RETURNS VOID
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
     v_estado public.estado_registro_servicio;
@@ -1152,7 +1198,8 @@ BEGIN
     SELECT COALESCE(SUM(p.monto), 0)::NUMERIC(10, 2)
     INTO v_suma_pagos
     FROM public.pagos p
-    WHERE p.registro_servicio_id = p_registro_servicio_id;
+    WHERE p.registro_servicio_id = p_registro_servicio_id
+      AND p.activo = TRUE;
 
     IF v_monto_final IS NULL OR v_monto_pagado IS NULL THEN
         RAISE EXCEPTION
@@ -1179,6 +1226,8 @@ $$;
 CREATE FUNCTION public.validar_total_pagos_desde_registro()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
 AS $$
 BEGIN
     IF TG_OP = 'DELETE' THEN
@@ -1193,6 +1242,8 @@ $$;
 CREATE FUNCTION public.validar_total_pagos_desde_pago()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
 AS $$
 BEGIN
     IF TG_OP = 'DELETE' THEN
@@ -1450,6 +1501,7 @@ REVOKE ALL ON FUNCTION public.cancelar_citas_por_cliente_desactivado() FROM PUBL
 REVOKE ALL ON FUNCTION public.cancelar_citas_por_mascota_desactivada() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.desasignar_peluquero_desactivado() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.preparar_registro_servicio() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.sincronizar_montos_registro_servicio() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.validar_consistencia_cita_registro_id(BIGINT) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.validar_consistencia_desde_cita() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.validar_consistencia_desde_registro() FROM PUBLIC, anon, authenticated;
@@ -1464,6 +1516,7 @@ GRANT EXECUTE ON FUNCTION public.cancelar_citas_por_cliente_desactivado() TO ser
 GRANT EXECUTE ON FUNCTION public.cancelar_citas_por_mascota_desactivada() TO service_role;
 GRANT EXECUTE ON FUNCTION public.desasignar_peluquero_desactivado() TO service_role;
 GRANT EXECUTE ON FUNCTION public.preparar_registro_servicio() TO service_role;
+GRANT EXECUTE ON FUNCTION public.sincronizar_montos_registro_servicio() TO service_role;
 GRANT EXECUTE ON FUNCTION public.validar_consistencia_cita_registro_id(BIGINT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.validar_consistencia_cita_registro_id(BIGINT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.validar_consistencia_desde_cita() TO service_role;

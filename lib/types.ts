@@ -71,6 +71,11 @@ export type Service = {
   active: boolean;
 };
 
+export type ShampooOption = { id: number; name: string };
+
+export type PaymentMethod = { id: number; name: string };
+export type ServicePayment = { id: number; recordId: number; methodId: number; amount: string };
+
 export type Appointment = {
   id: number;
   branchId: number;
@@ -88,6 +93,10 @@ export type Appointment = {
 export type GroomingRecord = {
   id: number;
   appointmentId: number;
+  serviceId?: number;
+  groomerId?: number;
+  sizeId?: number;
+  shampooId?: number;
   actualStart?: string;
   actualEnd?: string;
   groomerNotes: string;
@@ -101,6 +110,14 @@ export type GroomingRecord = {
   satisfactionNotes: string;
   beforePhotoUrl?: string;
   afterPhotoUrl?: string;
+  beforePhotoPath?: string;
+  afterPhotoPath?: string;
+  finalAmount?: string;
+  paidAmount?: string;
+  couponId?: string;
+  discountAmount?: string;
+  conditions?: string[];
+  parasites?: string[];
 };
 
 export type ReminderLog = {
@@ -119,7 +136,11 @@ export type AppData = {
   pets: Pet[];
   sizes?: PetSizeOption[];
   services: Service[];
+  shampooOptions?: ShampooOption[];
+  paymentMethods?: PaymentMethod[];
+  payments?: ServicePayment[];
   appointments: Appointment[];
   groomingRecords: GroomingRecord[];
+  groomingRecordsTotal?: number;
   reminderLogs: ReminderLog[];
 };
