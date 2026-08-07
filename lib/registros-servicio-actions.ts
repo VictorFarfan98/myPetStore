@@ -157,7 +157,7 @@ export async function saveHoja(formData: FormData) {
     }
     revalidatePath("/hojas");
     revalidatePath("/agenda");
-    return { ok: true };
+    return { ok: true, completed: Boolean(input.p_firma_entrega_url), recordId: result.data?.id ?? input.recordId ?? 0, groomerId: input.p_peluquero_id };
   } catch (error) {
     console.error("saveHoja failed", error instanceof Error ? { message: error.message, stack: error.stack } : error);
     return { error: error instanceof Error ? error.message : "No se pudo guardar la hoja de servicio." };

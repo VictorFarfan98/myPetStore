@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ClipboardCheck, Save, Trash2, X } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, Save, Star, Trash2, X } from "lucide-react";
 import type { AppData, GroomingRecord } from "@/lib/types";
 import type { AppointmentStatus } from "@/lib/types";
 import { todayInGuatemala } from "@/lib/business-rules";
 import { applyCoupon, listClientCoupons, savePayments } from "@/lib/pagos-actions";
 import { deleteHoja, saveHoja } from "@/lib/registros-servicio-actions";
+import { saveCalificacionGroomer } from "@/lib/calificaciones-groomer-actions";
 import type { CuponRow } from "@/lib/rpc/types";
 
 const conditions = ["Heridas visibles", "Raspones", "Piel irritada / enrojecida", "Costras", "Inflamacion", "Cojera", "Dolor al tocar"];
@@ -103,7 +104,7 @@ function PaymentEditor({ record, totalAmount, methods, payments, onClose }: { re
   return <form className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4" onSubmit={submit}><input name="registro_servicio_id" type="hidden" value={record.id} readOnly /><div className="mb-3"><h3 className="font-semibold text-ink">Pagos del servicio</h3><p className="text-sm text-slate-500">Ingresa el monto recibido por cada método de pago.</p></div><div className="mb-4 grid gap-2 rounded-lg bg-white p-3 text-sm sm:grid-cols-3"><p>Total requerido: <strong>{Number.isFinite(chargeTotal) ? money(chargeTotal) : "Pendiente de definir"}</strong></p><p>Ingresado: <strong>{money(entered)}</strong></p><p className={remaining !== null && remaining < 0 ? "text-rose-700" : "text-slate-700"}>{remaining === null ? "Saldo: pendiente de definir" : remaining >= 0 ? <span>Saldo restante: <strong>{money(remaining)}</strong></span> : <span>Excedente: <strong>{money(Math.abs(remaining))}</strong></span>}</p></div><label className="mb-4 grid gap-1 text-sm font-medium text-slate-700">Cupón aplicado<input type="text" value={record.couponId ?? "Sin cupón"} readOnly className="rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-slate-600" /></label><div className="grid gap-3 sm:grid-cols-2">{methods.filter((method) => method.name.toLowerCase() !== "cupón").map((method) => <label key={method.id} className="grid gap-1 text-sm font-medium text-slate-700">{method.name}<input name={`pago_${method.id}`} type="number" min="0" step="0.01" value={amounts[method.id] ?? ""} onChange={(event) => setAmounts({ ...amounts, [method.id]: event.target.value })} className="focus-ring rounded-lg border border-slate-300 px-3 py-2" placeholder="0.00" /></label>)}</div>{message && <p className="mt-3 text-sm text-rose-700" role="alert">{message}</p>}<div className="mt-4 flex gap-2"><button disabled={pending || !canSave} className="focus-ring rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{pending ? "Guardando..." : "Guardar pagos"}</button><button type="button" disabled={pending} onClick={onClose} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cerrar pagos</button></div></form>;
 }
 
-function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: AppData; appointmentId: number; record?: GroomingRecord; onClose: () => void; onSaved: () => void }) {
+function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: AppData; appointmentId: number; record?: GroomingRecord; onClose: () => void; onSaved: (result: { completed?: boolean; recordId?: number; groomerId?: number }) => void }) {
   const router = useRouter();
   const appointment = data.appointments.find((item) => item.id === appointmentId)!;
   const pet = data.pets.find((item) => item.id === appointment.petId)!;
@@ -156,7 +157,7 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
     const result = await saveHoja(form);
     setPending(false);
     if (result.error) return setMessage(result.error);
-    onSaved();
+    onSaved(result);
     router.refresh();
   }
   async function remove() {
@@ -192,6 +193,31 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
   </form>;
 }
 
+function RatingModal({ recordId, groomerName, onClose }: { recordId: number; groomerName: string; onClose: () => void }) {
+  const [step, setStep] = useState<"ask" | "rate">("ask");
+  const [rating, setRating] = useState<number | null>(null);
+  const [notes, setNotes] = useState("");
+  const [message, setMessage] = useState("");
+  const [pending, setPending] = useState(false);
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (rating === null) return setMessage("Selecciona una calificación.");
+    setPending(true); setMessage("");
+    const form = new FormData(event.currentTarget);
+    const result = await saveCalificacionGroomer(form);
+    setPending(false);
+    if (result.error) return setMessage(result.error);
+    onClose();
+  }
+
+    return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="rating-title">
+    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+      {step === "ask" ? <><h2 id="rating-title" className="text-xl font-semibold text-ink">¿Deseas dejar una reseña?</h2><p className="mt-2 text-sm text-slate-600">Tu opinión ayuda a mejorar el servicio de grooming.</p><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={onClose} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">No, gracias</button><button type="button" onClick={() => setStep("rate")} className="focus-ring rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white">Sí, calificar</button></div></> : <form onSubmit={submit}><input name="registro_servicio_id" type="hidden" value={recordId} readOnly /><h2 id="rating-title" className="text-xl font-semibold text-ink">Califica a {groomerName}</h2><div className="mt-5 flex items-center justify-center gap-1" aria-label="Calificación de 0 a 5 estrellas"><button type="button" onClick={() => setRating(0)} aria-label="0 estrellas" className="focus-ring rounded px-2 py-1 text-xs font-semibold text-slate-500">0</button>{[1, 2, 3, 4, 5].map((value) => <button key={value} type="button" onClick={() => setRating(value)} aria-label={`${value} estrella${value === 1 ? "" : "s"}`} className="focus-ring rounded p-1"><Star className={`h-9 w-9 ${rating !== null && value <= rating ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} /></button>)}</div><input name="calificacion" type="hidden" value={rating ?? ""} readOnly /><label className="mt-5 grid gap-1 text-sm font-medium text-slate-700">Comentario (opcional)<textarea name="calificacion_notas" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={1000} className="focus-ring min-h-24 rounded-lg border border-slate-300 px-3 py-2" /></label>{message && <p className="mt-3 text-sm text-rose-700" role="alert">{message}</p>}<div className="mt-6 flex justify-end gap-2"><button type="button" disabled={pending} onClick={() => setStep("ask")} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Atrás</button><button type="submit" disabled={pending} className="focus-ring rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{pending ? "Guardando..." : "Guardar calificación"}</button></div></form>}
+    </div>
+  </div>;
+}
+
 export function HojasBrowser({
   data,
   initialView,
@@ -208,6 +234,7 @@ export function HojasBrowser({
   const [openId, setOpenId] = useState<number | null>(null);
   const [paymentOpenId, setPaymentOpenId] = useState<number | null>(null);
   const [savedMessage, setSavedMessage] = useState("");
+  const [rating, setRating] = useState<{ recordId: number; groomerName: string } | null>(null);
   const [view, setView] = useState<"today" | "history">(initialView);
   const [status, setStatus] = useState<AppointmentStatus | "all">("all");
   const [query, setQuery] = useState("");
@@ -243,13 +270,14 @@ export function HojasBrowser({
     router.push(view === "history" ? `/hojas?view=history&page=1${nextBranchId === "all" ? "" : `&sucursal_id=${nextBranchId}`}` : `/hojas${nextBranchId === "all" ? "" : `?sucursal_id=${nextBranchId}`}`);
   };
   return <div>
+    {rating && <RatingModal recordId={rating.recordId} groomerName={rating.groomerName} onClose={() => { setRating(null); setSavedMessage("La hoja de servicio se guardó correctamente."); }} />}
     {savedMessage && <div className="mb-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 shadow-sm" role="status" aria-live="polite"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /><p className="flex-1 text-sm font-semibold">{savedMessage}</p><button type="button" onClick={() => setSavedMessage("")} className="focus-ring rounded p-1" aria-label="Cerrar confirmación"><X className="h-4 w-4" aria-hidden="true" /></button></div>}
     <div className="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-panel">
       <div className="flex flex-wrap gap-2"><button className={`focus-ring rounded-lg px-3 py-2 text-sm font-semibold ${view === "today" ? "bg-jade text-white" : "border border-slate-300 text-slate-700"}`} onClick={() => changeView("today")} type="button">Cola de hoy</button><button className={`focus-ring rounded-lg px-3 py-2 text-sm font-semibold ${view === "history" ? "bg-jade text-white" : "border border-slate-300 text-slate-700"}`} onClick={() => changeView("history")} type="button">Historial</button></div>
       <div className="mt-3 grid gap-3 md:grid-cols-[1fr_12rem_12rem]"><label className="grid gap-1 text-sm font-medium text-slate-700">Buscar mascota o cliente<input className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ej. Frida" /></label><label className="grid gap-1 text-sm font-medium text-slate-700">Sucursal<select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={branchId} disabled={Boolean(onlyBranch)} onChange={(event) => changeBranch(event.target.value)}><option value="all">Todas</option>{data.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label><label className="grid gap-1 text-sm font-medium text-slate-700">Estado<select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={status} onChange={(event) => setStatus(event.target.value as AppointmentStatus | "all")}><option value="all">Todos</option><option value="scheduled">Programadas</option><option value="confirmed">Confirmadas</option><option value="checked_in">Recibidas</option><option value="in_progress">En progreso</option><option value="completed">Completadas</option><option value="cancelled">Canceladas</option><option value="no_show">No asistió</option></select></label></div>
       <p className="mt-3 text-sm text-slate-500">{view === "today" ? `${appointments.length} cita${appointments.length === 1 ? "" : "s"} para hoy.` : `Página ${historyPage} de ${totalPages} · ${data.groomingRecordsTotal ?? 0} hojas registradas.`}</p>
     </div>
-    <div className="space-y-4">{appointments.map((appointment) => { const record = recordsByAppointment.get(appointment.id); const pet = data.pets.find((item) => item.id === appointment.petId); const customer = data.customers.find((item) => item.id === pet?.customerId); const state = hojaState(record?.outcome); const editable = !record || record.outcome === "en_progreso"; return <article key={appointment.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-jade" /><h2 className="text-xl font-semibold text-ink">{pet?.name}</h2></div><p className="mt-1 text-sm text-slate-500">{customer?.name} · {new Date(appointment.scheduledStart).toLocaleString("es-GT", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Guatemala" })}</p><p className="mt-1 text-sm text-slate-600">{record ? `Hoja #${record.id}` : "Hoja pendiente de ingreso"} <span className={`ml-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${state.className}`}>{record ? state.label : "Pendiente"}</span></p></div><div className="flex flex-wrap gap-2">{record && <button onClick={() => { setPaymentOpenId(paymentOpenId === appointment.id ? null : appointment.id); setOpenId(null); }} className="focus-ring rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800" type="button">{paymentOpenId === appointment.id ? "Cerrar pagos" : "Registrar pagos"}</button>}{editable ? <button onClick={() => { setOpenId(openId === appointment.id ? null : appointment.id); setPaymentOpenId(null); }} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button">{openId === appointment.id ? "Cerrar" : record ? "Editar hoja" : "Llenar hoja"}</button> : <span className={`rounded-lg px-3 py-2 text-sm font-semibold ${state.className}`}>{state.label}</span>}</div></div>{paymentOpenId === appointment.id && record && <PaymentEditor record={record} totalAmount={record.finalAmount} methods={data.paymentMethods ?? []} payments={data.payments ?? []} onClose={() => setPaymentOpenId(null)} />}{openId === appointment.id && editable && <SheetForm data={data} appointmentId={appointment.id} record={record} onClose={() => setOpenId(null)} onSaved={() => { setOpenId(null); setSavedMessage("La hoja de servicio se guardó correctamente."); }} />}</article>; })}</div>
+    <div className="space-y-4">{appointments.map((appointment) => { const record = recordsByAppointment.get(appointment.id); const pet = data.pets.find((item) => item.id === appointment.petId); const customer = data.customers.find((item) => item.id === pet?.customerId); const state = hojaState(record?.outcome); const editable = !record || record.outcome === "en_progreso"; return <article key={appointment.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-jade" /><h2 className="text-xl font-semibold text-ink">{pet?.name}</h2></div><p className="mt-1 text-sm text-slate-500">{customer?.name} · {new Date(appointment.scheduledStart).toLocaleString("es-GT", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Guatemala" })}</p><p className="mt-1 text-sm text-slate-600">{record ? `Hoja #${record.id}` : "Hoja pendiente de ingreso"} <span className={`ml-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${state.className}`}>{record ? state.label : "Pendiente"}</span></p></div><div className="flex flex-wrap gap-2">{record && <button onClick={() => { setPaymentOpenId(paymentOpenId === appointment.id ? null : appointment.id); setOpenId(null); }} className="focus-ring rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800" type="button">{paymentOpenId === appointment.id ? "Cerrar pagos" : "Registrar pagos"}</button>}{editable ? <button onClick={() => { setOpenId(openId === appointment.id ? null : appointment.id); setPaymentOpenId(null); }} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button">{openId === appointment.id ? "Cerrar" : record ? "Editar hoja" : "Llenar hoja"}</button> : <span className={`rounded-lg px-3 py-2 text-sm font-semibold ${state.className}`}>{state.label}</span>}</div></div>{paymentOpenId === appointment.id && record && <PaymentEditor record={record} totalAmount={record.finalAmount} methods={data.paymentMethods ?? []} payments={data.payments ?? []} onClose={() => setPaymentOpenId(null)} />}{openId === appointment.id && editable && <SheetForm data={data} appointmentId={appointment.id} record={record} onClose={() => setOpenId(null)} onSaved={(result) => { setOpenId(null); if (result.completed && data.ratingsEnabled !== false && result.recordId) { setRating({ recordId: result.recordId, groomerName: data.users.find((user) => user.id === result.groomerId)?.name ?? "el groomer" }); } else setSavedMessage("La hoja de servicio se guardó correctamente."); }} />}</article>; })}</div>
     {!appointments.length && <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">No hay hojas para los filtros seleccionados.</div>}
     {view === "history" && totalPages > 1 && <div className="mt-5 flex items-center justify-between"><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" disabled={historyPage <= 1} onClick={() => router.push(`/hojas?view=history&page=${historyPage - 1}${branchId === "all" ? "" : `&sucursal_id=${branchId}`}`)} type="button">Anterior</button><span className="text-sm text-slate-500">Página {historyPage} de {totalPages}</span><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" disabled={historyPage >= totalPages} onClick={() => router.push(`/hojas?view=history&page=${historyPage + 1}${branchId === "all" ? "" : `&sucursal_id=${branchId}`}`)} type="button">Siguiente</button></div>}
   </div>;

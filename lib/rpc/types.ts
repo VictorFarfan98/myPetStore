@@ -269,6 +269,7 @@ export type ConfiguracionSistemaRow = {
   foto_despues_requerida: boolean;
   dias_anticipacion_recordatorio: number;
   metodo_pago_cupon_id: number;
+  habilitar_calificaciones: boolean;
 };
 
 export type ConfiguracionSistemaUpdateParams = {
@@ -276,6 +277,24 @@ export type ConfiguracionSistemaUpdateParams = {
   p_foto_despues_requerida: boolean;
   p_dias_anticipacion_recordatorio: number;
   p_metodo_pago_cupon_id: number;
+  p_habilitar_calificaciones: boolean;
+};
+
+export type CalificacionGroomerInsertParams = {
+  p_registro_servicio_id: number;
+  p_calificacion: number;
+  p_calificacion_notas: string | null;
+};
+
+export type CalificacionGroomerRow = {
+  id: number;
+  peluquero_id: number;
+  mascota_id: number;
+  registro_servicio_id: number;
+  calificacion: number;
+  calificacion_notas: string | null;
+  creado_en: DateString;
+  actualizado_en: DateString;
 };
 
 export type CuponRow = {

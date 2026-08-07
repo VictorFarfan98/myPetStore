@@ -17,6 +17,7 @@ export * from "./configuracion_sistema";
 export * from "./cupones";
 export * from "./citas";
 export * from "./registros_servicio";
+export * from "./calificaciones_groomer";
 export * from "./pagos";
 export * from "./recordatorios_citas";
 export * from "./auditorias";

@@ -130,6 +130,7 @@ export type ReminderLog = {
 };
 
 export type AppData = {
+  ratingsEnabled?: boolean;
   branches: Branch[];
   users: User[];
   customers: Customer[];

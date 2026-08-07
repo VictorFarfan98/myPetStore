@@ -7,6 +7,7 @@ import { RPC_NAMES } from "./rpc/names";
 import type {
   CitaRow,
   ClienteRow,
+  ConfiguracionSistemaRow,
   MascotaRow,
   PrecioServicioRow,
   MetodoPagoRow,
@@ -93,6 +94,13 @@ function must<T>(value: RpcResult<RpcListEnvelope<T>>, label: string): T[] {
   }
 
   return value.data.datos;
+}
+
+function mustRow<T>(value: RpcResult<T>, label: string): T {
+  if (value.error || value.data === null) {
+    throw new Error(`Failed to load ${label} ${value.error?.code ?? "UNKNOWN"} ${value.error?.message ?? "Empty response"}`);
+  }
+  return value.data;
 }
 
 function mapBranch(row: SucursalRow) {
@@ -322,7 +330,8 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       citasResult,
       registrosResult,
       paymentsResult,
-      reminderLogsResult
+      reminderLogsResult,
+      configResult
     ] = await Promise.all([
       rpcCall<RpcListEnvelope<SucursalRow>>(RPC_NAMES.branchesList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<UsuarioRow>>(RPC_NAMES.usersList, { p_limite: null, p_offset: 0 }, supabase),
@@ -342,7 +351,8 @@ export async function getAppData(options: { recordsLimit?: number | null; record
         p_sucursal_id: options.recordsBranchId ?? null
       }, supabase),
       rpcCall<RpcListEnvelope<PagoRow>>(RPC_NAMES.paymentsList, { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<RpcListEnvelope<RecordatorioCitaRow>>(RPC_NAMES.reminderLogsList, { p_limite: null, p_offset: 0 }, supabase)
+      rpcCall<RpcListEnvelope<RecordatorioCitaRow>>(RPC_NAMES.reminderLogsList, { p_limite: null, p_offset: 0 }, supabase),
+      rpcCall<ConfiguracionSistemaRow>(RPC_NAMES.systemConfigGet, {}, supabase)
     ]);
 
     const branches = must(branchesResult, "branches").filter((branch) => branch.activo).map(mapBranch);
@@ -360,6 +370,7 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     const registros = must(registrosResult, "registros_servicio");
     const payments = must(paymentsResult, "pagos").map((payment) => ({ id: payment.id, recordId: payment.registro_servicio_id, methodId: payment.metodo_pago_id, amount: payment.monto }));
     const reminderLogs = must(reminderLogsResult, "recordatorios_citas");
+    const config = mustRow(configResult, "configuracion_sistema");
 
     const sizeById = new Map(tamanos.map((row) => [row.id, row.nombre]));
     const customerNameByPetId = new Map<number, string>();
@@ -437,6 +448,7 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     }));
 
     return {
+      ratingsEnabled: config.habilitar_calificaciones,
       branches,
       users: appUsers,
       customers,

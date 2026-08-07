@@ -2359,13 +2359,17 @@ Comportamiento: Devuelve la única fila de configuración del sistema (id = 1).
 
 Actualizar configuración — configuracion_sistema_actualizar
 
-Firma: configuracion_sistema_actualizar(p_foto_antes_requerida BOOLEAN, p_foto_despues_requerida BOOLEAN, p_dias_anticipacion_recordatorio INTEGER, p_metodo_pago_cupon_id BIGINT)
+Firma: configuracion_sistema_actualizar(p_foto_antes_requerida BOOLEAN, p_foto_despues_requerida BOOLEAN, p_dias_anticipacion_recordatorio INTEGER, p_metodo_pago_cupon_id BIGINT, p_habilitar_calificaciones BOOLEAN)
 
 Retorno: public.configuracion_sistema
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Actualiza completamente la configuración global.
+Comportamiento: Actualiza completamente la configuración global, incluyendo si se muestran calificaciones al cerrar una hoja.
+
+calificaciones_groomer — Calificaciones
+
+`calificaciones_groomer_insertar(p_registro_servicio_id BIGINT, p_calificacion SMALLINT, p_calificacion_notas TEXT DEFAULT NULL)` inserta una sola calificación por hoja de servicio completada. La tabla no permite actualizaciones ni inserciones directas; la calificación solo se crea por RPC cuando `configuracion_sistema.habilitar_calificaciones` está activa.
 
 auditorias — Auditorías
 

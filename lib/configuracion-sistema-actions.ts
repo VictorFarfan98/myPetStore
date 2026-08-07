@@ -14,7 +14,8 @@ export async function updateConfiguracionSistema(formData: FormData) {
     p_foto_antes_requerida: formData.get("foto_antes_requerida") === "on",
     p_foto_despues_requerida: formData.get("foto_despues_requerida") === "on",
     p_dias_anticipacion_recordatorio: dias,
-    p_metodo_pago_cupon_id: metodoPagoId
+    p_metodo_pago_cupon_id: metodoPagoId,
+    p_habilitar_calificaciones: formData.get("habilitar_calificaciones") === "on"
   });
 
   if (result.error) {

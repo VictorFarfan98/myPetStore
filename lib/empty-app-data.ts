@@ -1,6 +1,7 @@
 import type { AppData } from "./types";
 
 export const emptyAppData: AppData = {
+  ratingsEnabled: true,
   branches: [],
   users: [],
   customers: [],
