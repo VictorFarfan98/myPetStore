@@ -23,7 +23,7 @@ const appData = {
       calendarColor: "#0F766E"
     }
   ],
-  customers: [{ id: 1, name: "Valeria Castillo", phone: "+50255555555", whatsappOptIn: true, notes: "" }],
+  customers: [{ id: 1, name: "Valeria Castillo", phone: "+50255555555", email: "", whatsappOptIn: true, notes: "" }],
   pets: [
     {
       id: 1,

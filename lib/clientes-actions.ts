@@ -17,6 +17,7 @@ export async function getClientes(): Promise<ClientesData> {
       id: cliente.id,
       name: cliente.nombre,
       phone: cliente.telefono,
+      email: cliente.email?.trim() ?? "",
       whatsappOptIn: cliente.whatsapp_opt_in,
       smsOptIn: cliente.sms_opt_in,
       notes: cliente.notas?.trim() ?? ""
@@ -41,10 +42,13 @@ function active(formData: FormData) {
 function validate(formData: FormData) {
   const nombre = text(formData, "nombre");
   if (!nombre) throw new Error("El nombre del cliente es obligatorio.");
+  const email = text(formData, "email");
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("El correo electrónico no es válido.");
 
   return {
     p_nombre: nombre,
     p_telefono: toE164(text(formData, "telefono")),
+    p_email: email.toLowerCase() || null,
     p_whatsapp_opt_in: formData.get("whatsapp_opt_in") === "on",
     p_sms_opt_in: formData.get("sms_opt_in") === "on",
     p_notas: text(formData, "notas") || null,

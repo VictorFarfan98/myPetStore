@@ -38,6 +38,7 @@ export type Customer = {
   id: number;
   name: string;
   phone: string;
+  email: string;
   whatsappOptIn: boolean;
   smsOptIn?: boolean;
   notes: string;

@@ -51,6 +51,7 @@ export type ClienteRow = {
   id: number;
   nombre: string;
   telefono: string;
+  email: string | null;
   whatsapp_opt_in: boolean;
   sms_opt_in: boolean;
   notas: string | null;
@@ -60,6 +61,7 @@ export type ClienteRow = {
 export type ClienteInsertParams = {
   p_nombre: string;
   p_telefono: string;
+  p_email: string | null;
   p_whatsapp_opt_in: boolean;
   p_sms_opt_in: boolean;
   p_notas: string | null;

@@ -163,6 +163,8 @@ CREATE TABLE public.clientes (
         CHECK (BTRIM(nombre) <> ''),
     telefono TEXT NOT NULL UNIQUE
         CHECK (telefono ~ '^\+[1-9][0-9]{7,14}$'),
+    email TEXT NULL
+        CHECK (email IS NULL OR email ~* '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
     whatsapp_opt_in BOOLEAN NOT NULL DEFAULT FALSE,
     sms_opt_in BOOLEAN NOT NULL DEFAULT FALSE,
     notas TEXT NULL,

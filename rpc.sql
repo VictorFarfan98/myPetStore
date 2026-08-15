@@ -1257,6 +1257,7 @@ $$;
 CREATE FUNCTION public.clientes_insertar(
     p_nombre TEXT,
     p_telefono TEXT,
+    p_email TEXT,
     p_whatsapp_opt_in BOOLEAN,
     p_sms_opt_in BOOLEAN,
     p_notas TEXT,
@@ -1276,6 +1277,7 @@ BEGIN
     INSERT INTO public.clientes (
         nombre,
         telefono,
+        email,
         whatsapp_opt_in,
         sms_opt_in,
         notas,
@@ -1284,6 +1286,7 @@ BEGIN
     VALUES (
         BTRIM(p_nombre),
         BTRIM(p_telefono),
+        NULLIF(LOWER(BTRIM(p_email)), ''),
         p_whatsapp_opt_in,
         p_sms_opt_in,
         p_notas,
@@ -1401,6 +1404,7 @@ CREATE FUNCTION public.clientes_actualizar(
     p_id BIGINT,
     p_nombre TEXT,
     p_telefono TEXT,
+    p_email TEXT,
     p_whatsapp_opt_in BOOLEAN,
     p_sms_opt_in BOOLEAN,
     p_notas TEXT,
@@ -1431,6 +1435,7 @@ BEGIN
     SET
         nombre = BTRIM(p_nombre),
         telefono = BTRIM(p_telefono),
+        email = NULLIF(LOWER(BTRIM(p_email)), ''),
         whatsapp_opt_in = p_whatsapp_opt_in,
         sms_opt_in = p_sms_opt_in,
         notas = p_notas,
