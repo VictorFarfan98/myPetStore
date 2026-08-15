@@ -2369,7 +2369,7 @@ Comportamiento: Actualiza completamente la configuración global, incluyendo si 
 
 calificaciones_groomer — Calificaciones
 
-`calificaciones_groomer_insertar(p_registro_servicio_id BIGINT, p_calificacion SMALLINT, p_calificacion_notas TEXT DEFAULT NULL)` inserta una sola calificación por hoja de servicio completada. La tabla no permite actualizaciones ni inserciones directas; la calificación solo se crea por RPC cuando `configuracion_sistema.habilitar_calificaciones` está activa.
+`calificaciones_groomer_insertar(p_registro_servicio_id BIGINT, p_calificacion SMALLINT, p_calificacion_notas TEXT DEFAULT NULL)` inserta una sola calificación por hoja con firma de entrega, incluso si aún está `en_progreso`. La tabla no permite actualizaciones ni inserciones directas; la calificación solo se crea por RPC cuando `configuracion_sistema.habilitar_calificaciones` está activa.
 
 auditorias — Auditorías
 
