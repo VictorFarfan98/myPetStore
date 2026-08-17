@@ -60,7 +60,8 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
         </div>
         <div className="mt-5"><DataTable rows={rows.map(({ customer, pets }) => ({ ...customer, pets }))} columns={[
           { key: "nombre", header: "Cliente", render: (row) => <span className="font-semibold text-ink">{row.name}</span> },
-          { key: "contacto", header: "Contacto", render: (row) => <span>{row.phone}{row.email ? ` · ${row.email}` : ""}{row.smsOptIn ? " · SMS" : ""}</span> },
+          { key: "contacto", header: "Contacto", render: (row) => <span>{row.phone}{row.smsOptIn ? " · SMS" : ""}</span> },
+          { key: "email", header: "Correo electrónico", render: (row) => <span>{row.email || "—"}</span> },
           { key: "mascotas", header: "Mascotas", render: (row) => row.pets.map((pet) => pet.name).join(", ") || "—" },
           { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" type="button" onClick={() => edit(row)}>Editar</button><button className="font-semibold text-red-700 hover:underline" type="button" onClick={() => remove(row.id)}>Eliminar</button></div> }
         ]} /></div>

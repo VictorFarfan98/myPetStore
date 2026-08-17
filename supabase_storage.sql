@@ -1,5 +1,5 @@
 -- Idempotent Supabase Storage setup.
--- This file does not delete or modify stored objects and creates no RLS policies.
+-- This file does not delete or modify stored objects or RLS policies.
 -- The backend is expected to access this private bucket using service_role.
 
 BEGIN;

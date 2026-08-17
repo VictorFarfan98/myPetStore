@@ -10,6 +10,26 @@
 
 BEGIN;
 
+DROP POLICY IF EXISTS "Authenticated users can upload service photos" ON storage.objects;
+CREATE POLICY "Authenticated users can upload service photos"
+ON storage.objects
+FOR INSERT
+TO authenticated
+WITH CHECK (
+    bucket_id = 'petstore'
+    AND (storage.foldername(name))[1] = 'services'
+);
+
+DROP POLICY IF EXISTS "Authenticated users can read service photos" ON storage.objects;
+CREATE POLICY "Authenticated users can read service photos"
+ON storage.objects
+FOR SELECT
+TO authenticated
+USING (
+    bucket_id = 'petstore'
+    AND (storage.foldername(name))[1] = 'services'
+);
+
 -- =============================================================================
 -- 1. Remove existing application policies, RPC functions and private helpers
 -- =============================================================================
@@ -27,7 +47,7 @@ BEGIN
               'tamanos', 'mascotas', 'peluqueros', 'servicios',
               'precios_servicios', 'opciones_shampoo', 'precios_shampoo',
               'metodos_pago', 'configuracion_sistema', 'cupones', 'citas',
-              'registros_servicio', 'pagos', 'recordatorios_citas', 'auditorias'
+              'registros_servicio', 'pagos', 'recordatorios_citas', 'calificaciones_groomer', 'auditorias'
           ])
     LOOP
         EXECUTE FORMAT(
@@ -52,7 +72,7 @@ BEGIN
         FROM pg_proc p
         INNER JOIN pg_namespace n ON n.oid = p.pronamespace
         WHERE n.nspname = 'public'
-          AND p.proname ~ '^(usuarios|sucursales|usuarios_sucursales|clientes|tamanos|mascotas|peluqueros|servicios|precios_servicios|opciones_shampoo|precios_shampoo|metodos_pago|configuracion_sistema|cupones|citas|registros_servicio|pagos|recordatorios_citas|auditorias)_'
+          AND p.proname ~ '^(usuarios|sucursales|usuarios_sucursales|clientes|tamanos|mascotas|peluqueros|servicios|precios_servicios|opciones_shampoo|precios_shampoo|metodos_pago|configuracion_sistema|cupones|citas|registros_servicio|pagos|recordatorios_citas|calificaciones_groomer|auditorias)_'
     LOOP
         EXECUTE FORMAT(
             'DROP FUNCTION IF EXISTS %I.%I(%s) CASCADE',
@@ -953,6 +973,7 @@ REVOKE ALL PRIVILEGES ON TABLE
     public.registros_servicio,
     public.pagos,
     public.recordatorios_citas,
+    public.calificaciones_groomer,
     public.auditorias
 FROM anon, authenticated;
 
@@ -998,6 +1019,7 @@ GRANT ALL PRIVILEGES ON TABLE
     public.registros_servicio,
     public.pagos,
     public.recordatorios_citas,
+    public.calificaciones_groomer,
     public.auditorias
 TO service_role;
 
@@ -3729,7 +3751,8 @@ CREATE FUNCTION public.configuracion_sistema_actualizar(
     p_foto_antes_requerida BOOLEAN,
     p_foto_despues_requerida BOOLEAN,
     p_dias_anticipacion_recordatorio INTEGER,
-    p_metodo_pago_cupon_id BIGINT
+    p_metodo_pago_cupon_id BIGINT,
+    p_habilitar_calificaciones BOOLEAN
 )
 RETURNS public.configuracion_sistema
 LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
@@ -3762,7 +3785,8 @@ BEGIN
         foto_antes_requerida = p_foto_antes_requerida,
         foto_despues_requerida = p_foto_despues_requerida,
         dias_anticipacion_recordatorio = p_dias_anticipacion_recordatorio,
-        metodo_pago_cupon_id = p_metodo_pago_cupon_id
+        metodo_pago_cupon_id = p_metodo_pago_cupon_id,
+        habilitar_calificaciones = p_habilitar_calificaciones
     WHERE id = 1
     RETURNING * INTO v_fila;
 
@@ -3777,6 +3801,67 @@ EXCEPTION
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'DATOS_INVALIDOS';
 END;
 $$;
+
+CREATE FUNCTION public.calificaciones_groomer_insertar(
+    p_registro_servicio_id BIGINT,
+    p_calificacion SMALLINT,
+    p_calificacion_notas TEXT DEFAULT NULL
+)
+RETURNS public.calificaciones_groomer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+    v_registro public.registros_servicio;
+    v_cita public.citas;
+    v_config public.configuracion_sistema;
+    v_fila public.calificaciones_groomer;
+BEGIN
+    PERFORM petstore_private.requerir_usuario_activo();
+    PERFORM petstore_private.establecer_actor();
+
+    IF p_calificacion IS NULL OR p_calificacion NOT BETWEEN 0 AND 5 THEN
+        RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'CALIFICACION_INVALIDA';
+    END IF;
+
+    SELECT * INTO v_config FROM public.configuracion_sistema WHERE id = 1;
+    IF NOT FOUND OR NOT v_config.habilitar_calificaciones THEN
+        RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'CALIFICACIONES_DESHABILITADAS';
+    END IF;
+
+    SELECT * INTO v_registro
+    FROM public.registros_servicio
+    WHERE id = p_registro_servicio_id
+      AND activo = TRUE
+      AND firma_entrega_url IS NOT NULL;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'SERVICIO_SIN_FIRMA_DE_ENTREGA';
+    END IF;
+
+    SELECT * INTO v_cita FROM public.citas WHERE id = v_registro.cita_id;
+    PERFORM petstore_private.requerir_acceso_sucursal(v_cita.sucursal_id);
+
+    INSERT INTO public.calificaciones_groomer (
+        peluquero_id, mascota_id, registro_servicio_id, calificacion, calificacion_notas
+    )
+    VALUES (
+        v_registro.peluquero_id, v_cita.mascota_id, p_registro_servicio_id,
+        p_calificacion, NULLIF(BTRIM(p_calificacion_notas), '')
+    )
+    RETURNING * INTO v_fila;
+
+    RETURN v_fila;
+EXCEPTION
+    WHEN unique_violation THEN
+        RAISE EXCEPTION USING ERRCODE = 'PC001', MESSAGE = 'SERVICIO_YA_CALIFICADO';
+    WHEN check_violation OR not_null_violation OR foreign_key_violation THEN
+        RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'DATOS_INVALIDOS';
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.calificaciones_groomer_insertar(BIGINT, SMALLINT, TEXT)
+FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.calificaciones_groomer_insertar(BIGINT, SMALLINT, TEXT)
+TO authenticated, service_role;
 
 CREATE FUNCTION public.cupones_insertar(
     p_id UUID,
@@ -4641,7 +4726,11 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION public.registros_servicio_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+CREATE FUNCTION public.registros_servicio_listar(
+    p_limite BIGINT DEFAULT NULL,
+    p_offset BIGINT DEFAULT 0,
+    p_sucursal_id BIGINT DEFAULT NULL
+)
 RETURNS JSONB
 LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
 AS $$
@@ -4649,7 +4738,13 @@ DECLARE v_resultado JSONB;
 BEGIN
     PERFORM petstore_private.requerir_usuario_activo();
     PERFORM petstore_private.validar_paginacion(p_limite, p_offset);
-    WITH base AS (SELECT * FROM public.registros_servicio WHERE activo = TRUE),
+    WITH base AS (
+        SELECT rs.*
+        FROM public.registros_servicio rs
+        INNER JOIN public.citas c ON c.id = rs.cita_id
+        WHERE rs.activo = TRUE
+          AND (p_sucursal_id IS NULL OR c.sucursal_id = p_sucursal_id)
+    ),
     pagina AS (SELECT * FROM base ORDER BY id ASC LIMIT p_limite OFFSET p_offset)
     SELECT JSONB_BUILD_OBJECT(
         'datos', COALESCE((SELECT JSONB_AGG(TO_JSONB(p) ORDER BY p.id) FROM pagina p), '[]'::JSONB),
@@ -4658,6 +4753,11 @@ BEGIN
     RETURN v_resultado;
 END;
 $$;
+
+REVOKE ALL ON FUNCTION public.registros_servicio_listar(BIGINT, BIGINT, BIGINT)
+FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.registros_servicio_listar(BIGINT, BIGINT, BIGINT)
+TO authenticated, service_role;
 
 CREATE FUNCTION public.registros_servicio_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
 RETURNS JSONB
