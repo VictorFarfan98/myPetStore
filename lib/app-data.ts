@@ -385,7 +385,7 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       .slice()
       .sort((a, b) => a.nombre_usuario.localeCompare(b.nombre_usuario))
       .forEach((user, index) => {
-        createdByMap.set(user.id, index + 1);
+        createdByMap.set(user.id, -(index + 1));
       });
 
     const groomerMap = new Map<number, number>();
