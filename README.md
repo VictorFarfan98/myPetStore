@@ -58,7 +58,7 @@ Helpers privados, políticas RLS, permisos directos y todas las funciones RPC p�
 
 supabase_storage.sql
 
-Crea o actualiza de forma idempotente el bucket privado petstore. No elimina archivos existentes.
+Crea o actualiza de forma idempotente el bucket privado petstore y sus políticas para fotos de servicio. No elimina archivos existentes.
 
 Orden de ejecución
 
@@ -504,13 +504,13 @@ pets/
 signatures/
 services/
 
-La migración `20260807130000_allow_authenticated_service_photo_storage.sql` permite a usuarios autenticados subir y leer objetos bajo `services/`. Las cargas de fotos de hojas de servicio usan la sesión del usuario y no requieren `SUPABASE_SERVICE_ROLE_KEY`.
+`supabase_storage.sql` permite a usuarios autenticados subir y leer objetos bajo `services/`. Las cargas de fotos de hojas de servicio usan la sesión del usuario y no requieren `SUPABASE_SERVICE_ROLE_KEY`.
 
 Las carpetas son prefijos lógicos y aparecen cuando se sube el primer objeto. La aplicación debe usar el backend para subir, reemplazar y firmar URLs.
 
 Referencia organizada de RPC
 
-rpc.sql expone 118 funciones públicas. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
+rpc.sql expone 121 funciones públicas. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
 
 Convención de esta sección
 
