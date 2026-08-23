@@ -73,10 +73,12 @@ export type ClienteUpdateParams = ClienteInsertParams & {
 export type TamanoRow = {
   id: number;
   nombre: string;
+  especie: "perro" | "gato" | "otro";
   activo: boolean;
 };
 
 export type TamanoInsertParams = {
+  p_especie: "perro" | "gato" | "otro";
   p_nombre: string;
   p_activo: boolean;
 };
@@ -141,12 +143,14 @@ export type ServicioRow = {
   id: number;
   nombre: string;
   intervalo_recordatorio_dias: number | null;
+  es_adicional: boolean;
   activo: boolean;
 };
 
 export type ServicioInsertParams = {
   p_nombre: string;
   p_intervalo_recordatorio_dias: number | null;
+  p_es_adicional: boolean;
   p_activo: boolean;
 };
 
@@ -185,16 +189,20 @@ export type UsuarioSucursalUpdateParams = UsuarioSucursalInsertParams;
 
 export type PrecioServicioRow = {
   servicio_id: number;
+  especie: "perro" | "gato" | "otro";
   tamano_id: number;
   precio: string;
+  precio_promocional: string | null;
   duracion_minutos: number;
   activo: boolean;
 };
 
 export type PrecioServicioInsertParams = {
   p_servicio_id: number;
+  p_especie: "perro" | "gato" | "otro";
   p_tamano_id: number;
   p_precio: string;
+  p_precio_promocional: string | null;
   p_duracion_minutos: number;
   p_activo: boolean;
 };
@@ -363,6 +371,7 @@ export type RegistroServicioRow = {
   servicio_id: number;
   peluquero_id: number;
   tamano_id: number;
+  usar_promocion: boolean;
   shampoo_id: number | null;
   cupon_id: string | null;
   estado: string;
@@ -452,6 +461,11 @@ export type RegistroServicioUpdateParams = {
   p_activo: boolean;
   p_pagos?: unknown;
   p_motivo?: string | null;
+};
+
+export type RegistroServicioAdicionalesParams = {
+  p_registro_servicio_id: number;
+  p_adicionales: Array<{ servicio_id: number; cantidad: number }>;
 };
 
 export type PagoRow = {

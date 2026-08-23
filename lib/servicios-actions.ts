@@ -11,7 +11,6 @@ function validate(formData: FormData) {
   const nombre = text(formData, "nombre");
   const intervalo = text(formData, "intervalo_recordatorio_dias");
   const intervaloRecordatorio = intervalo ? Number(intervalo) : null;
-
   if (!nombre || (intervaloRecordatorio !== null && (!Number.isInteger(intervaloRecordatorio) || intervaloRecordatorio < 1))) {
     throw new Error("Ingresa un nombre y un intervalo de recordatorio válido.");
   }
@@ -19,6 +18,7 @@ function validate(formData: FormData) {
   return {
     p_nombre: nombre,
     p_intervalo_recordatorio_dias: intervaloRecordatorio,
+    p_es_adicional: formData.get("es_adicional") !== null,
     p_activo: formData.get("activo") !== null && formData.get("activo") !== "false"
   };
 }

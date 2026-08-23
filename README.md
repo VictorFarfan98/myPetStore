@@ -2,6 +2,14 @@
 
 Spanish-first grooming operations app for a Guatemala pet store chain.
 
+## Clasificaciones y servicios adicionales
+
+`tamanos.especie` separa las clasificaciones por especie: los perros usan tamaños y los gatos usan `Pelo corto` o `Pelo largo`. El nombre `tamano_id` se conserva temporalmente en los RPC existentes para mantener compatibilidad.
+
+Los servicios adicionales reutilizan `servicios` con `es_adicional = TRUE`. Sus precios se configuran en `precios_servicios` y las selecciones de una hoja se guardan en `registros_servicio_adicionales` con precio y duración históricos.
+
+El precio promocional se configura opcionalmente en cada fila de `precios_servicios` con `precio_promocional`. El gerente decide en la hoja de servicio si lo aplica mediante `usar_promocion`; las hojas existentes conservan su precio histórico.
+
 ## What is included
 
 - Next.js App Router dashboard for grooming operations.
@@ -1345,7 +1353,7 @@ Acceso: Administrador o propietario; service_role.
 
 Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
 
-tamanos — Tamaños
+tamanos — Clasificaciones por especie
 
 Resumen
 
@@ -1371,7 +1379,7 @@ Acciones
 
 Insertar — tamanos_insertar
 
-Firma: tamanos_insertar(p_nombre TEXT, p_activo BOOLEAN)
+Firma: tamanos_insertar(p_especie public.especie_mascota, p_nombre TEXT, p_activo BOOLEAN)
 
 Retorno: public.tamanos
 
@@ -1411,7 +1419,7 @@ Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
 Actualizar — tamanos_actualizar
 
-Firma: tamanos_actualizar(p_id BIGINT, p_nombre TEXT, p_activo BOOLEAN)
+Firma: tamanos_actualizar(p_id BIGINT, p_especie public.especie_mascota, p_nombre TEXT, p_activo BOOLEAN)
 
 Retorno: public.tamanos
 
@@ -1513,7 +1521,7 @@ Acceso: Administrador o propietario; service_role.
 
 Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
 
-precios_servicios — Precios y duraciones de servicios
+precios_servicios — Precios y duraciones de servicios por especie y clasificación
 
 Resumen
 
@@ -1539,7 +1547,7 @@ Acciones
 
 Insertar — precios_servicios_insertar
 
-Firma: precios_servicios_insertar(p_servicio_id BIGINT, p_tamano_id BIGINT, p_precio NUMERIC(10, 2), p_duracion_minutos INTEGER, p_activo BOOLEAN)
+Firma: precios_servicios_insertar(p_servicio_id BIGINT, p_especie public.especie_mascota, p_tamano_id BIGINT, p_precio NUMERIC(10, 2), p_precio_promocional NUMERIC(10, 2), p_duracion_minutos INTEGER, p_activo BOOLEAN)
 
 Retorno: public.precios_servicios
 
@@ -1549,7 +1557,7 @@ Comportamiento: Inserta una fila y devuelve la fila creada.
 
 Obtener por ID — precios_servicios_obtener_por_id
 
-Firma: precios_servicios_obtener_por_id(p_servicio_id BIGINT, p_tamano_id BIGINT)
+Firma: precios_servicios_obtener_por_id(p_servicio_id BIGINT, p_especie public.especie_mascota, p_tamano_id BIGINT)
 
 Retorno: public.precios_servicios
 
@@ -1579,7 +1587,7 @@ Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
 Actualizar — precios_servicios_actualizar
 
-Firma: precios_servicios_actualizar(p_servicio_id BIGINT, p_tamano_id BIGINT, p_precio NUMERIC(10, 2), p_duracion_minutos INTEGER, p_activo BOOLEAN)
+Firma: precios_servicios_actualizar(p_servicio_id BIGINT, p_especie public.especie_mascota, p_tamano_id BIGINT, p_precio NUMERIC(10, 2), p_precio_promocional NUMERIC(10, 2), p_duracion_minutos INTEGER, p_activo BOOLEAN)
 
 Retorno: public.precios_servicios
 
@@ -1589,7 +1597,7 @@ Comportamiento: Realiza una actualización completa con parámetros tipados y de
 
 Eliminar lógicamente — precios_servicios_eliminar
 
-Firma: precios_servicios_eliminar(p_servicio_id BIGINT, p_tamano_id BIGINT)
+Firma: precios_servicios_eliminar(p_servicio_id BIGINT, p_especie public.especie_mascota, p_tamano_id BIGINT)
 
 Retorno: public.precios_servicios
 

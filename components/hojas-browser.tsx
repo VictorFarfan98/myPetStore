@@ -116,9 +116,13 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
   const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [pending, setPending] = useState(false);
   const [serviceId, setServiceId] = useState(String(record?.serviceId ?? appointment.serviceIds[0]));
+  const [usePromotion, setUsePromotion] = useState(Boolean(record?.usesPromotion));
   const [shampooId, setShampooId] = useState(String(record?.shampooId ?? ""));
+  const [additionalIds, setAdditionalIds] = useState<number[]>([]);
+  const [additionalTouched, setAdditionalTouched] = useState(false);
   const [selected, setSelected] = useState([...(record?.conditions ?? []), ...(record?.parasites ?? [])]);
   const toggle = (value: string) => setSelected((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
+  const toggleAdditional = (id: number) => { setAdditionalTouched(true); setAdditionalIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); };
   const loadCoupons = useCallback(async () => {
     setLoadingCoupons(true); setMessage("");
     setCoupons([]);
@@ -149,17 +153,21 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
     const form = new FormData(event.currentTarget);
     form.set("cupon_id", couponId);
     form.set("descuento_cupon", discount);
+    form.set("adicionales_configurados", String(additionalTouched));
+    form.set("usar_promocion", usePromotion && Boolean(data.serviceDurations?.find((item) => item.serviceId === Number(serviceId) && item.species === pet.species && item.size === pet.size)?.promotionalPrice) ? "on" : "off");
     if (clientSigning && !String(form.get("firma_entrega_url") ?? "").trim()) {
       setPending(false);
       return setMessage("El cliente debe firmar antes de confirmar el recibido.");
     }
     [...conditions, ...parasites].forEach((value) => { if (selected.includes(value)) form.set(value === "Piel irritada / enrojecida" ? "piel_irritada" : value.toLowerCase().replaceAll(" ", "_"), "on"); });
+    additionalIds.forEach((id) => form.append("adicional_id", String(id)));
     const result = await saveHoja(form);
     setPending(false);
     if (result.error) return setMessage(result.error);
     onSaved(result);
     router.refresh();
   }
+  const selectedPrice = data.serviceDurations?.find((item) => item.serviceId === Number(serviceId) && item.species === pet.species && item.size === pet.size);
   async function remove() {
     if (!record || !window.confirm("¿Deseas desactivar esta hoja de servicio?")) return;
     const form = new FormData(); form.set("registro_id", String(record.id));
@@ -175,10 +183,12 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
           <label className="grid gap-1 text-sm font-medium text-slate-700">Servicio<select name="servicio_id" value={serviceId} onChange={(event) => { setServiceId(event.target.value); if (event.target.value !== "1" && event.target.value !== "3") setShampooId(""); }} className="focus-ring rounded-lg border border-slate-300 px-3 py-2">{data.services.map((service) => <option key={service.id} value={service.id}>{service.name}</option>)}</select></label>
           {(serviceId === "1" || serviceId === "3") && <label className="grid gap-1 text-sm font-medium text-slate-700">Opción de shampoo<select name="shampoo_id" value={shampooId} onChange={(event) => setShampooId(event.target.value)} required className="focus-ring rounded-lg border border-slate-300 px-3 py-2"><option value="">Selecciona una opción</option>{data.shampooOptions?.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>}
           <label className="grid gap-1 text-sm font-medium text-slate-700">Groomer<select name="peluquero_id" defaultValue={appointment.groomerId} className="focus-ring rounded-lg border border-slate-300 px-3 py-2">{data.users.filter((user) => user.role === "groomer").map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</select></label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">Tamaño<select name="tamano_id" defaultValue={data.sizes?.find((size) => size.name.toLowerCase().includes(pet.size.slice(0, 4)))?.id ?? data.sizes?.[0]?.id} className="focus-ring rounded-lg border border-slate-300 px-3 py-2">{data.sizes?.map((size) => <option key={size.id} value={size.id}>{size.name}</option>)}</select></label>
+          <label className="grid gap-1 text-sm font-medium text-slate-700">{pet.species === "gato" ? "Tipo de pelo" : "Tamaño"}<select name="tamano_id" defaultValue={data.sizes?.find((size) => size.species === pet.species && size.name.toLowerCase().includes(pet.size.replace("_", " ").slice(0, 4)))?.id ?? data.sizes?.find((size) => size.species === pet.species)?.id} className="focus-ring rounded-lg border border-slate-300 px-3 py-2">{data.sizes?.filter((size) => size.species === pet.species).map((size) => <option key={size.id} value={size.id}>{size.name}</option>)}</select></label>
+          {selectedPrice?.promotionalPrice && <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input name="usar_promocion" type="checkbox" checked={usePromotion} onChange={(event) => setUsePromotion(event.target.checked)} /> Aplicar precio promocional (Q {Number(selectedPrice.promotionalPrice).toFixed(2)})</label>}
         </div>
         <fieldset className="grid gap-2"><legend className="text-sm font-semibold text-ink">Condiciones visibles</legend><div className="grid gap-2 sm:grid-cols-2">{conditions.map((label) => <label key={label} className="flex gap-2 text-sm text-slate-700"><input name={label.toLowerCase().replaceAll(" ", "_")} type="checkbox" checked={selected.includes(label)} onChange={() => toggle(label)} />{label}</label>)}</div></fieldset>
         <fieldset className="grid gap-2"><legend className="text-sm font-semibold text-ink">Parásitos visibles</legend><div className="grid gap-2 sm:grid-cols-3">{parasites.map((label) => <label key={label} className="flex gap-2 text-sm text-slate-700"><input name={label.toLowerCase()} type="checkbox" checked={selected.includes(label)} onChange={() => toggle(label)} />{label}</label>)}</div></fieldset>
+        {data.services.some((service) => service.additional) && <fieldset className="grid gap-2"><legend className="text-sm font-semibold text-ink">Servicios adicionales</legend><div className="grid gap-2 sm:grid-cols-2">{data.services.filter((service) => service.additional && service.active).map((service) => <label key={service.id} className="flex gap-2 text-sm text-slate-700"><input name="adicional_id" type="checkbox" checked={additionalIds.includes(service.id)} onChange={() => toggleAdditional(service.id)} value={service.id} />{service.name}</label>)}</div></fieldset>}
         <label className="grid gap-1 text-sm font-medium text-slate-700">Observaciones de ingreso<textarea name="observaciones_ingreso" defaultValue={record?.groomerNotes ?? appointment.notes} className="focus-ring min-h-20 rounded-lg border border-slate-300 px-3 py-2" /></label>
         <SignaturePad name="firma_ingreso_url" label="Firma de ingreso" defaultValue={record?.intakeSignatureImageUrl} required />
         <div className="grid gap-3 sm:grid-cols-2"><PhotoPreview label="Foto antes actual" src={record?.beforePhotoUrl} /><PhotoPreview label="Foto después actual" src={record?.afterPhotoUrl} /></div>

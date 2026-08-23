@@ -11,8 +11,8 @@ export function preciosServiciosInsertar(params: PrecioServicioInsertParams) {
   return rpcCall<PrecioServicioRow>("precios_servicios_insertar", params);
 }
 
-export function preciosServiciosObtenerPorId(p_servicio_id: number, p_tamano_id: number) {
-  return rpcCall<PrecioServicioRow>("precios_servicios_obtener_por_id", { p_servicio_id, p_tamano_id });
+export function preciosServiciosObtenerPorId(p_servicio_id: number, p_especie: PrecioServicioRow["especie"], p_tamano_id: number) {
+  return rpcCall<PrecioServicioRow>("precios_servicios_obtener_por_id", { p_servicio_id, p_especie, p_tamano_id });
 }
 
 export function preciosServiciosListar(p_limite: number | null = null, p_offset = 0) {
@@ -33,7 +33,6 @@ export function preciosServiciosActualizar(params: PrecioServicioUpdateParams) {
   return rpcCall<PrecioServicioRow>("precios_servicios_actualizar", params);
 }
 
-export function preciosServiciosEliminar(p_servicio_id: number, p_tamano_id: number) {
-  return rpcCall<PrecioServicioRow>("precios_servicios_eliminar", { p_servicio_id, p_tamano_id });
+export function preciosServiciosEliminar(p_servicio_id: number, p_especie: PrecioServicioRow["especie"], p_tamano_id: number) {
+  return rpcCall<PrecioServicioRow>("precios_servicios_eliminar", { p_servicio_id, p_especie, p_tamano_id });
 }
-

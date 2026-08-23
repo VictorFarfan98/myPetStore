@@ -37,7 +37,9 @@ export const sizeLabels: Record<PetSize, string> = {
   pequeno: "Pequeno",
   mediano: "Mediano",
   grande: "Grande",
-  gigante: "Gigante"
+  gigante: "Gigante",
+  pelo_corto: "Pelo corto",
+  pelo_largo: "Pelo largo"
 };
 
 export const speciesLabels: Record<Species, string> = {

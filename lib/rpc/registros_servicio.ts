@@ -5,6 +5,7 @@ import type {
   RegistroServicioIniciarParams,
   RegistroServicioRow,
   RegistroServicioUpdateParams,
+  RegistroServicioAdicionalesParams,
   RegistrosServicioCompletarParams
 } from "./types";
 import { rpcCall } from "./core";
@@ -43,6 +44,14 @@ export function registrosServicioActualizar(params: RegistroServicioUpdateParams
 
 export function registrosServicioEliminar(p_id: number) {
   return rpcCall<RegistroServicioRow>("registros_servicio_eliminar", { p_id });
+}
+
+export function registrosServicioAdicionalesReemplazar(params: RegistroServicioAdicionalesParams) {
+  return rpcCall<unknown>("registros_servicio_adicionales_reemplazar", params);
+}
+
+export function registrosServicioPromocionAplicar(p_registro_servicio_id: number, p_usar_promocion: boolean) {
+  return rpcCall<RegistroServicioRow>("registros_servicio_promocion_aplicar", { p_registro_servicio_id, p_usar_promocion });
 }
 
 export function registrosServicioCompletar(params: RegistrosServicioCompletarParams) {

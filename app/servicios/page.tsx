@@ -31,7 +31,7 @@ export default async function ServiciosPage() {
           description="Administra los servicios de grooming que ofrece la tienda."
         />
         <ServiciosBrowser rows={services.data.datos} />
-        <CatalogBrowser rows={sizes.data.datos} title="Tamaños" singular="Tamaño" create={createTamano} update={updateTamano} remove={deleteTamano} />
+        <CatalogBrowser rows={sizes.data.datos} title="Clasificaciones por especie" singular="Clasificación" create={createTamano} update={updateTamano} remove={deleteTamano} speciesCatalog />
         <CatalogBrowser rows={shampoos.data.datos} title="Opciones de shampoo" singular="Opción de shampoo" create={createOpcionShampoo} update={updateOpcionShampoo} remove={deleteOpcionShampoo} sizes={sizes.data.datos} priceRows={shampooPrices.data.datos} />
         <PreciosServiciosBrowser rows={prices.data.datos} services={services.data.datos} sizes={sizes.data.datos} />
       </PageContainer>

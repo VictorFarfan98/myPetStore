@@ -57,6 +57,8 @@ function normalizeSpecies(value: string | null | undefined): Species {
 
 function normalizeSize(value: string | null | undefined): PetSize {
   const normalized = normalizeText(value).toLowerCase();
+  if (normalized.includes("pelo corto")) return "pelo_corto";
+  if (normalized.includes("pelo largo")) return "pelo_largo";
   if (normalized.includes("pequ")) return "pequeno";
   if (normalized.includes("med")) return "mediano";
   if (normalized.includes("gig")) return "gigante";
@@ -290,6 +292,7 @@ async function buildGroomingRecords(args: {
         beforePhotoPath: registro.foto_antes_url ?? undefined,
         afterPhotoPath: registro.foto_despues_url ?? undefined,
         finalAmount: registro.monto_final ?? configuredPrice ?? undefined,
+        usesPromotion: registro.usar_promocion,
         paidAmount: registro.monto_pagado ?? undefined,
         couponId: registro.cupon_id ?? undefined,
         discountAmount: registro.descuento_cupon ?? undefined,
@@ -430,20 +433,21 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       supabase
     });
 
-    const serviceDurationById = new Map<number, number>();
-    precioServicios.forEach((row) => {
-      const current = serviceDurationById.get(row.servicio_id);
-      if (current === undefined || row.duracion_minutos < current) {
-        serviceDurationById.set(row.servicio_id, row.duracion_minutos);
-      }
-    });
+    const serviceDurations = precioServicios.map((row) => ({
+      serviceId: row.servicio_id,
+      species: normalizeSpecies(row.especie),
+      size: normalizeSize(sizeById.get(row.tamano_id)),
+      minutes: row.duracion_minutos,
+      promotionalPrice: row.precio_promocional ?? undefined
+    }));
 
     const petsData = pets.map((pet) => mapPet(pet, sizeById));
 
     const services = servicesRows.map((service) => ({
       id: service.id,
       name: service.nombre,
-      estimatedDurationMinutes: serviceDurationById.get(service.id) ?? 30,
+      estimatedDurationMinutes: Math.min(...serviceDurations.filter((item) => item.serviceId === service.id).map((item) => item.minutes), 30),
+      additional: service.es_adicional,
       active: service.activo
     }));
 
@@ -453,8 +457,9 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       users: appUsers,
       customers,
       pets: petsData,
-      sizes: tamanos.filter((tamano) => tamano.activo).map((tamano) => ({ id: tamano.id, name: tamano.nombre })),
+      sizes: tamanos.filter((tamano) => tamano.activo).map((tamano) => ({ id: tamano.id, name: tamano.nombre, species: normalizeSpecies(tamano.especie) })),
       services,
+      serviceDurations,
       shampooOptions,
       paymentMethods,
       payments,

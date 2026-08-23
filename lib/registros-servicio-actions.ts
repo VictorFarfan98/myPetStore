@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createUserSupabaseClient } from "@/lib/supabase/server";
 import {
   registrosServicioActualizar,
+  registrosServicioAdicionalesReemplazar,
+  registrosServicioPromocionAplicar,
   registrosServicioEliminar,
   registrosServicioIniciar
 } from "@/lib/rpc/registros_servicio";
@@ -60,6 +62,8 @@ function values(formData: FormData) {
   const firma = text(formData, "firma_ingreso_url");
   const couponId = text(formData, "cupon_id") || null;
   const discount = Number(text(formData, "descuento_cupon") || "0");
+  const adicionales = formData.getAll("adicional_id").map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0).map((servicio_id) => ({ servicio_id, cantidad: 1 }));
+  const adicionalesConfigurados = formData.get("adicionales_configurados") === "true";
   if ((!citaId && !recordId) || !servicioId || !peluqueroId || !tamanoId || !firma) {
     throw new Error("Completa servicio, groomer, tamaño y firma de ingreso.");
   }
@@ -69,6 +73,8 @@ function values(formData: FormData) {
   return {
     citaId, recordId, p_servicio_id: servicioId, p_peluquero_id: peluqueroId, p_tamano_id: tamanoId, p_shampoo_id: servicioId === 1 || servicioId === 3 ? shampooId : null, p_cupon_id: couponId,
     p_descuento_cupon: Number.isFinite(discount) && discount >= 0 ? discount.toFixed(2) : "0",
+    adicionales,
+    adicionalesConfigurados,
     p_firma_ingreso_url: firma,
     p_firma_entrega_url: text(formData, "firma_entrega_url") || null,
     p_notas_servicio: text(formData, "notas_servicio") || null,
@@ -95,6 +101,14 @@ export async function saveHoja(formData: FormData) {
     const appointmentId = input.citaId ?? input.recordId!;
     const beforePhotoUrl = await uploadPhoto(formData, "foto_antes", appointmentId, text(formData, "foto_antes_url_actual") || null);
     const afterPhotoUrl = await uploadPhoto(formData, "foto_despues", appointmentId, text(formData, "foto_despues_url_actual") || null);
+    if (input.recordId && input.adicionalesConfigurados) {
+      const extras = await registrosServicioAdicionalesReemplazar({ p_registro_servicio_id: input.recordId, p_adicionales: input.adicionales });
+      if (extras.error) return { error: errorMessage(extras.error) };
+    }
+    if (input.recordId) {
+      const promo = await registrosServicioPromocionAplicar(input.recordId, formData.get("usar_promocion") === "on");
+      if (promo.error) return { error: errorMessage(promo.error) };
+    }
     console.log("saveHoja input", { ...input, p_foto_antes_url: beforePhotoUrl });
     const result = input.recordId
       ? await registrosServicioActualizar({
@@ -150,6 +164,13 @@ export async function saveHoja(formData: FormData) {
           p_foto_antes_url: beforePhotoUrl,
           p_notas_servicio: input.p_notas_servicio
         });
+    const recordId = result.data?.id ?? input.recordId;
+    if (!input.recordId && !result.error && recordId) {
+      const promo = await registrosServicioPromocionAplicar(recordId, formData.get("usar_promocion") === "on");
+      if (promo.error) return { error: errorMessage(promo.error) };
+      const extras = await registrosServicioAdicionalesReemplazar({ p_registro_servicio_id: recordId, p_adicionales: input.adicionales });
+      if (extras.error) return { error: errorMessage(extras.error) };
+    }
     console.log("saveHoja RPC result", result);
     if (result.error) {
       console.log("saveHoja RPC failed", result.error);
@@ -157,7 +178,7 @@ export async function saveHoja(formData: FormData) {
     }
     revalidatePath("/hojas");
     revalidatePath("/agenda");
-    return { ok: true, completed: Boolean(input.p_firma_entrega_url), recordId: result.data?.id ?? input.recordId ?? 0, groomerId: input.p_peluquero_id };
+    return { ok: true, completed: Boolean(input.p_firma_entrega_url), recordId: recordId ?? 0, groomerId: input.p_peluquero_id };
   } catch (error) {
     console.error("saveHoja failed", error instanceof Error ? { message: error.message, stack: error.stack } : error);
     return { error: error instanceof Error ? error.message : "No se pudo guardar la hoja de servicio." };

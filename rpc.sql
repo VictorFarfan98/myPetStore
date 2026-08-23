@@ -1195,6 +1195,13 @@ BEGIN
     PERFORM petstore_private.requerir_admin_propietario();
     PERFORM petstore_private.establecer_actor();
 
+    IF EXISTS (
+        SELECT 1 FROM public.mascotas m
+        WHERE m.tamano_id = p_id AND m.especie <> p_especie
+    ) THEN
+        RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'CLASIFICACION_EN_USO_POR_OTRA_ESPECIE';
+    END IF;
+
     SELECT t.* INTO v_anterior
     FROM public.sucursales t
     WHERE t.id = p_id
@@ -1482,6 +1489,7 @@ $$;
 
 -- tamanos: standard CRUD
 CREATE FUNCTION public.tamanos_insertar(
+    p_especie public.especie_mascota,
     p_nombre TEXT,
     p_activo BOOLEAN
 )
@@ -1497,10 +1505,12 @@ BEGIN
     PERFORM petstore_private.establecer_actor();
 
     INSERT INTO public.tamanos (
+        especie,
         nombre,
         activo
     )
     VALUES (
+        p_especie,
         BTRIM(p_nombre),
         p_activo
     )
@@ -1613,6 +1623,7 @@ $$;
 
 CREATE FUNCTION public.tamanos_actualizar(
     p_id BIGINT,
+    p_especie public.especie_mascota,
     p_nombre TEXT,
     p_activo BOOLEAN
 )
@@ -1628,6 +1639,13 @@ BEGIN
     PERFORM petstore_private.requerir_admin_propietario();
     PERFORM petstore_private.establecer_actor();
 
+    IF EXISTS (
+        SELECT 1 FROM public.mascotas m
+        WHERE m.tamano_id = p_id AND m.especie <> p_especie
+    ) THEN
+        RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'CLASIFICACION_EN_USO_POR_OTRA_ESPECIE';
+    END IF;
+
     SELECT t.* INTO v_anterior
     FROM public.tamanos t
     WHERE t.id = p_id
@@ -1639,6 +1657,7 @@ BEGIN
 
     UPDATE public.tamanos
     SET
+        especie = p_especie,
         nombre = BTRIM(p_nombre),
         activo = p_activo
     WHERE id = p_id
@@ -2154,6 +2173,7 @@ $$;
 CREATE FUNCTION public.servicios_insertar(
     p_nombre TEXT,
     p_intervalo_recordatorio_dias INTEGER,
+    p_es_adicional BOOLEAN,
     p_activo BOOLEAN
 )
 RETURNS public.servicios
@@ -2170,11 +2190,13 @@ BEGIN
     INSERT INTO public.servicios (
         nombre,
         intervalo_recordatorio_dias,
+        es_adicional,
         activo
     )
     VALUES (
         BTRIM(p_nombre),
         p_intervalo_recordatorio_dias,
+        p_es_adicional,
         p_activo
     )
     RETURNING * INTO v_fila;
@@ -2288,6 +2310,7 @@ CREATE FUNCTION public.servicios_actualizar(
     p_id BIGINT,
     p_nombre TEXT,
     p_intervalo_recordatorio_dias INTEGER,
+    p_es_adicional BOOLEAN,
     p_activo BOOLEAN
 )
 RETURNS public.servicios
@@ -2315,6 +2338,7 @@ BEGIN
     SET
         nombre = BTRIM(p_nombre),
         intervalo_recordatorio_dias = p_intervalo_recordatorio_dias,
+        es_adicional = p_es_adicional,
         activo = p_activo
     WHERE id = p_id
     RETURNING * INTO v_fila;
@@ -2770,8 +2794,10 @@ $$;
 -- precios_servicios: composite-key CRUD
 CREATE FUNCTION public.precios_servicios_insertar(
     p_servicio_id BIGINT,
+    p_especie public.especie_mascota,
     p_tamano_id BIGINT,
     p_precio NUMERIC(10, 2),
+    p_precio_promocional NUMERIC(10, 2),
     p_duracion_minutos INTEGER,
     p_activo BOOLEAN
 )
@@ -2788,15 +2814,19 @@ BEGIN
 
     INSERT INTO public.precios_servicios (
         servicio_id,
+        especie,
         tamano_id,
         precio,
+        precio_promocional,
         duracion_minutos,
         activo
     )
     VALUES (
         p_servicio_id,
+        p_especie,
         p_tamano_id,
         p_precio,
+        p_precio_promocional,
         p_duracion_minutos,
         p_activo
     )
@@ -2813,6 +2843,7 @@ $$;
 
 CREATE FUNCTION public.precios_servicios_obtener_por_id(
     p_servicio_id BIGINT,
+    p_especie public.especie_mascota,
     p_tamano_id BIGINT
 )
 RETURNS public.precios_servicios
@@ -2827,7 +2858,7 @@ BEGIN
 
     SELECT t.* INTO v_fila
     FROM public.precios_servicios t
-    WHERE t.servicio_id = p_servicio_id AND t.tamano_id = p_tamano_id;
+    WHERE t.servicio_id = p_servicio_id AND t.especie = p_especie AND t.tamano_id = p_tamano_id;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'REGISTRO_NO_ENCONTRADO';
@@ -2855,10 +2886,10 @@ BEGIN
         SELECT t.* FROM public.precios_servicios t WHERE t.activo = TRUE
     ),
     pagina AS (
-        SELECT * FROM base ORDER BY servicio_id, tamano_id ASC LIMIT p_limite OFFSET p_offset
+        SELECT * FROM base ORDER BY servicio_id, especie, tamano_id ASC LIMIT p_limite OFFSET p_offset
     )
     SELECT JSONB_BUILD_OBJECT(
-        'datos', COALESCE((SELECT JSONB_AGG(TO_JSONB(p) ORDER BY p.servicio_id, p.tamano_id) FROM pagina p), '[]'::JSONB),
+        'datos', COALESCE((SELECT JSONB_AGG(TO_JSONB(p) ORDER BY p.servicio_id, p.especie, p.tamano_id) FROM pagina p), '[]'::JSONB),
         'total', (SELECT COUNT(*) FROM base),
         'limite', p_limite,
         'offset', p_offset
@@ -2886,10 +2917,10 @@ BEGIN
         SELECT t.* FROM public.precios_servicios t
     ),
     pagina AS (
-        SELECT * FROM base ORDER BY servicio_id, tamano_id ASC LIMIT p_limite OFFSET p_offset
+        SELECT * FROM base ORDER BY servicio_id, especie, tamano_id ASC LIMIT p_limite OFFSET p_offset
     )
     SELECT JSONB_BUILD_OBJECT(
-        'datos', COALESCE((SELECT JSONB_AGG(TO_JSONB(p) ORDER BY p.servicio_id, p.tamano_id) FROM pagina p), '[]'::JSONB),
+        'datos', COALESCE((SELECT JSONB_AGG(TO_JSONB(p) ORDER BY p.servicio_id, p.especie, p.tamano_id) FROM pagina p), '[]'::JSONB),
         'total', (SELECT COUNT(*) FROM base),
         'limite', p_limite,
         'offset', p_offset
@@ -2901,8 +2932,10 @@ $$;
 
 CREATE FUNCTION public.precios_servicios_actualizar(
     p_servicio_id BIGINT,
+    p_especie public.especie_mascota,
     p_tamano_id BIGINT,
     p_precio NUMERIC(10, 2),
+    p_precio_promocional NUMERIC(10, 2),
     p_duracion_minutos INTEGER,
     p_activo BOOLEAN
 )
@@ -2920,7 +2953,7 @@ BEGIN
 
     SELECT t.* INTO v_anterior
     FROM public.precios_servicios t
-    WHERE t.servicio_id = p_servicio_id AND t.tamano_id = p_tamano_id
+    WHERE t.servicio_id = p_servicio_id AND t.especie = p_especie AND t.tamano_id = p_tamano_id
     FOR UPDATE;
 
     IF NOT FOUND THEN
@@ -2930,9 +2963,10 @@ BEGIN
     UPDATE public.precios_servicios
     SET
         precio = p_precio,
+        precio_promocional = p_precio_promocional,
         duracion_minutos = p_duracion_minutos,
         activo = p_activo
-    WHERE servicio_id = p_servicio_id AND tamano_id = p_tamano_id
+    WHERE servicio_id = p_servicio_id AND especie = p_especie AND tamano_id = p_tamano_id
     RETURNING * INTO v_fila;
 
     RETURN v_fila;
@@ -2946,6 +2980,7 @@ $$;
 
 CREATE FUNCTION public.precios_servicios_eliminar(
     p_servicio_id BIGINT,
+    p_especie public.especie_mascota,
     p_tamano_id BIGINT
 )
 RETURNS public.precios_servicios
@@ -2962,7 +2997,7 @@ BEGIN
 
     SELECT t.* INTO v_anterior
     FROM public.precios_servicios t
-    WHERE t.servicio_id = p_servicio_id AND t.tamano_id = p_tamano_id
+    WHERE t.servicio_id = p_servicio_id AND t.especie = p_especie AND t.tamano_id = p_tamano_id
     FOR UPDATE;
 
     IF NOT FOUND THEN
@@ -2971,7 +3006,7 @@ BEGIN
 
     UPDATE public.precios_servicios
     SET activo = FALSE
-    WHERE servicio_id = p_servicio_id AND tamano_id = p_tamano_id
+    WHERE servicio_id = p_servicio_id AND especie = p_especie AND tamano_id = p_tamano_id
     RETURNING * INTO v_fila;
 
     RETURN v_fila;
@@ -3987,6 +4022,7 @@ AS $$
 DECLARE
     v_actor UUID;
     v_tamano_id BIGINT;
+    v_especie public.especie_mascota;
     v_duracion INTEGER;
     v_fila public.citas;
 BEGIN
@@ -4001,7 +4037,7 @@ BEGIN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'SUCURSAL_INACTIVA_O_INVALIDA';
     END IF;
 
-    SELECT m.tamano_id INTO v_tamano_id
+    SELECT m.tamano_id, m.especie INTO v_tamano_id, v_especie
     FROM public.mascotas m
     INNER JOIN public.clientes c ON c.id = m.cliente_id
     WHERE m.id = p_mascota_id AND m.activo = TRUE AND c.activo = TRUE;
@@ -4022,6 +4058,7 @@ BEGIN
     SELECT ps.duracion_minutos INTO v_duracion
     FROM public.precios_servicios ps
     WHERE ps.servicio_id = p_servicio_id
+      AND ps.especie = v_especie
       AND ps.tamano_id = v_tamano_id
       AND ps.activo = TRUE;
     IF NOT FOUND THEN
@@ -4184,6 +4221,7 @@ DECLARE
     v_anterior public.citas;
     v_fila public.citas;
     v_tamano_id BIGINT;
+    v_especie public.especie_mascota;
     v_duracion INTEGER;
 BEGIN
     PERFORM petstore_private.requerir_usuario_activo();
@@ -4193,7 +4231,7 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'REGISTRO_NO_ENCONTRADO'; END IF;
     PERFORM petstore_private.requerir_acceso_sucursal(v_anterior.sucursal_id);
 
-    SELECT m.tamano_id INTO v_tamano_id FROM public.mascotas m WHERE m.id = v_anterior.mascota_id AND m.activo = TRUE;
+    SELECT m.tamano_id, m.especie INTO v_tamano_id, v_especie FROM public.mascotas m WHERE m.id = v_anterior.mascota_id AND m.activo = TRUE;
     IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'MASCOTA_INACTIVA_O_INVALIDA'; END IF;
 
     IF NOT EXISTS (SELECT 1 FROM public.servicios s WHERE s.id = p_servicio_id AND s.activo = TRUE) THEN
@@ -4205,7 +4243,7 @@ BEGIN
 
     SELECT ps.duracion_minutos INTO v_duracion
     FROM public.precios_servicios ps
-    WHERE ps.servicio_id = p_servicio_id AND ps.tamano_id = v_tamano_id AND ps.activo = TRUE;
+    WHERE ps.servicio_id = p_servicio_id AND ps.especie = v_especie AND ps.tamano_id = v_tamano_id AND ps.activo = TRUE;
     IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'CONFIGURACION_PRECIO_SERVICIO_NO_ENCONTRADA'; END IF;
 
     UPDATE public.citas
@@ -4420,6 +4458,7 @@ BEGIN
     SELECT ps.duracion_minutos INTO v_duracion
     FROM public.precios_servicios ps
     WHERE ps.servicio_id = p_servicio_id
+      AND ps.especie = v_mascota_anterior.especie
       AND ps.tamano_id = p_tamano_id
       AND ps.activo = TRUE;
     IF NOT FOUND THEN
@@ -4441,7 +4480,7 @@ BEGIN
     RETURNING * INTO v_cita_nueva;
 
     INSERT INTO public.registros_servicio (
-        cita_id, servicio_id, peluquero_id, tamano_id, shampoo_id,
+        cita_id, servicio_id, peluquero_id, tamano_id, usar_promocion, shampoo_id,
         heridas_visibles, raspones, piel_irritada, costras, inflamacion,
         cojera, dolor_al_tocar, pulgas, garrapatas, piojos,
         observaciones_ingreso, firma_ingreso_url, foto_antes_url,
@@ -4565,6 +4604,7 @@ BEGIN
     SELECT ps.duracion_minutos INTO v_duracion
     FROM public.precios_servicios ps
     WHERE ps.servicio_id = p_servicio_id
+      AND ps.especie = v_mascota_anterior.especie
       AND ps.tamano_id = p_tamano_id
       AND ps.activo = TRUE;
     IF NOT FOUND THEN
@@ -4586,7 +4626,7 @@ BEGIN
     RETURNING * INTO v_cita_nueva;
 
     INSERT INTO public.registros_servicio (
-        cita_id, servicio_id, peluquero_id, tamano_id, shampoo_id,
+        cita_id, servicio_id, peluquero_id, tamano_id, usar_promocion, shampoo_id,
         heridas_visibles, raspones, piel_irritada, costras, inflamacion,
         cojera, dolor_al_tocar, pulgas, garrapatas, piojos,
         observaciones_ingreso, firma_ingreso_url, foto_antes_url,
@@ -4755,9 +4795,9 @@ BEGIN
     END IF;
 
     IF p_precio_base IS NOT NULL THEN
-        SELECT ps.precio INTO v_precio
+        SELECT CASE WHEN v_anterior.usar_promocion THEN COALESCE(ps.precio_promocional, ps.precio) ELSE ps.precio END INTO v_precio
         FROM public.precios_servicios ps
-        WHERE ps.servicio_id = p_servicio_id AND ps.tamano_id = p_tamano_id AND ps.activo = TRUE;
+        WHERE ps.servicio_id = p_servicio_id AND ps.especie = v_mascota_anterior.especie AND ps.tamano_id = p_tamano_id AND ps.activo = TRUE;
         IF NOT FOUND OR v_precio IS DISTINCT FROM p_precio_base THEN
             RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'PRECIO_BASE_NO_COINCIDE';
         END IF;
@@ -4777,13 +4817,13 @@ BEGIN
         END IF;
     END IF;
 
-    IF p_descuento_cupon > p_precio_base + p_recargo_shampoo THEN
+    IF p_descuento_cupon > p_precio_base + p_recargo_shampoo + COALESCE((SELECT SUM(a.precio * a.cantidad) FROM public.registros_servicio_adicionales a WHERE a.registro_servicio_id = p_id AND a.activo = TRUE), 0) THEN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'DESCUENTO_EXCEDE_SUBTOTAL';
     END IF;
     IF p_cupon_id IS NULL AND p_descuento_cupon <> 0 THEN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'DESCUENTO_REQUIERE_CUPON';
     END IF;
-    IF p_monto_final <> p_precio_base + p_recargo_shampoo - p_descuento_cupon THEN
+    IF p_monto_final <> p_precio_base + p_recargo_shampoo + COALESCE((SELECT SUM(a.precio * a.cantidad) FROM public.registros_servicio_adicionales a WHERE a.registro_servicio_id = p_id AND a.activo = TRUE), 0) - p_descuento_cupon THEN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'MONTO_FINAL_INVALIDO';
     END IF;
 
@@ -5022,9 +5062,9 @@ BEGIN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'TAMANO_INACTIVO_O_INVALIDO';
     END IF;
 
-    SELECT ps.precio INTO v_precio
+    SELECT CASE WHEN v_anterior.usar_promocion THEN COALESCE(ps.precio_promocional, ps.precio) ELSE ps.precio END INTO v_precio
     FROM public.precios_servicios ps
-    WHERE ps.servicio_id = p_servicio_id AND ps.tamano_id = p_tamano_id AND ps.activo = TRUE;
+    WHERE ps.servicio_id = p_servicio_id AND ps.especie = v_mascota_anterior.especie AND ps.tamano_id = p_tamano_id AND ps.activo = TRUE;
     IF NOT FOUND OR v_precio IS DISTINCT FROM p_precio_base THEN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'PRECIO_BASE_NO_COINCIDE';
     END IF;
@@ -5041,13 +5081,13 @@ BEGIN
         END IF;
     END IF;
 
-    IF p_descuento_cupon > p_precio_base + p_recargo_shampoo THEN
+    IF p_descuento_cupon > p_precio_base + p_recargo_shampoo + COALESCE((SELECT SUM(a.precio * a.cantidad) FROM public.registros_servicio_adicionales a WHERE a.registro_servicio_id = p_registro_servicio_id AND a.activo = TRUE), 0) THEN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'DESCUENTO_EXCEDE_SUBTOTAL';
     END IF;
     IF p_cupon_id IS NULL AND p_descuento_cupon <> 0 THEN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'DESCUENTO_REQUIERE_CUPON';
     END IF;
-    IF p_monto_final <> p_precio_base + p_recargo_shampoo - p_descuento_cupon THEN
+    IF p_monto_final <> p_precio_base + p_recargo_shampoo + COALESCE((SELECT SUM(a.precio * a.cantidad) FROM public.registros_servicio_adicionales a WHERE a.registro_servicio_id = p_registro_servicio_id AND a.activo = TRUE), 0) - p_descuento_cupon THEN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'MONTO_FINAL_INVALIDO';
     END IF;
     IF p_monto_pagado <> p_monto_final THEN
@@ -5770,6 +5810,92 @@ BEGIN
     ) INTO v_resultado;
 
     RETURN v_resultado;
+END;
+$$;
+
+CREATE FUNCTION public.registros_servicio_adicionales_reemplazar(
+    p_registro_servicio_id BIGINT,
+    p_adicionales JSONB
+)
+RETURNS JSONB
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+    v_registro public.registros_servicio;
+    v_cita public.citas;
+    v_mascota public.mascotas;
+    v_item RECORD;
+    v_precio public.precios_servicios%ROWTYPE;
+    v_resultado JSONB;
+BEGIN
+    PERFORM petstore_private.requerir_usuario_activo();
+    PERFORM petstore_private.establecer_actor();
+    IF JSONB_TYPEOF(p_adicionales) <> 'array' THEN
+        RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'ADICIONALES_DEBE_SER_ARREGLO';
+    END IF;
+    SELECT * INTO v_registro FROM public.registros_servicio WHERE id = p_registro_servicio_id FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'REGISTRO_NO_ENCONTRADO'; END IF;
+    SELECT * INTO v_cita FROM public.citas WHERE id = v_registro.cita_id FOR UPDATE;
+    PERFORM petstore_private.requerir_acceso_sucursal(v_cita.sucursal_id);
+    SELECT * INTO v_mascota FROM public.mascotas WHERE id = v_cita.mascota_id;
+    IF v_registro.estado = 'completado' AND NOT petstore_private.es_admin_propietario() THEN
+        RAISE EXCEPTION USING ERRCODE = 'PA001', MESSAGE = 'SOLO_ADMIN_PUEDE_EDITAR_COMPLETADO';
+    END IF;
+    DELETE FROM public.registros_servicio_adicionales WHERE registro_servicio_id = p_registro_servicio_id;
+    FOR v_item IN SELECT * FROM JSONB_TO_RECORDSET(p_adicionales) AS x(servicio_id BIGINT, cantidad INTEGER) LOOP
+        IF v_item.servicio_id IS NULL OR COALESCE(v_item.cantidad, 0) < 1 THEN
+            RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'ADICIONAL_INVALIDO';
+        END IF;
+        SELECT ps.* INTO v_precio
+        FROM public.precios_servicios ps
+        INNER JOIN public.servicios s ON s.id = ps.servicio_id
+        WHERE ps.servicio_id = v_item.servicio_id AND ps.especie = v_mascota.especie
+          AND ps.tamano_id = v_registro.tamano_id AND ps.activo = TRUE
+          AND s.activo = TRUE AND s.es_adicional = TRUE;
+        IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'PRECIO_ADICIONAL_NO_ENCONTRADO'; END IF;
+        SELECT CASE WHEN v_registro.usar_promocion THEN COALESCE(ps.precio_promocional, v_precio.precio) ELSE v_precio.precio END
+        INTO v_precio.precio FROM public.precios_servicios ps
+        WHERE ps.servicio_id = v_item.servicio_id AND ps.especie = v_mascota.especie AND ps.tamano_id = v_registro.tamano_id;
+        INSERT INTO public.registros_servicio_adicionales(registro_servicio_id, servicio_id, cantidad, precio, duracion_minutos)
+        VALUES (p_registro_servicio_id, v_item.servicio_id, v_item.cantidad, v_precio.precio, v_precio.duracion_minutos);
+    END LOOP;
+    SELECT COALESCE(JSONB_AGG(TO_JSONB(a) ORDER BY a.servicio_id), '[]'::JSONB) INTO v_resultado
+    FROM public.registros_servicio_adicionales a
+    WHERE a.registro_servicio_id = p_registro_servicio_id AND a.activo = TRUE;
+    UPDATE public.registros_servicio
+    SET monto_final = precio_base + recargo_shampoo
+        + COALESCE((SELECT SUM(a.precio * a.cantidad) FROM public.registros_servicio_adicionales a
+                   WHERE a.registro_servicio_id = p_registro_servicio_id AND a.activo = TRUE), 0)
+        - descuento_cupon
+    WHERE id = p_registro_servicio_id;
+    RETURN v_resultado;
+END;
+$$;
+
+CREATE FUNCTION public.registros_servicio_promocion_aplicar(
+    p_registro_servicio_id BIGINT,
+    p_usar_promocion BOOLEAN
+)
+RETURNS public.registros_servicio
+LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
+AS $$
+DECLARE
+    v_registro public.registros_servicio;
+    v_cita public.citas;
+    v_fila public.registros_servicio;
+BEGIN
+    PERFORM petstore_private.requerir_usuario_activo();
+    PERFORM petstore_private.establecer_actor();
+    SELECT * INTO v_registro FROM public.registros_servicio WHERE id = p_registro_servicio_id FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'PN001', MESSAGE = 'REGISTRO_NO_ENCONTRADO'; END IF;
+    SELECT * INTO v_cita FROM public.citas WHERE id = v_registro.cita_id;
+    PERFORM petstore_private.requerir_acceso_sucursal(v_cita.sucursal_id);
+    IF v_registro.estado = 'completado' AND NOT petstore_private.es_admin_propietario() THEN
+        RAISE EXCEPTION USING ERRCODE = 'PA001', MESSAGE = 'SOLO_ADMIN_PUEDE_EDITAR_COMPLETADO';
+    END IF;
+    UPDATE public.registros_servicio SET usar_promocion = p_usar_promocion
+    WHERE id = p_registro_servicio_id RETURNING * INTO v_fila;
+    RETURN v_fila;
 END;
 $$;
 

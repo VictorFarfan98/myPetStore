@@ -11,7 +11,7 @@ export type AppointmentStatus =
 
 export type AppointmentSource = "whatsapp" | "phone" | "walk_in" | "online";
 
-export type PetSize = "pequeno" | "mediano" | "grande" | "gigante";
+export type PetSize = "pequeno" | "mediano" | "grande" | "gigante" | "pelo_corto" | "pelo_largo";
 
 export type Species = "perro" | "gato" | "otro";
 
@@ -62,14 +62,17 @@ export type ClientesData = {
   pets: Pick<Pet, "id" | "customerId" | "name" | "breed">[];
 };
 
-export type PetSizeOption = { id: number; name: string };
+export type PetSizeOption = { id: number; name: string; species: Species };
 
 export type Service = {
   id: number;
   name: string;
   estimatedDurationMinutes: number;
+  additional?: boolean;
   active: boolean;
 };
+
+export type ServiceDuration = { serviceId: number; species: Species; size: PetSize; minutes: number; promotionalPrice?: string };
 
 export type ShampooOption = { id: number; name: string };
 
@@ -116,6 +119,7 @@ export type GroomingRecord = {
   paidAmount?: string;
   couponId?: string;
   discountAmount?: string;
+  usesPromotion?: boolean;
   conditions?: string[];
   parasites?: string[];
 };
@@ -137,6 +141,7 @@ export type AppData = {
   pets: Pet[];
   sizes?: PetSizeOption[];
   services: Service[];
+  serviceDurations?: ServiceDuration[];
   shampooOptions?: ShampooOption[];
   paymentMethods?: PaymentMethod[];
   payments?: ServicePayment[];

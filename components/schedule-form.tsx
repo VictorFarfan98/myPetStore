@@ -42,9 +42,10 @@ export function ScheduleForm({
     return { value: pet.id, label: `${pet.name} · ${customer?.name ?? "Sin cliente"} · ${customer?.phone ?? ""}` };
   });
 
+  const selectedDuration = data.serviceDurations?.find((item) => item.serviceId === serviceId && item.species === selectedPet?.species && item.size === selectedPet?.size)?.minutes ?? selectedService?.estimatedDurationMinutes ?? 30;
   const startIso = `${date}T${time}:00-06:00`;
   const [hours, minutes] = time.split(":").map(Number);
-  const endTotalMinutes = hours * 60 + minutes + (selectedService?.estimatedDurationMinutes ?? 30);
+  const endTotalMinutes = hours * 60 + minutes + selectedDuration;
   const endHours = String(Math.floor(endTotalMinutes / 60) % 24).padStart(2, "0");
   const endMinutes = String(endTotalMinutes % 60).padStart(2, "0");
   const endIso = `${date}T${endHours}:${endMinutes}:00-06:00`;
