@@ -446,7 +446,8 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     const services = servicesRows.map((service) => ({
       id: service.id,
       name: service.nombre,
-      estimatedDurationMinutes: Math.min(...serviceDurations.filter((item) => item.serviceId === service.id).map((item) => item.minutes), 30),
+      estimatedDurationMinutes: service.duracion_minutos ?? Math.min(...serviceDurations.filter((item) => item.serviceId === service.id).map((item) => item.minutes), 30),
+      generalDurationMinutes: service.duracion_minutos ?? undefined,
       price: service.precio ?? undefined,
       additional: service.es_adicional,
       active: service.activo

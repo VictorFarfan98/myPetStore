@@ -44,8 +44,8 @@ export function ScheduleForm({
   const primaryServices = data.services.filter((service) => !service.additional);
 
   const selectedService = primaryServices.find((service) => service.id === serviceId) ?? primaryServices[0];
-  const selectedPet = data.pets.find((pet) => pet.id === petId) ?? data.pets[0];
-  const selectedCustomer = data.customers.find((customer) => customer.id === selectedPet?.customerId) ?? data.customers[0];
+  const selectedPet = data.pets.find((pet) => pet.id === petId);
+  const selectedCustomer = data.customers.find((customer) => customer.id === selectedPet?.customerId);
   const selectedBranch = data.branches.find((branch) => branch.id === branchId) ?? data.branches[0];
   const groomers = data.users.filter((user) => user.role === "groomer" && user.branchIds.includes(branchId));
   const petOptions = data.pets.map((pet) => {
@@ -53,7 +53,8 @@ export function ScheduleForm({
     return { value: pet.id, label: `${pet.name} · ${customer?.name ?? "Sin cliente"} · ${customer?.phone ?? ""}` };
   });
 
-  const selectedDuration = data.serviceDurations?.find((item) => item.serviceId === serviceId && item.species === selectedPet?.species && item.size === selectedPet?.size)?.minutes ?? selectedService?.estimatedDurationMinutes ?? 30;
+  const durationForService = (id: number) => data.services.find((service) => service.id === id)?.generalDurationMinutes ?? data.serviceDurations?.find((item) => item.serviceId === id && item.species === selectedPet?.species && item.size === selectedPet?.size)?.minutes ?? 30;
+  const selectedDuration = durationForService(serviceId);
   const startIso = `${date}T${time}:00-06:00`;
   const [hours, minutes] = time.split(":").map(Number);
   const endTotalMinutes = hours * 60 + minutes + selectedDuration;
@@ -146,7 +147,7 @@ export function ScheduleForm({
           <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={serviceId} onChange={(event) => setServiceId(Number(event.target.value))}>
             {primaryServices.map((service) => (
               <option key={service.id} value={service.id}>
-                {service.name} · {service.estimatedDurationMinutes} min
+                {service.name} · {durationForService(service.id)} min
               </option>
             ))}
           </select>
@@ -185,6 +186,7 @@ export function ScheduleForm({
           Mensaje WhatsApp sugerido
         </div>
         <p className="mt-2 text-sm leading-6 text-slate-100">{reminder}</p>
+        <p className="mt-2 text-sm text-slate-300">Teléfono del cliente: {selectedCustomer?.phone || "Sin teléfono"}</p>
       </div>
       <input name="id" type="hidden" value={appointment?.id ?? ""} readOnly />
       <input name="sucursal_id" type="hidden" value={branchId} readOnly />

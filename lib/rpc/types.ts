@@ -145,6 +145,7 @@ export type ServicioRow = {
   id: number;
   nombre: string;
   intervalo_recordatorio_dias: number | null;
+  duracion_minutos: number | null;
   es_adicional: boolean;
   precio: string | null;
   activo: boolean;
@@ -153,6 +154,7 @@ export type ServicioRow = {
 export type ServicioInsertParams = {
   p_nombre: string;
   p_intervalo_recordatorio_dias: number | null;
+  p_duracion_minutos: number | null;
   p_es_adicional: boolean;
   p_precio: string | null;
   p_activo: boolean;

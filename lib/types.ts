@@ -69,6 +69,7 @@ export type Service = {
   id: number;
   name: string;
   estimatedDurationMinutes: number;
+  generalDurationMinutes?: number;
   price?: string;
   additional?: boolean;
   active: boolean;

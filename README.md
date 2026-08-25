@@ -1443,13 +1443,13 @@ Acciones
 
 Insertar — servicios_insertar
 
-Firma: servicios_insertar(p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_es_adicional BOOLEAN, p_precio NUMERIC(10, 2), p_activo BOOLEAN)
+Firma: servicios_insertar(p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_duracion_minutos INTEGER, p_es_adicional BOOLEAN, p_precio NUMERIC(10, 2), p_activo BOOLEAN)
 
 Retorno: public.servicios
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Inserta una fila y devuelve la fila creada.
+Comportamiento: Inserta una fila y devuelve la fila creada. `p_duracion_minutos` es obligatorio para servicios principales y se guarda como su duración general.
 
 Obtener por ID — servicios_obtener_por_id
 
@@ -1483,13 +1483,13 @@ Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
 Actualizar — servicios_actualizar
 
-Firma: servicios_actualizar(p_id BIGINT, p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_es_adicional BOOLEAN, p_precio NUMERIC(10, 2), p_activo BOOLEAN)
+Firma: servicios_actualizar(p_id BIGINT, p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_duracion_minutos INTEGER, p_es_adicional BOOLEAN, p_precio NUMERIC(10, 2), p_activo BOOLEAN)
 
 Retorno: public.servicios
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
+Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante. La duración general es obligatoria para servicios principales.
 
 Eliminar lógicamente — servicios_eliminar
 
@@ -1799,7 +1799,7 @@ Retorno: public.citas
 
 Acceso: Usuario con acceso a la sucursal; service_role.
 
-Comportamiento: Inserta una fila y devuelve la fila creada.
+Comportamiento: Inserta una cita y calcula su fin con la duración general del servicio; si no existe, usa la duración configurada para la especie y clasificación de la mascota.
 
 Obtener por ID — citas_obtener_por_id
 
@@ -1859,7 +1859,7 @@ Retorno: public.citas
 
 Acceso: Usuario con acceso a la sucursal; service_role.
 
-Comportamiento: Reprograma una cita, permite cambiar servicio y peluquero y recalcula fin_programado con la duración vigente.
+Comportamiento: Reprograma una cita, permite cambiar servicio y peluquero y recalcula `fin_programado` con la duración general del servicio, usando la duración específica como respaldo.
 
 Cancelar cita — citas_cancelar
 
