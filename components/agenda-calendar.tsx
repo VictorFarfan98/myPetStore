@@ -111,7 +111,7 @@ export function AgendaCalendar({ data }: { data: AppData }) {
   const [selectedBranchId, setSelectedBranchId] = useState<number | "all">("all");
   const [selectedGroomerId, setSelectedGroomerId] = useState<number | "all">("all");
   const [selectedDate, setSelectedDate] = useState(new Date(`${todayInGuatemala()}T12:00:00-06:00`));
-  const [selectedView, setSelectedView] = useState<View>("day");
+  const [selectedView, setSelectedView] = useState<View>("week");
   const [modalState, setModalState] = useState<{ date: string; time: string; appointment?: Appointment } | null>(null);
 
   const selectedBranch = data.branches.find((branch) => branch.id === selectedBranchId);
