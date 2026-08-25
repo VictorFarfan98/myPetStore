@@ -981,7 +981,7 @@ Acciones
 
 Insertar — clientes_insertar
 
-Firma: clientes_insertar(p_nombre TEXT, p_telefono TEXT, p_whatsapp_opt_in BOOLEAN, p_sms_opt_in BOOLEAN, p_notas TEXT, p_activo BOOLEAN)
+Firma: clientes_insertar(p_nombre TEXT, p_telefono TEXT, p_email TEXT, p_whatsapp_opt_in BOOLEAN, p_sms_opt_in BOOLEAN, p_notas TEXT, p_activo BOOLEAN)
 
 Retorno: public.clientes
 
@@ -1021,7 +1021,7 @@ Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
 Actualizar — clientes_actualizar
 
-Firma: clientes_actualizar(p_id BIGINT, p_nombre TEXT, p_telefono TEXT, p_whatsapp_opt_in BOOLEAN, p_sms_opt_in BOOLEAN, p_notas TEXT, p_activo BOOLEAN)
+Firma: clientes_actualizar(p_id BIGINT, p_nombre TEXT, p_telefono TEXT, p_email TEXT, p_whatsapp_opt_in BOOLEAN, p_sms_opt_in BOOLEAN, p_notas TEXT, p_activo BOOLEAN)
 
 Retorno: public.clientes
 

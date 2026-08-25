@@ -119,6 +119,7 @@ function mapCustomer(row: ClienteRow) {
     id: row.id,
     name: row.nombre,
     phone: row.telefono,
+    email: normalizeText(row.email),
     whatsappOptIn: row.whatsapp_opt_in,
     smsOptIn: row.sms_opt_in,
     notes: normalizeText(row.notas)

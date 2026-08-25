@@ -51,6 +51,7 @@ async function clienteId(formData: FormData) {
   const result = await clientesInsertar({
     p_nombre: nombre,
     p_telefono: toE164(telefono),
+    p_email: null,
     p_whatsapp_opt_in: formData.get("cliente_whatsapp_opt_in") === "on",
     p_sms_opt_in: formData.get("cliente_sms_opt_in") === "on",
     p_notas: text(formData, "cliente_notas") || null,

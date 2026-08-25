@@ -7,7 +7,7 @@ import type { ClientesData, Customer } from "@/lib/types";
 import { createCliente, deleteCliente, updateCliente } from "@/lib/clientes-actions";
 import { DataTable } from "./data-table";
 
-const emptyForm = { id: "", nombre: "", telefono: "", whatsapp_opt_in: false, sms_opt_in: false, notas: "", activo: true };
+const emptyForm = { id: "", nombre: "", telefono: "", email: "", whatsapp_opt_in: false, sms_opt_in: false, notas: "", activo: true };
 
 export function ClientesBrowser({ data }: { data: ClientesData }) {
   const [query, setQuery] = useState("");
@@ -21,7 +21,7 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
   console.log("Clientes", data);
   const rows = data.customers
     .map((customer) => ({ customer, pets: data.pets.filter((pet) => pet.customerId === customer.id) }))
-    .filter(({ customer, pets }) => !normalizedQuery || [customer.name, customer.phone, customer.notes, ...pets.flatMap((pet) => [pet.name, pet.breed])].some((value) => value.toLowerCase().includes(normalizedQuery)));
+    .filter(({ customer, pets }) => !normalizedQuery || [customer.name, customer.phone, customer.email, customer.notes, ...pets.flatMap((pet) => [pet.name, pet.breed])].some((value) => value.toLowerCase().includes(normalizedQuery)));
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,7 +36,7 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
   }
 
   function edit(customer: Customer) {
-    setForm({ id: String(customer.id), nombre: customer.name, telefono: customer.phone, whatsapp_opt_in: customer.whatsappOptIn, sms_opt_in: Boolean(customer.smsOptIn), notas: customer.notes, activo: true });
+    setForm({ id: String(customer.id), nombre: customer.name, telefono: customer.phone, email: customer.email, whatsapp_opt_in: customer.whatsappOptIn, sms_opt_in: Boolean(customer.smsOptIn), notas: customer.notes, activo: true });
     setMessage("");
   }
 
@@ -61,6 +61,7 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
         <div className="mt-5"><DataTable rows={rows.map(({ customer, pets }) => ({ ...customer, pets }))} columns={[
           { key: "nombre", header: "Cliente", render: (row) => <span className="font-semibold text-ink">{row.name}</span> },
           { key: "contacto", header: "Contacto", render: (row) => <span>{row.phone}{row.smsOptIn ? " · SMS" : ""}</span> },
+          { key: "email", header: "Correo electrónico", render: (row) => <span>{row.email || "—"}</span> },
           { key: "mascotas", header: "Mascotas", render: (row) => row.pets.map((pet) => pet.name).join(", ") || "—" },
           { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" type="button" onClick={() => edit(row)}>Editar</button><button className="font-semibold text-red-700 hover:underline" type="button" onClick={() => remove(row.id)}>Eliminar</button></div> }
         ]} /></div>
@@ -70,6 +71,7 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
         <div className="mt-5 space-y-4">
           <label className="block text-sm font-medium text-ink">Nombre<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="nombre" required value={form.nombre} onChange={(event) => setForm({ ...form, nombre: event.target.value })} /></label>
           <label className="block text-sm font-medium text-ink">Teléfono<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="telefono" required type="tel" value={form.telefono} onChange={(event) => setForm({ ...form, telefono: event.target.value })} /><span className="mt-1 block text-xs font-normal text-slate-500">8 dígitos o formato E.164.</span></label>
+          <label className="block text-sm font-medium text-ink">Correo electrónico<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
           <div className="space-y-2 text-sm"><label className="flex items-center gap-2"><input name="whatsapp_opt_in" type="checkbox" checked={form.whatsapp_opt_in} onChange={(event) => setForm({ ...form, whatsapp_opt_in: event.target.checked })} /> Acepta WhatsApp</label><label className="flex items-center gap-2"><input name="sms_opt_in" type="checkbox" checked={form.sms_opt_in} onChange={(event) => setForm({ ...form, sms_opt_in: event.target.checked })} /> Acepta SMS</label></div>
           <label className="block text-sm font-medium text-ink">Notas<textarea className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="notas" rows={3} value={form.notas} onChange={(event) => setForm({ ...form, notas: event.target.value })} /></label>
           {message && <p className="rounded-lg bg-cloud px-3 py-2 text-sm text-slate-700" role="status">{message}</p>}
