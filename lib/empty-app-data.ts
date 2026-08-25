@@ -8,7 +8,6 @@ export const emptyAppData: AppData = {
   pets: [],
   sizes: [],
   services: [],
-  shampooOptions: [],
   paymentMethods: [],
   payments: [],
   appointments: [],

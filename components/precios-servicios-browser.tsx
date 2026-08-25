@@ -16,7 +16,9 @@ export function PreciosServiciosBrowser({ rows, services, sizes }: Props) {
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const serviceName = (id: number) => services.find((service) => service.id === id)?.nombre ?? `Servicio #${id}`;
+  const primaryServices = services.filter((service) => !service.es_adicional);
+  const visibleRows = rows.filter((row) => primaryServices.some((service) => service.id === row.servicio_id));
+  const serviceName = (id: number) => primaryServices.find((service) => service.id === id)?.nombre ?? `Servicio #${id}`;
   const sizeName = (id: number) => sizes.find((size) => size.id === id)?.nombre ?? `Tamaño #${id}`;
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -48,7 +50,7 @@ export function PreciosServiciosBrowser({ rows, services, sizes }: Props) {
   return <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
       <div className="mb-5"><h2 className="text-xl font-semibold text-ink">Precios y duración por especie y tamaño</h2><p className="mt-1 text-sm text-slate-500">Configura el precio y tiempo estimado de cada servicio.</p></div>
-      <DataTable rows={rows.map((row) => ({ ...row, id: `${row.servicio_id}-${row.especie}-${row.tamano_id}` }))} columns={[
+      <DataTable rows={visibleRows.map((row) => ({ ...row, id: `${row.servicio_id}-${row.especie}-${row.tamano_id}` }))} columns={[
         { key: "servicio", header: "Servicio", render: (row) => <span className="font-semibold text-ink">{serviceName(row.servicio_id)}</span> },
         { key: "especie", header: "Especie", render: (row) => row.especie === "perro" ? "Perro" : row.especie === "gato" ? "Gato" : "Otro" },
         { key: "tamano", header: "Clasificación", render: (row) => sizeName(row.tamano_id) },
@@ -62,7 +64,7 @@ export function PreciosServiciosBrowser({ rows, services, sizes }: Props) {
     <form className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-panel" onSubmit={submit}>
       <h2 className="text-xl font-semibold text-ink">{editing ? "Editar precio" : "Nuevo precio"}</h2>
       <div className="mt-5 space-y-4">
-        <label className="block text-sm font-medium text-ink">Servicio<select className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal disabled:bg-slate-100" disabled={editing} name="servicio_id" onChange={(event) => setForm({ ...form, servicio_id: event.target.value })} required value={form.servicio_id}><option value="">Selecciona un servicio</option>{services.map((service) => <option key={service.id} value={service.id}>{service.nombre}{service.activo ? "" : " (inactivo)"}</option>)}</select>{editing && <input name="servicio_id" type="hidden" value={form.servicio_id} />}</label>
+        <label className="block text-sm font-medium text-ink">Servicio<select className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal disabled:bg-slate-100" disabled={editing} name="servicio_id" onChange={(event) => setForm({ ...form, servicio_id: event.target.value })} required value={form.servicio_id}><option value="">Selecciona un servicio</option>{primaryServices.map((service) => <option key={service.id} value={service.id}>{service.nombre}{service.activo ? "" : " (inactivo)"}</option>)}</select>{editing && <input name="servicio_id" type="hidden" value={form.servicio_id} />}</label>
         <label className="block text-sm font-medium text-ink">Especie<select className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal disabled:bg-slate-100" disabled={editing} name="especie" onChange={(event) => setForm({ ...form, especie: event.target.value })} required value={form.especie}><option value="perro">Perro</option><option value="gato">Gato</option><option value="otro">Otro</option></select>{editing && <input name="especie" type="hidden" value={form.especie} />}</label>
         <label className="block text-sm font-medium text-ink">Clasificación<select className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal disabled:bg-slate-100" disabled={editing} name="tamano_id" onChange={(event) => setForm({ ...form, tamano_id: event.target.value })} required value={form.tamano_id}><option value="">Selecciona una clasificación</option>{sizes.filter((size) => size.especie === form.especie).map((size) => <option key={size.id} value={size.id}>{size.nombre}{size.activo ? "" : " (inactivo)"}</option>)}</select>{editing && <input name="tamano_id" type="hidden" value={form.tamano_id} />}</label>
         <label className="block text-sm font-medium text-ink">Precio (GTQ)<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" min="0" name="precio" onChange={(event) => setForm({ ...form, precio: event.target.value })} required step="0.01" type="number" value={form.precio} /></label>

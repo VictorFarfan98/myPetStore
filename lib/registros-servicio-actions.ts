@@ -58,7 +58,6 @@ function values(formData: FormData) {
   const servicioId = id(formData, "servicio_id");
   const peluqueroId = id(formData, "peluquero_id");
   const tamanoId = id(formData, "tamano_id");
-  const shampooId = id(formData, "shampoo_id");
   const firma = text(formData, "firma_ingreso_url");
   const couponId = text(formData, "cupon_id") || null;
   const discount = Number(text(formData, "descuento_cupon") || "0");
@@ -67,11 +66,9 @@ function values(formData: FormData) {
   if ((!citaId && !recordId) || !servicioId || !peluqueroId || !tamanoId || !firma) {
     throw new Error("Completa servicio, groomer, tamaño y firma de ingreso.");
   }
-  if ((servicioId === 1 || servicioId === 3) && !shampooId) throw new Error("Selecciona una opción de shampoo para este servicio.");
-
   const flag = (name: string) => formData.get(name) === "on";
   return {
-    citaId, recordId, p_servicio_id: servicioId, p_peluquero_id: peluqueroId, p_tamano_id: tamanoId, p_shampoo_id: servicioId === 1 || servicioId === 3 ? shampooId : null, p_cupon_id: couponId,
+    citaId, recordId, p_servicio_id: servicioId, p_peluquero_id: peluqueroId, p_tamano_id: tamanoId, p_cupon_id: couponId,
     p_descuento_cupon: Number.isFinite(discount) && discount >= 0 ? discount.toFixed(2) : "0",
     adicionales,
     adicionalesConfigurados,
@@ -116,7 +113,6 @@ export async function saveHoja(formData: FormData) {
           p_servicio_id: input.p_servicio_id,
           p_peluquero_id: input.p_peluquero_id,
           p_tamano_id: input.p_tamano_id,
-          p_shampoo_id: input.p_shampoo_id,
           p_cupon_id: input.p_cupon_id,
           p_heridas_visibles: input.p_heridas_visibles,
           p_raspones: input.p_raspones,
@@ -137,7 +133,6 @@ export async function saveHoja(formData: FormData) {
           p_calificacion_satisfaccion: null,
           p_comentario_satisfaccion: null,
           p_precio_base: null,
-          p_recargo_shampoo: "0",
           p_descuento_cupon: input.p_descuento_cupon,
           p_monto_final: null,
           p_monto_pagado: null,
@@ -148,7 +143,6 @@ export async function saveHoja(formData: FormData) {
           p_servicio_id: input.p_servicio_id,
           p_peluquero_id: input.p_peluquero_id,
           p_tamano_id: input.p_tamano_id,
-          p_shampoo_id: input.p_shampoo_id,
           p_heridas_visibles: input.p_heridas_visibles,
           p_raspones: input.p_raspones,
           p_piel_irritada: input.p_piel_irritada,

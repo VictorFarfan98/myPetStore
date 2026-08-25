@@ -25,14 +25,15 @@ export function ScheduleForm({
   const [branchId, setBranchId] = useState(appointment?.branchId ?? data.branches[0]?.id ?? 0);
   const [petId, setPetId] = useState(appointment?.petId ?? 0);
   const [groomerId, setGroomerId] = useState(appointment?.groomerId ?? data.users.find((user) => user.role === "groomer")?.id ?? 0);
-  const [serviceId, setServiceId] = useState(appointment?.serviceIds[0] ?? data.services[0]?.id ?? 0);
+  const [serviceId, setServiceId] = useState(appointment?.serviceIds[0] ?? data.services.find((service) => !service.additional)?.id ?? 0);
   const [date, setDate] = useState(appointment ? appointment.scheduledStart.slice(0, 10) : initialDate);
   const [time, setTime] = useState(appointment ? new Date(appointment.scheduledStart).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guatemala" }) : initialTime);
   const [source, setSource] = useState(appointment?.source === "phone" ? "telefono" : appointment?.source === "whatsapp" ? "whatsapp" : "presencial");
   const [message, setMessage] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const primaryServices = data.services.filter((service) => !service.additional);
 
-  const selectedService = data.services.find((service) => service.id === serviceId) ?? data.services[0];
+  const selectedService = primaryServices.find((service) => service.id === serviceId) ?? primaryServices[0];
   const selectedPet = data.pets.find((pet) => pet.id === petId) ?? data.pets[0];
   const selectedCustomer = data.customers.find((customer) => customer.id === selectedPet?.customerId) ?? data.customers[0];
   const selectedBranch = data.branches.find((branch) => branch.id === branchId) ?? data.branches[0];
@@ -133,7 +134,7 @@ export function ScheduleForm({
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           Servicio
           <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={serviceId} onChange={(event) => setServiceId(Number(event.target.value))}>
-            {data.services.map((service) => (
+            {primaryServices.map((service) => (
               <option key={service.id} value={service.id}>
                 {service.name} · {service.estimatedDurationMinutes} min
               </option>

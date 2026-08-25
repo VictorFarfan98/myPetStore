@@ -15,7 +15,6 @@ import type {
   RegistroServicioRow,
   RecordatorioCitaRow,
   ServicioRow,
-  OpcionShampooRow,
   SucursalRow,
   TamanoRow,
   UsuarioRow,
@@ -275,7 +274,7 @@ async function buildGroomingRecords(args: {
         serviceId: registro.servicio_id,
         groomerId: registro.peluquero_id,
         sizeId: registro.tamano_id,
-        shampooId: registro.shampoo_id ?? undefined,
+        additionalServiceIds: registro.adicionales?.map((additional) => additional.servicio_id) ?? [],
         actualStart: toIso(registro.inicio_real),
         actualEnd: toIso(registro.fin_real),
         groomerNotes: normalizeText(registro.notas_servicio),
@@ -327,7 +326,6 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       petsResult,
       tamanosResult,
       servicesResult,
-      shampooOptionsResult,
       preciosServiciosResult,
       paymentMethodsResult,
       citasResult,
@@ -344,7 +342,6 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       rpcCall<RpcListEnvelope<MascotaRow>>(RPC_NAMES.petsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<TamanoRow>>(RPC_NAMES.sizesList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<ServicioRow>>(RPC_NAMES.servicesList, { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<RpcListEnvelope<OpcionShampooRow>>(RPC_NAMES.shampooOptionsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<PrecioServicioRow>>(RPC_NAMES.servicePricesList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<MetodoPagoRow>>(RPC_NAMES.paymentMethodsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<CitaRow>>(RPC_NAMES.appointmentsList, { p_limite: null, p_offset: 0 }, supabase),
@@ -366,7 +363,6 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     const tamanos = must(tamanosResult, "tamanos");
     const pets = must(petsResult, "mascotas").filter((pet) => pet.activo);
     const servicesRows = must(servicesResult, "servicios").filter((service) => service.activo);
-    const shampooOptions = must(shampooOptionsResult, "opciones_shampoo").filter((option) => option.activo).map((option) => ({ id: option.id, name: option.nombre }));
     const precioServicios = must(preciosServiciosResult, "precios_servicios");
     const paymentMethods = must(paymentMethodsResult, "metodos_pago").filter((method) => method.activo).map((method) => ({ id: method.id, name: method.nombre }));
     const citas = must(citasResult, "citas");
@@ -447,6 +443,7 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       id: service.id,
       name: service.nombre,
       estimatedDurationMinutes: Math.min(...serviceDurations.filter((item) => item.serviceId === service.id).map((item) => item.minutes), 30),
+      price: service.precio ?? undefined,
       additional: service.es_adicional,
       active: service.activo
     }));
@@ -460,7 +457,6 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       sizes: tamanos.filter((tamano) => tamano.activo).map((tamano) => ({ id: tamano.id, name: tamano.nombre, species: normalizeSpecies(tamano.especie) })),
       services,
       serviceDurations,
-      shampooOptions,
       paymentMethods,
       payments,
       appointments,

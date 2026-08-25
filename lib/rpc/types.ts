@@ -144,6 +144,7 @@ export type ServicioRow = {
   nombre: string;
   intervalo_recordatorio_dias: number | null;
   es_adicional: boolean;
+  precio: string | null;
   activo: boolean;
 };
 
@@ -151,25 +152,11 @@ export type ServicioInsertParams = {
   p_nombre: string;
   p_intervalo_recordatorio_dias: number | null;
   p_es_adicional: boolean;
+  p_precio: string | null;
   p_activo: boolean;
 };
 
 export type ServicioUpdateParams = ServicioInsertParams & {
-  p_id: number;
-};
-
-export type OpcionShampooRow = {
-  id: number;
-  nombre: string;
-  activo: boolean;
-};
-
-export type OpcionShampooInsertParams = {
-  p_nombre: string;
-  p_activo: boolean;
-};
-
-export type OpcionShampooUpdateParams = OpcionShampooInsertParams & {
   p_id: number;
 };
 
@@ -208,22 +195,6 @@ export type PrecioServicioInsertParams = {
 };
 
 export type PrecioServicioUpdateParams = PrecioServicioInsertParams;
-
-export type PrecioShampooRow = {
-  shampoo_id: number;
-  tamano_id: number;
-  recargo: string;
-  activo: boolean;
-};
-
-export type PrecioShampooInsertParams = {
-  p_shampoo_id: number;
-  p_tamano_id: number;
-  p_recargo: string;
-  p_activo: boolean;
-};
-
-export type PrecioShampooUpdateParams = PrecioShampooInsertParams;
 
 export type MetodoPagoRow = {
   id: number;
@@ -372,7 +343,6 @@ export type RegistroServicioRow = {
   peluquero_id: number;
   tamano_id: number;
   usar_promocion: boolean;
-  shampoo_id: number | null;
   cupon_id: string | null;
   estado: string;
   activo: boolean;
@@ -388,7 +358,6 @@ export type RegistroServicioRow = {
   foto_antes_url: string | null;
   foto_despues_url: string | null;
   precio_base: string | null;
-  recargo_shampoo: string | null;
   descuento_cupon: string | null;
   monto_final: string | null;
   monto_pagado: string | null;
@@ -402,6 +371,7 @@ export type RegistroServicioRow = {
   pulgas: boolean;
   garrapatas: boolean;
   piojos: boolean;
+  adicionales?: Array<{ servicio_id: number }>;
 };
 
 export type RegistroServicioInsertParams = {
@@ -409,7 +379,6 @@ export type RegistroServicioInsertParams = {
   p_servicio_id: number;
   p_peluquero_id: number;
   p_tamano_id: number;
-  p_shampoo_id: number | null;
   p_heridas_visibles: boolean;
   p_raspones: boolean;
   p_piel_irritada: boolean;
@@ -433,7 +402,6 @@ export type RegistroServicioUpdateParams = {
   p_servicio_id: number;
   p_peluquero_id: number;
   p_tamano_id: number;
-  p_shampoo_id: number | null;
   p_cupon_id: string | null;
   p_heridas_visibles: boolean;
   p_raspones: boolean;
@@ -454,7 +422,6 @@ export type RegistroServicioUpdateParams = {
   p_calificacion_satisfaccion: number | null;
   p_comentario_satisfaccion: string | null;
   p_precio_base: string | null;
-  p_recargo_shampoo: string | null;
   p_descuento_cupon: string | null;
   p_monto_final: string | null;
   p_monto_pagado: string | null;
@@ -550,7 +517,6 @@ export type RegistrosServicioCompletarParams = {
   p_servicio_id: number;
   p_peluquero_id: number;
   p_tamano_id: number;
-  p_shampoo_id: number | null;
   p_cupon_id: string | null;
   p_firma_entrega_url: string | null;
   p_foto_antes_url: string | null;
@@ -559,7 +525,6 @@ export type RegistrosServicioCompletarParams = {
   p_calificacion_satisfaccion: number | null;
   p_comentario_satisfaccion: string | null;
   p_precio_base: string;
-  p_recargo_shampoo: string;
   p_descuento_cupon: string;
   p_monto_final: string;
   p_monto_pagado: string;

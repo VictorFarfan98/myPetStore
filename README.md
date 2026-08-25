@@ -6,9 +6,9 @@ Spanish-first grooming operations app for a Guatemala pet store chain.
 
 `tamanos.especie` separa las clasificaciones por especie: los perros usan tamaños y los gatos usan `Pelo corto` o `Pelo largo`. El nombre `tamano_id` se conserva temporalmente en los RPC existentes para mantener compatibilidad.
 
-Los servicios adicionales reutilizan `servicios` con `es_adicional = TRUE`. Sus precios se configuran en `precios_servicios` y las selecciones de una hoja se guardan en `registros_servicio_adicionales` con precio y duración históricos.
+Los servicios adicionales reutilizan `servicios` con `es_adicional = TRUE`. Incluyen los tipos de shampoo, Rapado y Desenredo de nudos; nunca pueden usarse como servicio principal. Su precio fijo se configura directamente en `servicios.precio`; `precios_servicios` queda para los servicios principales. Las selecciones de una hoja se guardan en `registros_servicio_adicionales` con precio y duración históricos.
 
-El precio promocional se configura opcionalmente en cada fila de `precios_servicios` con `precio_promocional`. El gerente decide en la hoja de servicio si lo aplica mediante `usar_promocion`; las hojas existentes conservan su precio histórico.
+El precio promocional de los servicios principales se configura opcionalmente en cada fila de `precios_servicios` con `precio_promocional`. El gerente decide en la hoja de servicio si lo aplica mediante `usar_promocion`; las hojas existentes conservan su precio histórico.
 
 ## What is included
 
@@ -407,11 +407,11 @@ const { data, error } = await supabase.rpc('pagos_reemplazar_lista', {
   p_motivo: null,
 })
 
-La función desactiva los pagos activos anteriores, inserta los nuevos y recalcula monto_pagado. El registro sincroniza precio_base, recargo_shampoo y monto_final con el servicio, tamaño, shampoo y descuento guardados en la hoja. En un servicio completado, solo administrador o propietario puede modificar la lista y la suma debe coincidir exactamente con monto_final.
+La función desactiva los pagos activos anteriores, inserta los nuevos y recalcula monto_pagado. El registro sincroniza precio_base y monto_final con el servicio principal, los servicios adicionales y el descuento guardados en la hoja. En un servicio completado, solo administrador o propietario puede modificar la lista y la suma debe coincidir exactamente con monto_final.
 
 Completar un servicio
 
-registros_servicio_completar recibe la información final, los montos y la lista completa de pagos. PostgreSQL verifica que precio_base y recargo_shampoo coincidan con las configuraciones activas, valida la fórmula final, el cupón, las fotos, la firma y la suma de pagos, y realiza todo en una sola transacción.
+registros_servicio_completar recibe la información final, los montos y la lista completa de pagos. PostgreSQL verifica que el precio base y los servicios adicionales coincidan con las configuraciones activas, valida la fórmula final, el cupón, las fotos, la firma y la suma de pagos, y realiza todo en una sola transacción.
 
 Consulta la firma exacta en el catálogo de RPC de este documento o en rpc.sql antes de construir el objeto de parámetros.
 
@@ -472,7 +472,7 @@ sincroniza esos datos con la cita y la mascota, sin cambiar fin_programado;
 
 valida precios configurados activos;
 
-valida shampoo cuando corresponde;
+valida los servicios adicionales configurados;
 
 valida fotos requeridas y firma de entrega;
 
@@ -510,7 +510,7 @@ Las carpetas son prefijos lógicos y aparecen cuando se sube el primer objeto. L
 
 Referencia organizada de RPC
 
-rpc.sql expone 121 funciones públicas. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
+rpc.sql expone 109 funciones públicas. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
 
 Convención de esta sección
 
@@ -632,26 +632,6 @@ insertar, obtener, listar, listar todos, actualizar, soft delete
 
 
 precios_servicios
-
-insertar, obtener, listar, listar todos, actualizar, soft delete
-
-—
-
-6
-
-
-
-opciones_shampoo
-
-insertar, obtener, listar, listar todos, actualizar, soft delete
-
-—
-
-6
-
-
-
-precios_shampoo
 
 insertar, obtener, listar, listar todos, actualizar, soft delete
 
@@ -1463,7 +1443,7 @@ Acciones
 
 Insertar — servicios_insertar
 
-Firma: servicios_insertar(p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_activo BOOLEAN)
+Firma: servicios_insertar(p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_es_adicional BOOLEAN, p_precio NUMERIC(10, 2), p_activo BOOLEAN)
 
 Retorno: public.servicios
 
@@ -1503,7 +1483,7 @@ Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
 Actualizar — servicios_actualizar
 
-Firma: servicios_actualizar(p_id BIGINT, p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_activo BOOLEAN)
+Firma: servicios_actualizar(p_id BIGINT, p_nombre TEXT, p_intervalo_recordatorio_dias INTEGER, p_es_adicional BOOLEAN, p_precio NUMERIC(10, 2), p_activo BOOLEAN)
 
 Retorno: public.servicios
 
@@ -1521,7 +1501,7 @@ Acceso: Administrador o propietario; service_role.
 
 Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
 
-precios_servicios — Precios y duraciones de servicios por especie y clasificación
+precios_servicios — Precios y duraciones de servicios principales por especie y clasificación
 
 Resumen
 
@@ -1600,174 +1580,6 @@ Eliminar lógicamente — precios_servicios_eliminar
 Firma: precios_servicios_eliminar(p_servicio_id BIGINT, p_especie public.especie_mascota, p_tamano_id BIGINT)
 
 Retorno: public.precios_servicios
-
-Acceso: Administrador o propietario; service_role.
-
-Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
-
-opciones_shampoo — Opciones de shampoo
-
-Resumen
-
-Valor
-
-Objeto principal
-
-public.opciones_shampoo
-
-Cantidad de RPC
-
-6
-
-Operaciones estándar
-
-insertar, obtener, listar, listar todos, actualizar, soft delete
-
-Operaciones específicas
-
-—
-
-Acciones
-
-Insertar — opciones_shampoo_insertar
-
-Firma: opciones_shampoo_insertar(p_nombre TEXT, p_activo BOOLEAN)
-
-Retorno: public.opciones_shampoo
-
-Acceso: Administrador o propietario; service_role.
-
-Comportamiento: Inserta una fila y devuelve la fila creada.
-
-Obtener por ID — opciones_shampoo_obtener_por_id
-
-Firma: opciones_shampoo_obtener_por_id(p_id BIGINT)
-
-Retorno: public.opciones_shampoo
-
-Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
-
-Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
-
-Listar activos — opciones_shampoo_listar
-
-Firma: opciones_shampoo_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
-
-Retorno: JSONB
-
-Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
-
-Comportamiento: Lista únicamente registros activos con paginación opcional.
-
-Listar todos — opciones_shampoo_listar_todos
-
-Firma: opciones_shampoo_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
-
-Retorno: JSONB
-
-Acceso: Administrador o propietario; service_role.
-
-Comportamiento: Lista registros activos e inactivos con paginación opcional.
-
-Actualizar — opciones_shampoo_actualizar
-
-Firma: opciones_shampoo_actualizar(p_id BIGINT, p_nombre TEXT, p_activo BOOLEAN)
-
-Retorno: public.opciones_shampoo
-
-Acceso: Administrador o propietario; service_role.
-
-Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
-
-Eliminar lógicamente — opciones_shampoo_eliminar
-
-Firma: opciones_shampoo_eliminar(p_id BIGINT)
-
-Retorno: public.opciones_shampoo
-
-Acceso: Administrador o propietario; service_role.
-
-Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultante.
-
-precios_shampoo — Recargos de shampoo
-
-Resumen
-
-Valor
-
-Objeto principal
-
-public.precios_shampoo
-
-Cantidad de RPC
-
-6
-
-Operaciones estándar
-
-insertar, obtener, listar, listar todos, actualizar, soft delete
-
-Operaciones específicas
-
-—
-
-Acciones
-
-Insertar — precios_shampoo_insertar
-
-Firma: precios_shampoo_insertar(p_shampoo_id BIGINT, p_tamano_id BIGINT, p_recargo NUMERIC(10, 2), p_activo BOOLEAN)
-
-Retorno: public.precios_shampoo
-
-Acceso: Administrador o propietario; service_role.
-
-Comportamiento: Inserta una fila y devuelve la fila creada.
-
-Obtener por ID — precios_shampoo_obtener_por_id
-
-Firma: precios_shampoo_obtener_por_id(p_shampoo_id BIGINT, p_tamano_id BIGINT)
-
-Retorno: public.precios_shampoo
-
-Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
-
-Comportamiento: Obtiene una fila por su llave; lanza REGISTRO_NO_ENCONTRADO si no existe o no es visible por RLS.
-
-Listar activos — precios_shampoo_listar
-
-Firma: precios_shampoo_listar(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
-
-Retorno: JSONB
-
-Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
-
-Comportamiento: Lista únicamente registros activos con paginación opcional.
-
-Listar todos — precios_shampoo_listar_todos
-
-Firma: precios_shampoo_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
-
-Retorno: JSONB
-
-Acceso: Administrador o propietario; service_role.
-
-Comportamiento: Lista registros activos e inactivos con paginación opcional.
-
-Actualizar — precios_shampoo_actualizar
-
-Firma: precios_shampoo_actualizar(p_shampoo_id BIGINT, p_tamano_id BIGINT, p_recargo NUMERIC(10, 2), p_activo BOOLEAN)
-
-Retorno: public.precios_shampoo
-
-Acceso: Administrador o propietario; service_role.
-
-Comportamiento: Realiza una actualización completa con parámetros tipados y devuelve la fila resultante.
-
-Eliminar lógicamente — precios_shampoo_eliminar
-
-Firma: precios_shampoo_eliminar(p_shampoo_id BIGINT, p_tamano_id BIGINT)
-
-Retorno: public.precios_shampoo
 
 Acceso: Administrador o propietario; service_role.
 
@@ -2103,7 +1915,7 @@ Acciones
 
 Insertar — registros_servicio_insertar
 
-Firma: registros_servicio_insertar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
+Firma: registros_servicio_insertar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
 
 Retorno: public.registros_servicio
 
@@ -2113,7 +1925,7 @@ Comportamiento: Inserta una fila y devuelve la fila creada.
 
 Iniciar servicio — registros_servicio_iniciar
 
-Firma: registros_servicio_iniciar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
+Firma: registros_servicio_iniciar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
 
 Retorno: public.registros_servicio
 
@@ -2153,7 +1965,7 @@ Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
 Actualizar — registros_servicio_actualizar
 
-Firma: registros_servicio_actualizar(p_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_cupon_id UUID, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_recargo_shampoo NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_activo BOOLEAN, p_pagos JSONB DEFAULT NULL, p_motivo TEXT DEFAULT NULL)
+Firma: registros_servicio_actualizar(p_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_cupon_id UUID, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_activo BOOLEAN, p_pagos JSONB DEFAULT NULL, p_motivo TEXT DEFAULT NULL)
 
 Retorno: public.registros_servicio
 
@@ -2173,7 +1985,7 @@ Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultan
 
 Completar servicio — registros_servicio_completar
 
-Firma: registros_servicio_completar(p_registro_servicio_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_shampoo_id BIGINT, p_cupon_id UUID, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_recargo_shampoo NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_pagos JSONB)
+Firma: registros_servicio_completar(p_registro_servicio_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_cupon_id UUID, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_pagos JSONB)
 
 Retorno: JSONB
 
