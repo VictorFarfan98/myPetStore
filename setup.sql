@@ -260,7 +260,7 @@ CREATE TABLE public.servicios (
             OR intervalo_recordatorio_dias > 0
     ),
     es_adicional BOOLEAN NOT NULL DEFAULT FALSE,
-    precio NUMERIC(10, 2) NULL CHECK (precio IS NULL OR precio > 0),
+    precio NUMERIC(10, 2) NULL CHECK (precio IS NULL OR precio >= 0),
     activo BOOLEAN NOT NULL DEFAULT TRUE,
     creado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

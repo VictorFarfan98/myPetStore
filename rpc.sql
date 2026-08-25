@@ -2150,7 +2150,7 @@ BEGIN
     PERFORM petstore_private.requerir_admin_propietario();
     PERFORM petstore_private.establecer_actor();
 
-    IF p_es_adicional AND (p_precio IS NULL OR p_precio <= 0) THEN
+    IF p_es_adicional AND (p_precio IS NULL OR p_precio < 0) THEN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'PRECIO_ADICIONAL_REQUERIDO';
     END IF;
 
@@ -2295,7 +2295,7 @@ BEGIN
     PERFORM petstore_private.requerir_admin_propietario();
     PERFORM petstore_private.establecer_actor();
 
-    IF p_es_adicional AND (p_precio IS NULL OR p_precio <= 0) THEN
+    IF p_es_adicional AND (p_precio IS NULL OR p_precio < 0) THEN
         RAISE EXCEPTION USING ERRCODE = 'PV001', MESSAGE = 'PRECIO_ADICIONAL_REQUERIDO';
     END IF;
 
