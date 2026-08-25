@@ -231,12 +231,14 @@ function RatingModal({ recordId, groomerName, onClose }: { recordId: number; gro
 export function HojasBrowser({
   data,
   initialView,
+  initialDate,
   initialBranchId,
   historyPage,
   historyPageSize
 }: {
   data: AppData;
   initialView: "today" | "history";
+  initialDate: string;
   initialBranchId: number | null;
   historyPage: number;
   historyPageSize: number;
@@ -246,6 +248,8 @@ export function HojasBrowser({
   const [savedMessage, setSavedMessage] = useState("");
   const [rating, setRating] = useState<{ recordId: number; groomerName: string } | null>(null);
   const [view, setView] = useState<"today" | "history">(initialView);
+  const today = todayInGuatemala();
+  const [selectedDate, setSelectedDate] = useState(initialDate || today);
   const [status, setStatus] = useState<AppointmentStatus | "all">("all");
   const [query, setQuery] = useState("");
   const onlyBranch = data.branches.length === 1 ? data.branches[0] : undefined;
@@ -259,33 +263,38 @@ export function HojasBrowser({
       const record = recordsByAppointment.get(appointment.id);
       const pet = data.pets.find((item) => item.id === appointment.petId);
       const customer = data.customers.find((item) => item.id === pet?.customerId);
-      if (view === "today" && appointmentDate(appointment.scheduledStart) !== todayInGuatemala()) return false;
+      if (view === "today" && appointmentDate(appointment.scheduledStart) !== selectedDate) return false;
       if (view === "history" && !record) return false;
       if (branchId !== "all" && appointment.branchId !== branchId) return false;
       if (status !== "all" && appointment.status !== status) return false;
       return !normalizedQuery || `${pet?.name ?? ""} ${customer?.name ?? ""}`.toLocaleLowerCase().includes(normalizedQuery);
     });
-  }, [branchId, data, query, recordsByAppointment, status, view]);
+  }, [branchId, data, query, recordsByAppointment, selectedDate, status, view]);
   const totalPages = Math.max(1, Math.ceil((data.groomingRecordsTotal ?? 0) / historyPageSize));
   const changeView = (nextView: "today" | "history") => {
     setView(nextView);
     setStatus("all");
     setQuery("");
     const branch = branchId === "all" ? "" : `&sucursal_id=${branchId}`;
-    router.push(nextView === "history" ? `/hojas?view=history&page=1${branch}` : `/hojas${branch ? `?sucursal_id=${branchId}` : ""}`);
+    router.push(nextView === "history" ? `/hojas?view=history&page=1${branch}` : `/hojas?fecha=${selectedDate}${branch}`);
   };
   const changeBranch = (value: string) => {
     const nextBranchId = value === "all" ? "all" : Number(value);
     setBranchId(nextBranchId);
-    router.push(view === "history" ? `/hojas?view=history&page=1${nextBranchId === "all" ? "" : `&sucursal_id=${nextBranchId}`}` : `/hojas${nextBranchId === "all" ? "" : `?sucursal_id=${nextBranchId}`}`);
+    router.push(view === "history" ? `/hojas?view=history&page=1${nextBranchId === "all" ? "" : `&sucursal_id=${nextBranchId}`}` : `/hojas?fecha=${selectedDate}${nextBranchId === "all" ? "" : `&sucursal_id=${nextBranchId}`}`);
+  };
+  const changeDate = (date: string) => {
+    if (!date) return;
+    setSelectedDate(date);
+    router.push(`/hojas?fecha=${date}${branchId === "all" ? "" : `&sucursal_id=${branchId}`}`);
   };
   return <div>
     {rating && <RatingModal recordId={rating.recordId} groomerName={rating.groomerName} onClose={() => { setRating(null); setSavedMessage("La hoja de servicio se guardó correctamente."); }} />}
     {savedMessage && <div className="mb-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 shadow-sm" role="status" aria-live="polite"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /><p className="flex-1 text-sm font-semibold">{savedMessage}</p><button type="button" onClick={() => setSavedMessage("")} className="focus-ring rounded p-1" aria-label="Cerrar confirmación"><X className="h-4 w-4" aria-hidden="true" /></button></div>}
     <div className="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-panel">
-      <div className="flex flex-wrap gap-2"><button className={`focus-ring rounded-lg px-3 py-2 text-sm font-semibold ${view === "today" ? "bg-jade text-white" : "border border-slate-300 text-slate-700"}`} onClick={() => changeView("today")} type="button">Cola de hoy</button><button className={`focus-ring rounded-lg px-3 py-2 text-sm font-semibold ${view === "history" ? "bg-jade text-white" : "border border-slate-300 text-slate-700"}`} onClick={() => changeView("history")} type="button">Historial</button></div>
-      <div className="mt-3 grid gap-3 md:grid-cols-[1fr_12rem_12rem]"><label className="grid gap-1 text-sm font-medium text-slate-700">Buscar mascota o cliente<input className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ej. Frida" /></label><label className="grid gap-1 text-sm font-medium text-slate-700">Sucursal<select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={branchId} disabled={Boolean(onlyBranch)} onChange={(event) => changeBranch(event.target.value)}><option value="all">Todas</option>{data.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label><label className="grid gap-1 text-sm font-medium text-slate-700">Estado<select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={status} onChange={(event) => setStatus(event.target.value as AppointmentStatus | "all")}><option value="all">Todos</option><option value="scheduled">Programadas</option><option value="confirmed">Confirmadas</option><option value="checked_in">Recibidas</option><option value="in_progress">En progreso</option><option value="completed">Completadas</option><option value="cancelled">Canceladas</option><option value="no_show">No asistió</option></select></label></div>
-      <p className="mt-3 text-sm text-slate-500">{view === "today" ? `${appointments.length} cita${appointments.length === 1 ? "" : "s"} para hoy.` : `Página ${historyPage} de ${totalPages} · ${data.groomingRecordsTotal ?? 0} hojas registradas.`}</p>
+      <div className="flex flex-wrap gap-2"><button className={`focus-ring rounded-lg px-3 py-2 text-sm font-semibold ${view === "today" ? "bg-jade text-white" : "border border-slate-300 text-slate-700"}`} onClick={() => changeView("today")} type="button">Hojas por fecha</button><button className={`focus-ring rounded-lg px-3 py-2 text-sm font-semibold ${view === "history" ? "bg-jade text-white" : "border border-slate-300 text-slate-700"}`} onClick={() => changeView("history")} type="button">Historial</button></div>
+      <div className={`mt-3 grid gap-3 ${view === "today" ? "md:grid-cols-2 xl:grid-cols-[1fr_12rem_12rem_12rem]" : "md:grid-cols-[1fr_12rem_12rem]"}`}><label className="grid gap-1 text-sm font-medium text-slate-700">Buscar mascota o cliente<input className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ej. Frida" /></label>{view === "today" && <label className="grid gap-1 text-sm font-medium text-slate-700">Fecha<input className="focus-ring rounded-lg border border-slate-300 px-3 py-2" type="date" min={today} value={selectedDate} onChange={(event) => changeDate(event.target.value)} /></label>}<label className="grid gap-1 text-sm font-medium text-slate-700">Sucursal<select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={branchId} disabled={Boolean(onlyBranch)} onChange={(event) => changeBranch(event.target.value)}><option value="all">Todas</option>{data.branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label><label className="grid gap-1 text-sm font-medium text-slate-700">Estado<select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={status} onChange={(event) => setStatus(event.target.value as AppointmentStatus | "all")}><option value="all">Todos</option><option value="scheduled">Programadas</option><option value="confirmed">Confirmadas</option><option value="checked_in">Recibidas</option><option value="in_progress">En progreso</option><option value="completed">Completadas</option><option value="cancelled">Canceladas</option><option value="no_show">No asistió</option></select></label></div>
+      <p className="mt-3 text-sm text-slate-500">{view === "today" ? `${appointments.length} cita${appointments.length === 1 ? "" : "s"} ${selectedDate === today ? "para hoy" : "para la fecha seleccionada"}.` : `Página ${historyPage} de ${totalPages} · ${data.groomingRecordsTotal ?? 0} hojas registradas.`}</p>
     </div>
     <div className="space-y-4">{appointments.map((appointment) => { const record = recordsByAppointment.get(appointment.id); const pet = data.pets.find((item) => item.id === appointment.petId); const customer = data.customers.find((item) => item.id === pet?.customerId); const state = hojaState(record?.outcome); const editable = !record || record.outcome === "en_progreso"; return <article key={appointment.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-jade" /><h2 className="text-xl font-semibold text-ink">{pet?.name}</h2></div><p className="mt-1 text-sm text-slate-500">{customer?.name} · {new Date(appointment.scheduledStart).toLocaleString("es-GT", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Guatemala" })}</p><p className="mt-1 text-sm text-slate-600">{record ? `Hoja #${record.id}` : "Hoja pendiente de ingreso"} <span className={`ml-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${state.className}`}>{record ? state.label : "Pendiente"}</span></p></div><div className="flex flex-wrap gap-2">{record && <button onClick={() => { setPaymentOpenId(paymentOpenId === appointment.id ? null : appointment.id); setOpenId(null); }} className="focus-ring rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800" type="button">{paymentOpenId === appointment.id ? "Cerrar pagos" : "Registrar pagos"}</button>}{editable ? <button onClick={() => { setOpenId(openId === appointment.id ? null : appointment.id); setPaymentOpenId(null); }} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button">{openId === appointment.id ? "Cerrar" : record ? "Editar hoja" : "Llenar hoja"}</button> : <span className={`rounded-lg px-3 py-2 text-sm font-semibold ${state.className}`}>{state.label}</span>}</div></div>{paymentOpenId === appointment.id && record && <PaymentEditor record={record} totalAmount={record.finalAmount} methods={data.paymentMethods ?? []} payments={data.payments ?? []} onClose={() => setPaymentOpenId(null)} />}{openId === appointment.id && editable && <SheetForm data={data} appointmentId={appointment.id} record={record} onClose={() => setOpenId(null)} onSaved={(result) => { setOpenId(null); if (result.completed && data.ratingsEnabled !== false && result.recordId) { setRating({ recordId: result.recordId, groomerName: data.users.find((user) => user.id === result.groomerId)?.name ?? "el groomer" }); } else setSavedMessage("La hoja de servicio se guardó correctamente."); }} />}</article>; })}</div>
     {!appointments.length && <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">No hay hojas para los filtros seleccionados.</div>}
