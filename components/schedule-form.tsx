@@ -8,6 +8,16 @@ import type { AppData, Appointment } from "@/lib/types";
 import { createCita, deleteCita, updateCita } from "@/lib/citas-actions";
 import { SearchableSelect } from "./searchable-select";
 
+const sourceValues: Record<Appointment["source"], string> = {
+  phone: "telefono",
+  walk_in: "presencial",
+  whatsapp: "whatsapp",
+  google: "google",
+  whatsapp_ad: "pauta_whatsapp",
+  instagram_ad: "pauta_instagram",
+  online: "presencial"
+};
+
 export function ScheduleForm({
   data,
   initialDate = todayInGuatemala(),
@@ -28,7 +38,7 @@ export function ScheduleForm({
   const [serviceId, setServiceId] = useState(appointment?.serviceIds[0] ?? data.services.find((service) => !service.additional)?.id ?? 0);
   const [date, setDate] = useState(appointment ? appointment.scheduledStart.slice(0, 10) : initialDate);
   const [time, setTime] = useState(appointment ? new Date(appointment.scheduledStart).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guatemala" }) : initialTime);
-  const [source, setSource] = useState(appointment?.source === "phone" ? "telefono" : appointment?.source === "whatsapp" ? "whatsapp" : "presencial");
+  const [source, setSource] = useState(sourceValues[appointment?.source ?? "walk_in"]);
   const [message, setMessage] = useState("");
   const [isPending, setIsPending] = useState(false);
   const primaryServices = data.services.filter((service) => !service.additional);
@@ -99,7 +109,7 @@ export function ScheduleForm({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-ink">{appointment ? "Editar cita" : "Nueva cita"}</h2>
-          <p className="text-sm text-slate-500">Entrada manual para WhatsApp, telefono o mostrador.</p>
+          <p className="text-sm text-slate-500">Registra la cita y su canal de origen.</p>
         </div>
         <CalendarPlus className="h-5 w-5 text-jade" aria-hidden="true" />
       </div>
@@ -155,6 +165,9 @@ export function ScheduleForm({
             <option value="presencial">Mostrador</option>
             <option value="whatsapp">WhatsApp</option>
             <option value="telefono">Telefono</option>
+            <option value="google">Google</option>
+            <option value="pauta_whatsapp">Pauta WhatsApp</option>
+            <option value="pauta_instagram">Pauta Instagram</option>
           </select>
         </label>
       </div>

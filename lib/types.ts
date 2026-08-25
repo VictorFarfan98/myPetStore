@@ -9,7 +9,7 @@ export type AppointmentStatus =
   | "cancelled"
   | "no_show";
 
-export type AppointmentSource = "whatsapp" | "phone" | "walk_in" | "online";
+export type AppointmentSource = "whatsapp" | "phone" | "walk_in" | "google" | "whatsapp_ad" | "instagram_ad" | "online";
 
 export type PetSize = "pequeno" | "mediano" | "grande" | "gigante" | "pelo_corto" | "pelo_largo";
 

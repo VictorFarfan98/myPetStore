@@ -81,6 +81,9 @@ function normalizeSource(value: string | null | undefined): AppointmentSource {
   if (value === "telefono") return "phone";
   if (value === "presencial") return "walk_in";
   if (value === "whatsapp") return "whatsapp";
+  if (value === "google") return "google";
+  if (value === "pauta_whatsapp") return "whatsapp_ad";
+  if (value === "pauta_instagram") return "instagram_ad";
   return "online";
 }
 

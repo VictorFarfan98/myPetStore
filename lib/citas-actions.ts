@@ -21,7 +21,7 @@ function dateTime(formData: FormData) {
 
 function source(formData: FormData) {
   const value = text(formData, "origen");
-  if (!["whatsapp", "telefono", "presencial"].includes(value)) throw new Error("El origen de la cita no es válido.");
+  if (!["whatsapp", "telefono", "presencial", "google", "pauta_whatsapp", "pauta_instagram"].includes(value)) throw new Error("El origen de la cita no es válido.");
   return value;
 }
 

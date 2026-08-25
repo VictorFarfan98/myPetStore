@@ -30,6 +30,9 @@ export const sourceLabels: Record<AppointmentSource, string> = {
   whatsapp: "WhatsApp",
   phone: "Telefono",
   walk_in: "Mostrador",
+  google: "Google",
+  whatsapp_ad: "Pauta WhatsApp",
+  instagram_ad: "Pauta Instagram",
   online: "Online futuro"
 };
 
