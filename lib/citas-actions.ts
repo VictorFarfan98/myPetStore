@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { citasActualizar, citasEliminar, citasInsertar } from "@/lib/rpc/citas";
+import { citasActualizar, citasCancelar, citasEliminar, citasInsertar } from "@/lib/rpc/citas";
 
 function text(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -74,5 +74,21 @@ export async function deleteCita(formData: FormData) {
   const result = await citasEliminar(citaId);
   if (result.error) return { error: "No se pudo desactivar la cita." };
   revalidatePath("/agenda");
+  return { ok: true };
+}
+
+export async function cancelCita(formData: FormData) {
+  const citaId = id(formData, "cita_id");
+  const motivo = text(formData, "motivo");
+  if (!citaId) return { error: "La cita seleccionada no es válida." };
+  if (!motivo) return { error: "Escribe un motivo para cancelar la cita." };
+  const result = await citasCancelar({ p_cita_id: citaId, p_motivo: motivo });
+  if (result.error) {
+    if (result.error.code === "PN001") return { error: "La cita no existe." };
+    if (result.error.code === "PV001") return { error: "Escribe un motivo para cancelar la cita." };
+    return { error: "No se pudo cancelar la cita." };
+  }
+  revalidatePath("/agenda");
+  revalidatePath("/hojas");
   return { ok: true };
 }

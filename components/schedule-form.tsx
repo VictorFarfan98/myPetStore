@@ -169,7 +169,7 @@ export function ScheduleForm({
         </label>
       </div>
 
-      <div className={`mt-5 rounded-lg border p-3 text-sm ${hasConflict ? "border-rose-200 bg-rose-50 text-rose-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+      <div className={`mt-5 rounded-lg border p-3 text-sm ${hasConflict ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
         <div className="flex items-center gap-2 font-semibold">
           {hasConflict ? <AlertTriangle className="h-4 w-4" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
           {hasConflict ? "Conflicto de agenda detectado" : "Horario disponible para este groomer"}
