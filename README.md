@@ -581,9 +581,9 @@ clientes
 
 insertar, obtener, listar, listar todos, actualizar, soft delete
 
-Obtener detalle del cliente
+Obtener detalle del cliente, listar progreso de fidelidad
 
-7
+8
 
 
 
@@ -983,7 +983,7 @@ public.clientes
 
 Cantidad de RPC
 
-7
+8
 
 Operaciones estándar
 
@@ -991,7 +991,7 @@ insertar, obtener, listar, listar todos, actualizar, soft delete
 
 Operaciones específicas
 
-Obtener detalle del cliente
+Obtener detalle del cliente, listar progreso de fidelidad
 
 Acciones
 
@@ -1064,6 +1064,16 @@ Retorno: JSONB
 Acceso: Usuario activo según visibilidad RLS; service_role.
 
 Comportamiento: Devuelve el cliente, mascotas visibles y las últimas 10 citas con resumen del servicio y pagos activos.
+
+Listar progreso de fidelidad — clientes_progreso_fidelidad_listar
+
+Firma: clientes_progreso_fidelidad_listar()
+
+Retorno: JSONB
+
+Acceso: Usuario activo; service_role.
+
+Comportamiento: Devuelve el avance de cada cliente desde `configuracion_sistema.fidelidad_inicia_en`. Cuenta servicios completados sin cupón o con cupón reutilizable y excluye cualquier cupón de uso único.
 
 mascotas — Mascotas
 
@@ -1713,13 +1723,13 @@ Acciones
 
 Insertar — cupones_insertar
 
-Firma: cupones_insertar(p_id UUID, p_cliente_id BIGINT, p_servicio_id BIGINT, p_tipo_descuento public.tipo_descuento_cupon, p_valor NUMERIC(10, 2), p_fecha_expiracion DATE, p_activo BOOLEAN)
+Firma: cupones_insertar(p_id UUID, p_nombre TEXT, p_cliente_id BIGINT, p_servicio_id BIGINT, p_tipo_descuento public.tipo_descuento_cupon, p_valor NUMERIC(10, 2), p_fecha_expiracion DATE, p_uso_unico BOOLEAN, p_activo BOOLEAN)
 
 Retorno: public.cupones
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Inserta una fila y devuelve la fila creada.
+Comportamiento: Inserta un cupón manual y registra al usuario creador. Cliente, servicio y expiración pueden ser NULL para promociones globales, aplicables a cualquier servicio o indefinidas.
 
 Obtener por ID — cupones_obtener_por_id
 
@@ -1753,7 +1763,7 @@ Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
 Actualizar — cupones_actualizar
 
-Firma: cupones_actualizar(p_id UUID, p_cliente_id BIGINT, p_servicio_id BIGINT, p_tipo_descuento public.tipo_descuento_cupon, p_valor NUMERIC(10, 2), p_fecha_expiracion DATE, p_activo BOOLEAN)
+Firma: cupones_actualizar(p_id UUID, p_nombre TEXT, p_cliente_id BIGINT, p_servicio_id BIGINT, p_tipo_descuento public.tipo_descuento_cupon, p_valor NUMERIC(10, 2), p_fecha_expiracion DATE, p_uso_unico BOOLEAN, p_activo BOOLEAN)
 
 Retorno: public.cupones
 
@@ -1779,7 +1789,7 @@ Retorno: JSONB
 
 Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Comportamiento: Lista los cupones almacenados de un cliente sin calcular un estado derivado.
+Comportamiento: Lista los cupones propios del cliente y las promociones globales. El canje valida y calcula el descuento sobre el servicio principal y todos sus adicionales; los cupones reutilizables permanecen activos hasta su desactivación manual.
 
 citas — Citas
 
@@ -2215,13 +2225,13 @@ Comportamiento: Devuelve la única fila de configuración del sistema (id = 1).
 
 Actualizar configuración — configuracion_sistema_actualizar
 
-Firma: configuracion_sistema_actualizar(p_foto_antes_requerida BOOLEAN, p_foto_despues_requerida BOOLEAN, p_dias_anticipacion_recordatorio INTEGER, p_metodo_pago_cupon_id BIGINT, p_habilitar_calificaciones BOOLEAN)
+Firma: configuracion_sistema_actualizar(p_foto_antes_requerida BOOLEAN, p_foto_despues_requerida BOOLEAN, p_dias_anticipacion_recordatorio INTEGER, p_metodo_pago_cupon_id BIGINT, p_habilitar_calificaciones BOOLEAN, p_servicios_requeridos_cupon INTEGER, p_vigencia_cupon_automatico_dias INTEGER)
 
 Retorno: public.configuracion_sistema
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Actualiza completamente la configuración global, incluyendo si se muestran calificaciones al cerrar una hoja.
+Comportamiento: Actualiza completamente la configuración global, incluyendo el umbral de fidelidad y los días de vigencia del cupón automático. El programa inicia en `fidelidad_inicia_en`, establecido por la migración, por lo que no cuenta servicios históricos.
 
 calificaciones_groomer — Calificaciones
 

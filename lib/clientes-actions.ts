@@ -1,27 +1,37 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { clientesActualizar, clientesEliminar, clientesInsertar, clientesListar } from "@/lib/rpc/clientes";
+import { clientesActualizar, clientesEliminar, clientesInsertar, clientesListar, clientesProgresoFidelidadListar } from "@/lib/rpc/clientes";
 import { mascotasListar } from "@/lib/rpc/mascotas";
 import { unwrapRpcResult } from "@/lib/rpc/core";
 import type { ClientesData } from "@/lib/types";
 import { toE164 } from "@/lib/phone";
 
 export async function getClientes(): Promise<ClientesData> {
-  const [clientesResult, mascotasResult] = await Promise.all([clientesListar(), mascotasListar()]);
+  const [clientesResult, mascotasResult, progresoResult] = await Promise.all([
+    clientesListar(),
+    mascotasListar(),
+    clientesProgresoFidelidadListar()
+  ]);
   const clientes = unwrapRpcResult(clientesResult).datos;
   const mascotas = mascotasResult.error ? [] : unwrapRpcResult(mascotasResult).datos;
+  const progreso = new Map(unwrapRpcResult(progresoResult).map((row) => [row.cliente_id, row]));
 
   return {
-    customers: clientes.filter((cliente) => cliente.activo).map((cliente) => ({
-      id: cliente.id,
-      name: cliente.nombre,
-      phone: cliente.telefono,
-      email: cliente.email?.trim() ?? "",
-      whatsappOptIn: cliente.whatsapp_opt_in,
-      smsOptIn: cliente.sms_opt_in,
-      notes: cliente.notas?.trim() ?? ""
-    })),
+    customers: clientes.filter((cliente) => cliente.activo).map((cliente) => {
+      const loyalty = progreso.get(cliente.id);
+      return {
+        id: cliente.id,
+        name: cliente.nombre,
+        phone: cliente.telefono,
+        email: cliente.email?.trim() ?? "",
+        whatsappOptIn: cliente.whatsapp_opt_in,
+        smsOptIn: cliente.sms_opt_in,
+        notes: cliente.notas?.trim() ?? "",
+        loyaltyProgress: loyalty?.completados ?? 0,
+        loyaltyRequired: loyalty?.requeridos ?? 5
+      };
+    }),
     pets: mascotas.filter((mascota) => mascota.activo).map((mascota) => ({
       id: mascota.id,
       customerId: mascota.cliente_id,

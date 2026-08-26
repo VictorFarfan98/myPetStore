@@ -440,6 +440,7 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       species: normalizeSpecies(row.especie),
       size: normalizeSize(sizeById.get(row.tamano_id)),
       minutes: row.duracion_minutos,
+      price: row.precio,
       promotionalPrice: row.precio_promocional ?? undefined
     }));
 

@@ -16,7 +16,7 @@ export function MascotasBrowser({ data }: { data: AppData }) {
   const [form, setForm] = useState(emptyForm);
   const [customerSearch, setCustomerSearch] = useState("");
   const [newClient, setNewClient] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const editing = Boolean(form.id);
@@ -51,7 +51,7 @@ export function MascotasBrowser({ data }: { data: AppData }) {
     setForm({ ...emptyForm, id: String(pet.id), cliente_id: String(pet.customerId), nombre: pet.name, especie: pet.species, raza: pet.breed, tamano_id: String(size?.id ?? ""), fecha_nacimiento: pet.birthdate?.slice(0, 10) ?? "", notas_salud: pet.healthNotes, notas_comportamiento: pet.behaviorNotes, cliente_nombre: customer?.name ?? "" });
     setCustomerSearch(customer ? `${customer.name} · ${customer.phone}` : "");
     setNewClient(false);
-    setMessage("");
+    setMessage(null);
   }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -59,16 +59,16 @@ export function MascotasBrowser({ data }: { data: AppData }) {
     const formData = new FormData(event.currentTarget);
     if (!newClient) {
       const selected = data.customers.find((customer) => `${customer.name} · ${customer.phone}` === formData.get("cliente_busqueda"));
-      if (!selected) return setMessage("Selecciona un cliente existente o crea uno nuevo.");
+      if (!selected) return setMessage({ text: "Selecciona un cliente existente o crea uno nuevo.", error: true });
       formData.set("cliente_id", String(selected.id));
     }
     startTransition(async () => {
       const result = editing ? await updateMascota(formData) : await createMascota(formData);
-      if (result.error) return setMessage(result.error);
+      if (result.error) return setMessage({ text: result.error, error: true });
       setForm(emptyForm);
       setCustomerSearch("");
       setNewClient(false);
-      setMessage(editing ? "Mascota actualizada." : "Mascota creada.");
+      setMessage({ text: editing ? "Mascota actualizada." : "Mascota creada.", error: false });
       router.refresh();
     });
   }
@@ -79,7 +79,7 @@ export function MascotasBrowser({ data }: { data: AppData }) {
     formData.set("id", String(id));
     startTransition(async () => {
       const result = await deleteMascota(formData);
-      setMessage(result.error ?? "Mascota desactivada.");
+      setMessage({ text: result.error ?? "Mascota desactivada.", error: Boolean(result.error) });
       if (!result.error) router.refresh();
     });
   }
@@ -103,7 +103,7 @@ export function MascotasBrowser({ data }: { data: AppData }) {
         </div>
         {newClient && <div className="mt-4 rounded-lg bg-cloud p-4"><p className="font-semibold text-ink">Nuevo cliente</p><div className="mt-3 grid gap-4 md:grid-cols-2"><label className="block text-sm font-medium text-ink">Nombre<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="cliente_nombre" required value={form.cliente_nombre} onChange={(event) => update("cliente_nombre", event.target.value)} /></label><label className="block text-sm font-medium text-ink">Teléfono<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="cliente_telefono" required type="tel" value={form.cliente_telefono} onChange={(event) => update("cliente_telefono", event.target.value)} /></label><label className="block text-sm font-medium text-ink md:col-span-2">Correo electrónico<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="cliente_email" type="email" value={form.cliente_email} onChange={(event) => update("cliente_email", event.target.value)} /></label><div className="flex gap-4 text-sm md:col-span-2"><label><input name="cliente_whatsapp_opt_in" type="checkbox" checked={form.cliente_whatsapp_opt_in} onChange={(event) => update("cliente_whatsapp_opt_in", event.target.checked)} /> Acepta WhatsApp</label><label><input name="cliente_sms_opt_in" type="checkbox" checked={form.cliente_sms_opt_in} onChange={(event) => update("cliente_sms_opt_in", event.target.checked)} /> Acepta SMS</label></div><label className="block text-sm font-medium text-ink md:col-span-2">Notas<textarea className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="cliente_notas" rows={2} value={form.cliente_notas} onChange={(event) => update("cliente_notas", event.target.value)} /></label></div></div>}
         <input type="hidden" name="id" value={form.id} /><input type="hidden" name="cliente_id" value={form.cliente_id} />
-        {message && <p className="mt-4 rounded-lg bg-cloud px-3 py-2 text-sm text-slate-700" role="status">{message}</p>}
+        {message && <p className={`mt-4 rounded-lg px-3 py-2 text-sm ${message.error ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`} role={message.error ? "alert" : "status"}>{message.text}</p>}
         <div className="mt-4 flex gap-3"><button className="focus-ring rounded-lg bg-jade px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={isPending} type="submit">{isPending ? "Guardando..." : editing ? "Guardar cambios" : "Crear mascota"}</button>{editing && <button className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700" type="button" onClick={() => { setForm(emptyForm); setCustomerSearch(""); setNewClient(false); }}>Cancelar</button>}</div>
       </form>
     <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-panel">

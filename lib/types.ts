@@ -42,6 +42,8 @@ export type Customer = {
   whatsappOptIn: boolean;
   smsOptIn?: boolean;
   notes: string;
+  loyaltyProgress?: number;
+  loyaltyRequired?: number;
 };
 
 export type Pet = {
@@ -75,7 +77,7 @@ export type Service = {
   active: boolean;
 };
 
-export type ServiceDuration = { serviceId: number; species: Species; size: PetSize; minutes: number; promotionalPrice?: string };
+export type ServiceDuration = { serviceId: number; species: Species; size: PetSize; minutes: number; price: string; promotionalPrice?: string };
 
 export type PaymentMethod = { id: number; name: string };
 export type ServicePayment = { id: number; recordId: number; methodId: number; amount: string };

@@ -124,16 +124,17 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
   const primaryServices = data.services.filter((service) => !service.additional);
   const additionalServices = data.services.filter((service) => service.additional && service.active && service.price);
   const toggle = (value: string) => setSelected((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
-  const toggleAdditional = (id: number) => { setAdditionalTouched(true); setAdditionalIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); };
+  const resetCoupon = () => { setCouponId(""); setDiscount("0.00"); };
+  const toggleAdditional = (id: number) => { setAdditionalTouched(true); resetCoupon(); setAdditionalIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); };
   const loadCoupons = useCallback(async () => {
     setLoadingCoupons(true); setMessage("");
     setCoupons([]);
-    const form = new FormData(); form.set("cliente_id", String(pet.customerId)); form.set("servicio_id", String(appointment.serviceIds[0]));
+    const form = new FormData(); form.set("cliente_id", String(pet.customerId)); form.set("servicio_id", serviceId);
     const result = await listClientCoupons(form);
     setLoadingCoupons(false);
     if (result.error) return setMessage(result.error);
     setCoupons(result.coupons ?? []);
-  }, [appointment.serviceIds, pet.customerId]);
+  }, [pet.customerId, serviceId]);
   useEffect(() => {
     if (!record) return;
     const timer = window.setTimeout(() => void loadCoupons(), 0);
@@ -143,7 +144,7 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
     setCouponId(id); setDiscount("0.00");
     if (!id) return;
     setLoadingCoupons(true); setMessage("");
-    const form = new FormData(); form.set("cliente_id", String(pet.customerId)); form.set("servicio_id", String(appointment.serviceIds[0])); form.set("monto_base", record?.finalAmount ?? "0"); form.set("cupon_id", id);
+    const form = new FormData(); form.set("cliente_id", String(pet.customerId)); form.set("servicio_id", serviceId); form.set("monto_base", String(subtotal)); form.set("cupon_id", id);
     const result = await applyCoupon(form);
     setLoadingCoupons(false);
     if (result.error) return setMessage(result.error);
@@ -181,6 +182,8 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
     router.refresh();
   }
   const selectedPrice = data.serviceDurations?.find((item) => item.serviceId === Number(serviceId) && item.species === pet.species && item.size === pet.size);
+  const subtotal = Number(usePromotion && selectedPrice?.promotionalPrice ? selectedPrice.promotionalPrice : selectedPrice?.price ?? 0)
+    + additionalServices.filter((service) => additionalIds.includes(service.id)).reduce((sum, service) => sum + Number(service.price), 0);
   async function remove() {
     if (!record || !window.confirm("¿Deseas desactivar esta hoja de servicio?")) return;
     const form = new FormData(); form.set("registro_id", String(record.id));
@@ -192,10 +195,10 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
     <div inert={clientSigning || undefined} className={clientSigning ? "pointer-events-none select-none opacity-60" : undefined}>
       <div className="grid gap-4">
         <div className="grid gap-3 sm:grid-cols-3">
-          <label className="grid gap-1 text-sm font-medium text-slate-700">Servicio<select name="servicio_id" value={serviceId} onChange={(event) => setServiceId(event.target.value)} className="focus-ring rounded-lg border border-slate-300 px-3 py-2">{primaryServices.map((service) => <option key={service.id} value={service.id}>{service.name}</option>)}</select></label>
+          <label className="grid gap-1 text-sm font-medium text-slate-700">Servicio<select name="servicio_id" value={serviceId} onChange={(event) => { setServiceId(event.target.value); resetCoupon(); }} className="focus-ring rounded-lg border border-slate-300 px-3 py-2">{primaryServices.map((service) => <option key={service.id} value={service.id}>{service.name}</option>)}</select></label>
           <label className="grid gap-1 text-sm font-medium text-slate-700">Groomer<select name="peluquero_id" defaultValue={appointment.groomerId} className="focus-ring rounded-lg border border-slate-300 px-3 py-2">{data.users.filter((user) => user.role === "groomer").map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</select></label>
           <label className="grid gap-1 text-sm font-medium text-slate-700">{pet.species === "gato" ? "Tipo de pelo" : "Tamaño"}<select name="tamano_id" defaultValue={data.sizes?.find((size) => size.species === pet.species && size.name.toLowerCase().includes(pet.size.replace("_", " ").slice(0, 4)))?.id ?? data.sizes?.find((size) => size.species === pet.species)?.id} className="focus-ring rounded-lg border border-slate-300 px-3 py-2">{data.sizes?.filter((size) => size.species === pet.species).map((size) => <option key={size.id} value={size.id}>{size.name}</option>)}</select></label>
-          {selectedPrice?.promotionalPrice && <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input name="usar_promocion" type="checkbox" checked={usePromotion} onChange={(event) => setUsePromotion(event.target.checked)} /> Aplicar precio promocional (Q {Number(selectedPrice.promotionalPrice).toFixed(2)})</label>}
+          {selectedPrice?.promotionalPrice && <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700"><input name="usar_promocion" type="checkbox" checked={usePromotion} onChange={(event) => { setUsePromotion(event.target.checked); resetCoupon(); }} /> Aplicar precio promocional (Q {Number(selectedPrice.promotionalPrice).toFixed(2)})</label>}
         </div>
         <fieldset className="grid gap-2"><legend className="text-sm font-semibold text-ink">Condiciones visibles</legend><div className="grid gap-2 sm:grid-cols-2">{conditions.map((label) => <label key={label} className="flex gap-2 text-sm text-slate-700"><input name={label.toLowerCase().replaceAll(" ", "_")} type="checkbox" checked={selected.includes(label)} onChange={() => toggle(label)} />{label}</label>)}</div></fieldset>
         <fieldset className="grid gap-2"><legend className="text-sm font-semibold text-ink">Parásitos visibles</legend><div className="grid gap-2 sm:grid-cols-3">{parasites.map((label) => <label key={label} className="flex gap-2 text-sm text-slate-700"><input name={label.toLowerCase()} type="checkbox" checked={selected.includes(label)} onChange={() => toggle(label)} />{label}</label>)}</div></fieldset>
@@ -205,7 +208,7 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
         <PhotoPreviews label="Fotos de ingreso" urls={record?.intakePhotoUrls ?? []} />
         <PhotoPreviews label="Fotos de egreso" urls={record?.completionPhotoUrls ?? []} />
         <div className="grid gap-3 sm:grid-cols-2"><label className="grid gap-1 text-sm font-medium text-slate-700">Agregar fotos de ingreso<input name="fotos_ingreso" type="file" accept="image/*" capture="environment" multiple className="focus-ring rounded-lg border border-slate-300 px-3 py-2" /></label>{record && <label className="grid gap-1 text-sm font-medium text-slate-700">Agregar fotos de egreso<input name="fotos_egreso" type="file" accept="image/*" capture="environment" multiple className="focus-ring rounded-lg border border-slate-300 px-3 py-2" /></label>}</div>
-        {record && <div className="rounded-lg border border-violet-200 bg-violet-50 p-4"><div className="flex flex-wrap items-end gap-3"><button type="button" disabled={loadingCoupons} onClick={loadCoupons} className="focus-ring rounded-lg border border-violet-300 bg-white px-4 py-2 text-sm font-semibold text-violet-800">{loadingCoupons ? "Consultando..." : "Actualizar cupones"}</button><label className="grid min-w-56 flex-1 gap-1 text-sm font-medium text-slate-700">Cupón<select value={couponId} disabled={loadingCoupons || coupons.length === 0} onChange={(event) => selectCoupon(event.target.value)} className="focus-ring rounded-lg border border-slate-300 bg-white px-3 py-2"><option value="">{loadingCoupons ? "Consultando cupones..." : coupons.length ? "Selecciona un cupón" : "No hay cupones disponibles"}</option>{coupons.map((coupon) => <option key={coupon.id} value={coupon.id}>{coupon.id} · {coupon.tipo_descuento === "porcentaje" ? `${coupon.valor}%` : `GTQ ${coupon.valor}`}</option>)}</select></label><label className="grid gap-1 text-sm font-medium text-slate-700">Descuento aplicado<input type="number" value={discount} readOnly className="rounded-lg border border-slate-300 bg-white px-3 py-2" /></label></div>{coupons.length === 0 && !loadingCoupons && <p className="mt-2 text-sm text-violet-800" role="status">El cliente no tiene cupones disponibles para este servicio.</p>}{couponId && <p className="mt-2 text-xs text-violet-800">Cupón aplicado a esta hoja.</p>}</div>}
+        {record && <div className="rounded-lg border border-violet-200 bg-violet-50 p-4"><div className="flex flex-wrap items-end gap-3"><button type="button" disabled={loadingCoupons} onClick={loadCoupons} className="focus-ring rounded-lg border border-violet-300 bg-white px-4 py-2 text-sm font-semibold text-violet-800">{loadingCoupons ? "Consultando..." : "Actualizar cupones"}</button><label className="grid min-w-56 flex-1 gap-1 text-sm font-medium text-slate-700">Cupón<select value={couponId} disabled={loadingCoupons || coupons.length === 0} onChange={(event) => selectCoupon(event.target.value)} className="focus-ring rounded-lg border border-slate-300 bg-white px-3 py-2"><option value="">{loadingCoupons ? "Consultando cupones..." : coupons.length ? "Selecciona un cupón" : "No hay cupones disponibles"}</option>{coupons.map((coupon) => <option key={coupon.id} value={coupon.id}>{coupon.nombre} · {coupon.tipo_descuento === "porcentaje" ? `${coupon.valor}%` : `GTQ ${coupon.valor}`}</option>)}</select></label><label className="grid gap-1 text-sm font-medium text-slate-700">Descuento aplicado<input type="number" value={discount} readOnly className="rounded-lg border border-slate-300 bg-white px-3 py-2" /></label></div>{coupons.length === 0 && !loadingCoupons && <p className="mt-2 text-sm text-violet-800" role="status">El cliente no tiene cupones disponibles para este servicio.</p>}{couponId && <p className="mt-2 text-xs text-violet-800">Cupón aplicado a esta hoja.</p>}</div>}
         <label className="grid gap-1 text-sm font-medium text-slate-700">Notas del servicio<textarea name="notas_servicio" defaultValue={record?.groomerNotes ?? ""} className="focus-ring min-h-20 rounded-lg border border-slate-300 px-3 py-2" /></label>
       </div>
     </div>

@@ -13,6 +13,7 @@ import {
   Scissors,
   Settings,
   Store,
+  TicketPercent,
   UserCog,
   UsersRound
 } from "lucide-react";
@@ -24,6 +25,7 @@ const navItems = [
   { label: "Hojas", href: "/hojas", icon: ClipboardCheck },
   { label: "Mascotas", href: "/mascotas", icon: PawPrint },
   { label: "Clientes", href: "/clientes", icon: UsersRound },
+  { label: "Cupones", href: "/cupones", icon: TicketPercent },
   { label: "Servicios", href: "/servicios", icon: Scissors },
   { label: "Sucursales", href: "/sucursales", icon: Store },
   { label: "Equipo", href: "/equipo", icon: UserCog },
@@ -48,7 +50,7 @@ export function AppShellClient({ children, role }: { children: ReactNode; role?:
           </div>
         </Link>
         <nav className="mt-8 space-y-1">
-          {navItems.filter((item) => !["/sucursales", "/equipo", "/configuracion"].includes(item.href) || canManageBranches).map((item) => {
+          {navItems.filter((item) => !["/sucursales", "/equipo", "/configuracion", "/cupones"].includes(item.href) || canManageBranches).map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (

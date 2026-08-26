@@ -13,7 +13,7 @@ const emptyManager = { id: "", nombre: "", nombre_usuario: "", telefono: "", alc
 export function EquipoBrowser({ managers, groomers, branches, assignments }: Props) {
   const [groomer, setGroomer] = useState(emptyGroomer);
   const [manager, setManager] = useState(emptyManager);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const managerAssignments = (id: string) => assignments.filter((item) => item.usuario_id === id && item.activo).map((item) => item.sucursal_id);
@@ -23,7 +23,7 @@ export function EquipoBrowser({ managers, groomers, branches, assignments }: Pro
     const data = new FormData(event.currentTarget);
     startTransition(async () => {
       const result = groomer.id ? await updateGroomer(data) : await createGroomer(data);
-      setMessage(result.error ?? (groomer.id ? "Groomista actualizado." : "Groomista creado."));
+      setMessage({ text: result.error ?? (groomer.id ? "Groomista actualizado." : "Groomista creado."), error: Boolean(result.error) });
       if (!result.error) { setGroomer(emptyGroomer); router.refresh(); }
     });
   }
@@ -33,7 +33,7 @@ export function EquipoBrowser({ managers, groomers, branches, assignments }: Pro
     const data = new FormData(event.currentTarget);
     startTransition(async () => {
       const result = manager.id ? await updateManager(data) : await createManager(data);
-      setMessage(result.error ?? (manager.id ? "Encargado actualizado." : "Encargado creado."));
+      setMessage({ text: result.error ?? (manager.id ? "Encargado actualizado." : "Encargado creado."), error: Boolean(result.error) });
       if (!result.error) { setManager(emptyManager); router.refresh(); }
     });
   }
@@ -43,7 +43,7 @@ export function EquipoBrowser({ managers, groomers, branches, assignments }: Pro
     const data = new FormData(); data.set("id", String(id));
     startTransition(async () => {
       const result = kind === "groomer" ? await deleteGroomer(data) : await deleteManager(data);
-      setMessage(result.error ?? "Registro desactivado.");
+      setMessage({ text: result.error ?? "Registro desactivado.", error: Boolean(result.error) });
       if (!result.error) router.refresh();
     });
   }
@@ -91,6 +91,6 @@ export function EquipoBrowser({ managers, groomers, branches, assignments }: Pro
         <div className="flex items-center gap-3 md:justify-end"><button className="focus-ring rounded-lg bg-jade px-4 py-2 font-semibold text-white disabled:opacity-60" disabled={isPending} type="submit">{isPending ? "Guardando..." : groomer.id ? "Guardar cambios" : "Crear groomista"}</button>{groomer.id && <button className="focus-ring rounded-lg border border-slate-300 px-4 py-2 font-semibold" onClick={() => setGroomer(emptyGroomer)} type="button">Cancelar</button>}</div>
       </form>
     </section>
-    {message && <p className="rounded-lg bg-cloud px-3 py-2 text-sm text-slate-700" role="status">{message}</p>}
+    {message && <p className={`rounded-lg px-3 py-2 text-sm ${message.error ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`} role={message.error ? "alert" : "status"}>{message.text}</p>}
   </div>;
 }

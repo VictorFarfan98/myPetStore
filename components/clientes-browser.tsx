@@ -12,7 +12,7 @@ const emptyForm = { id: "", nombre: "", telefono: "", email: "", whatsapp_opt_in
 export function ClientesBrowser({ data }: { data: ClientesData }) {
   const [query, setQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const editing = Boolean(form.id);
@@ -28,16 +28,16 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
     const formData = new FormData(event.currentTarget);
     startTransition(async () => {
       const result = editing ? await updateCliente(formData) : await createCliente(formData);
-      if (result.error) return setMessage(result.error);
+      if (result.error) return setMessage({ text: result.error, error: true });
       setForm(emptyForm);
-      setMessage(editing ? "Cliente actualizado." : "Cliente creado.");
+      setMessage({ text: editing ? "Cliente actualizado." : "Cliente creado.", error: false });
       router.refresh();
     });
   }
 
   function edit(customer: Customer) {
     setForm({ id: String(customer.id), nombre: customer.name, telefono: customer.phone, email: customer.email, whatsapp_opt_in: customer.whatsappOptIn, sms_opt_in: Boolean(customer.smsOptIn), notas: customer.notes, activo: true });
-    setMessage("");
+    setMessage(null);
   }
 
   function remove(id: number) {
@@ -46,7 +46,7 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
     formData.set("id", String(id));
     startTransition(async () => {
       const result = await deleteCliente(formData);
-      setMessage(result.error ?? "Cliente desactivado.");
+      setMessage({ text: result.error ?? "Cliente desactivado.", error: Boolean(result.error) });
       if (!result.error) router.refresh();
     });
   }
@@ -63,18 +63,24 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
           { key: "contacto", header: "Contacto", render: (row) => <span>{row.phone}{row.smsOptIn ? " · SMS" : ""}</span> },
           { key: "email", header: "Correo electrónico", render: (row) => <span>{row.email || "—"}</span> },
           { key: "mascotas", header: "Mascotas", render: (row) => row.pets.map((pet) => pet.name).join(", ") || "—" },
+          { key: "fidelidad", header: "Fidelidad", render: (row) => {
+            const completed = row.loyaltyProgress ?? 0;
+            const required = row.loyaltyRequired ?? 5;
+            return <div className="w-32" aria-label={`${completed} de ${required} servicios completados`}><div className="mb-1 flex justify-between text-xs"><span>{completed}/{required}</span><span>{Math.round(completed / required * 100)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-jade" style={{ width: `${completed / required * 100}%` }} /></div></div>;
+          } },
           { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" type="button" onClick={() => edit(row)}>Editar</button><button className="font-semibold text-red-700 hover:underline" type="button" onClick={() => remove(row.id)}>Eliminar</button></div> }
         ]} /></div>
       </div>
       <form className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-panel" onSubmit={submit}>
         <h2 className="text-xl font-semibold text-ink">{editing ? "Editar cliente" : "Nuevo cliente"}</h2>
         <div className="mt-5 space-y-4">
+          <input name="id" type="hidden" value={form.id} />
           <label className="block text-sm font-medium text-ink">Nombre<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="nombre" required value={form.nombre} onChange={(event) => setForm({ ...form, nombre: event.target.value })} /></label>
           <label className="block text-sm font-medium text-ink">Teléfono<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="telefono" required type="tel" value={form.telefono} onChange={(event) => setForm({ ...form, telefono: event.target.value })} /><span className="mt-1 block text-xs font-normal text-slate-500">8 dígitos o formato E.164.</span></label>
           <label className="block text-sm font-medium text-ink">Correo electrónico<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
           <div className="space-y-2 text-sm"><label className="flex items-center gap-2"><input name="whatsapp_opt_in" type="checkbox" checked={form.whatsapp_opt_in} onChange={(event) => setForm({ ...form, whatsapp_opt_in: event.target.checked })} /> Acepta WhatsApp</label><label className="flex items-center gap-2"><input name="sms_opt_in" type="checkbox" checked={form.sms_opt_in} onChange={(event) => setForm({ ...form, sms_opt_in: event.target.checked })} /> Acepta SMS</label></div>
           <label className="block text-sm font-medium text-ink">Notas<textarea className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="notas" rows={3} value={form.notas} onChange={(event) => setForm({ ...form, notas: event.target.value })} /></label>
-          {message && <p className="rounded-lg bg-cloud px-3 py-2 text-sm text-slate-700" role="status">{message}</p>}
+          {message && <p className={`rounded-lg px-3 py-2 text-sm ${message.error ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`} role={message.error ? "alert" : "status"}>{message.text}</p>}
           <div className="flex gap-3"><button className="focus-ring rounded-lg bg-jade px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={isPending} type="submit">{isPending ? "Guardando..." : editing ? "Guardar cambios" : "Crear cliente"}</button>{editing && <button className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700" type="button" onClick={() => setForm(emptyForm)}>Cancelar</button>}</div>
         </div>
       </form>

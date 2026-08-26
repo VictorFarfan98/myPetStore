@@ -22,12 +22,21 @@ export async function applyCoupon(formData: FormData) {
   if (result.error) return { error: "No se pudieron consultar los cupones del cliente." };
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Guatemala" }).format(new Date());
   const requestedCouponId = String(formData.get("cupon_id") ?? "").trim();
-  const coupon = (result.data ?? []).find((item) => (!requestedCouponId || String(item.id) === requestedCouponId) && item.servicio_id === serviceId && item.activo === true && item.canjeado_en === null && String(item.fecha_expiracion) >= today);
+  const coupon = (result.data ?? []).find((item) =>
+    (!requestedCouponId || String(item.id) === requestedCouponId)
+    && (item.servicio_id === null || item.servicio_id === serviceId)
+    && item.activo === true
+    && (!item.uso_unico || item.canjeado_en === null)
+    && (item.fecha_expiracion === null || String(item.fecha_expiracion) >= today)
+  );
   if (!coupon) return { error: "El cliente no tiene un cupón válido para este servicio." };
 
   const value = Number(coupon.valor);
-  const discount = coupon.tipo_descuento === "porcentaje" ? Math.min(baseAmount, baseAmount * value / 100) : Math.min(baseAmount, value);
-  return { couponId: String(coupon.id), discount: discount.toFixed(2) };
+  const baseCents = Math.round(baseAmount * 100);
+  const discountCents = coupon.tipo_descuento === "porcentaje"
+    ? Math.round(baseCents * value / 100)
+    : Math.round(value * 100);
+  return { couponId: String(coupon.id), discount: (Math.min(baseCents, discountCents) / 100).toFixed(2) };
 }
 
 export async function listClientCoupons(formData: FormData) {
@@ -37,7 +46,12 @@ export async function listClientCoupons(formData: FormData) {
   const result = await cuponesListarPorCliente(clientId);
   if (result.error) return { error: "No se pudieron consultar los cupones del cliente." };
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Guatemala" }).format(new Date());
-  return { coupons: (result.data ?? []).filter((item) => item.servicio_id === serviceId && item.activo === true && item.canjeado_en === null && String(item.fecha_expiracion) >= today) };
+  return { coupons: (result.data ?? []).filter((item) =>
+    (item.servicio_id === null || item.servicio_id === serviceId)
+    && item.activo === true
+    && (!item.uso_unico || item.canjeado_en === null)
+    && (item.fecha_expiracion === null || String(item.fecha_expiracion) >= today)
+  ) };
 }
 
 export async function savePayments(formData: FormData) {

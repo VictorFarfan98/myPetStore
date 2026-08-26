@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { ClienteInsertParams, ClienteRow, ClienteUpdateParams } from "./types";
+import type { ClienteInsertParams, ClienteProgresoFidelidadRow, ClienteRow, ClienteUpdateParams } from "./types";
 import { rpcCall } from "./core";
 
 export function clientesInsertar(params: ClienteInsertParams) {
@@ -33,3 +33,6 @@ export function clientesEliminar(p_id: number) {
   return rpcCall<ClienteRow>("clientes_eliminar", { p_id });
 }
 
+export function clientesProgresoFidelidadListar() {
+  return rpcCall<ClienteProgresoFidelidadRow[]>("clientes_progreso_fidelidad_listar");
+}

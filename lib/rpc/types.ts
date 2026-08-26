@@ -253,6 +253,9 @@ export type ConfiguracionSistemaRow = {
   dias_anticipacion_recordatorio: number;
   metodo_pago_cupon_id: number;
   habilitar_calificaciones: boolean;
+  servicios_requeridos_cupon: number;
+  vigencia_cupon_automatico_dias: number;
+  fidelidad_inicia_en: DateString;
 };
 
 export type ConfiguracionSistemaUpdateParams = {
@@ -261,6 +264,8 @@ export type ConfiguracionSistemaUpdateParams = {
   p_dias_anticipacion_recordatorio: number;
   p_metodo_pago_cupon_id: number;
   p_habilitar_calificaciones: boolean;
+  p_servicios_requeridos_cupon: number;
+  p_vigencia_cupon_automatico_dias: number;
 };
 
 export type CalificacionGroomerInsertParams = {
@@ -282,27 +287,39 @@ export type CalificacionGroomerRow = {
 
 export type CuponRow = {
   id: string;
-  cliente_id: number;
-  servicio_id: number;
+  nombre: string;
+  cliente_id: number | null;
+  servicio_id: number | null;
   tipo_descuento: string;
   valor: string;
-  fecha_expiracion: DateString;
+  fecha_expiracion: DateString | null;
   canjeado_en: DateString | null;
   activo: boolean;
+  uso_unico: boolean;
+  origen: "manual" | "automatico";
+  registro_origen_id: number | null;
   creado_por_usuario_id: string | null;
 };
 
 export type CuponInsertParams = {
   p_id: string;
-  p_cliente_id: number;
-  p_servicio_id: number;
+  p_nombre: string;
+  p_cliente_id: number | null;
+  p_servicio_id: number | null;
   p_tipo_descuento: string;
   p_valor: string;
-  p_fecha_expiracion: DateString;
+  p_fecha_expiracion: DateString | null;
+  p_uso_unico: boolean;
   p_activo: boolean;
 };
 
 export type CuponUpdateParams = CuponInsertParams;
+
+export type ClienteProgresoFidelidadRow = {
+  cliente_id: number;
+  completados: number;
+  requeridos: number;
+};
 
 export type CitaRow = {
   id: number;
