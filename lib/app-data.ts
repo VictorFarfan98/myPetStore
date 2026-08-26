@@ -150,7 +150,6 @@ function buildUsers(args: {
   peluqueros: PeluqueroRow[];
   assignments: UsuarioSucursalRow[];
   activeBranchIds: number[];
-  appointments: CitaRow[];
   employeeIdMap: Map<string, number>;
   groomerIdMap: Map<number, number>;
 }) {
@@ -163,19 +162,6 @@ function buildUsers(args: {
     if (!branchIds.includes(assignment.sucursal_id)) {
       branchIds.push(assignment.sucursal_id);
       employeeBranchMap.set(userId, branchIds);
-    }
-  });
-
-  const groomerBranchMap = new Map<number, number[]>();
-  args.appointments.forEach((appointment) => {
-    if (!appointment.peluquero_id) return;
-    const groomerId = args.groomerIdMap.get(appointment.peluquero_id);
-    if (!groomerId) return;
-
-    const branchIds = groomerBranchMap.get(groomerId) ?? [];
-    if (!branchIds.includes(appointment.sucursal_id)) {
-      branchIds.push(appointment.sucursal_id);
-      groomerBranchMap.set(groomerId, branchIds);
     }
   });
 
@@ -212,7 +198,7 @@ function buildUsers(args: {
         email: row.telefono ?? row.nombre,
         phone: row.telefono ?? "",
         role: "groomer" as const,
-        branchIds: groomerBranchMap.get(id) ?? args.activeBranchIds,
+        branchIds: args.activeBranchIds,
         active: row.activo,
         calendarColor: row.color_calendario ?? colorForIndex(index)
       };
@@ -405,7 +391,6 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       peluqueros,
       assignments,
       activeBranchIds: branches.map((branch) => branch.id),
-      appointments: citas,
       employeeIdMap: createdByMap,
       groomerIdMap: groomerMap
     });
