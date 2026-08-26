@@ -474,7 +474,7 @@ valida precios configurados activos;
 
 valida los servicios adicionales configurados;
 
-valida fotos requeridas y firma de entrega;
+valida que existan fotos de ingreso y egreso cuando estén configuradas como requeridas, además de la firma de entrega;
 
 valida y canjea el cupón de forma atómica;
 
@@ -504,13 +504,19 @@ pets/
 signatures/
 services/
 
-`supabase_storage.sql` permite a usuarios autenticados subir y leer objetos bajo `services/`. Las cargas de fotos de hojas de servicio usan la sesión del usuario y no requieren `SUPABASE_SERVICE_ROLE_KEY`.
+`supabase_storage.sql` permite a usuarios autenticados subir y leer objetos bajo `services/`. El navegador carga cada foto directamente con la sesión del usuario; el Server Action valida y registra las rutas, sin usar `SUPABASE_SERVICE_ROLE_KEY`.
 
-Las carpetas son prefijos lógicos y aparecen cuando se sube el primer objeto. La aplicación debe usar el backend para subir, reemplazar y firmar URLs.
+Las fotos de servicio se guardan bajo `services/{cita_id}/{ingreso|egreso}/`. PostgreSQL conserva cada ruta en `registros_servicio_fotos`; el índice `(registro_servicio_id, momento, id)` optimiza las consultas por hoja y por momento. La aplicación no limita la cantidad de fotos, pero valida un máximo de 10 MB por archivo.
+
+Las fotos de ingreso y egreso son opcionales por defecto. Un administrador o propietario puede hacerlas obligatorias desde la configuración del sistema.
+
+La migración elimina de `registros_servicio` las columnas legacy `foto_antes_url`, `foto_antes_subida_en`, `foto_despues_url` y `foto_despues_subida_en`. La tabla hija es la única fuente de fotos.
+
+Las carpetas son prefijos lógicos y aparecen cuando se sube el primer objeto. La aplicación debe usar el backend para subir y firmar URLs.
 
 Referencia organizada de RPC
 
-rpc.sql expone 109 funciones públicas. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
+La capa RPC expone 111 funciones públicas después de aplicar las migraciones. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
 
 Convención de esta sección
 
@@ -678,6 +684,16 @@ insertar, obtener, listar, listar todos, actualizar, soft delete
 Iniciar servicio, Completar servicio, Obtener detalle completo
 
 9
+
+
+
+registros_servicio_fotos
+
+listar por registro y momento
+
+Agregar fotos de ingreso o egreso
+
+2
 
 
 
@@ -1917,7 +1933,7 @@ Acciones
 
 Insertar — registros_servicio_insertar
 
-Firma: registros_servicio_insertar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
+Firma: registros_servicio_insertar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_notas_servicio TEXT)
 
 Retorno: public.registros_servicio
 
@@ -1927,7 +1943,7 @@ Comportamiento: Inserta una fila y devuelve la fila creada.
 
 Iniciar servicio — registros_servicio_iniciar
 
-Firma: registros_servicio_iniciar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_foto_antes_url TEXT, p_notas_servicio TEXT)
+Firma: registros_servicio_iniciar(p_cita_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_notas_servicio TEXT)
 
 Retorno: public.registros_servicio
 
@@ -1967,7 +1983,7 @@ Comportamiento: Lista registros activos e inactivos con paginación opcional.
 
 Actualizar — registros_servicio_actualizar
 
-Firma: registros_servicio_actualizar(p_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_cupon_id UUID, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_activo BOOLEAN, p_pagos JSONB DEFAULT NULL, p_motivo TEXT DEFAULT NULL)
+Firma: registros_servicio_actualizar(p_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_cupon_id UUID, p_heridas_visibles BOOLEAN, p_raspones BOOLEAN, p_piel_irritada BOOLEAN, p_costras BOOLEAN, p_inflamacion BOOLEAN, p_cojera BOOLEAN, p_dolor_al_tocar BOOLEAN, p_pulgas BOOLEAN, p_garrapatas BOOLEAN, p_piojos BOOLEAN, p_observaciones_ingreso TEXT, p_firma_ingreso_url TEXT, p_firma_entrega_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_activo BOOLEAN, p_pagos JSONB DEFAULT NULL, p_motivo TEXT DEFAULT NULL)
 
 Retorno: public.registros_servicio
 
@@ -1987,7 +2003,7 @@ Comportamiento: Realiza soft delete (activo = FALSE) y devuelve la fila resultan
 
 Completar servicio — registros_servicio_completar
 
-Firma: registros_servicio_completar(p_registro_servicio_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_cupon_id UUID, p_firma_entrega_url TEXT, p_foto_antes_url TEXT, p_foto_despues_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_pagos JSONB)
+Firma: registros_servicio_completar(p_registro_servicio_id BIGINT, p_servicio_id BIGINT, p_peluquero_id BIGINT, p_tamano_id BIGINT, p_cupon_id UUID, p_firma_entrega_url TEXT, p_notas_servicio TEXT, p_calificacion_satisfaccion SMALLINT, p_comentario_satisfaccion TEXT, p_precio_base NUMERIC(10, 2), p_descuento_cupon NUMERIC(10, 2), p_monto_final NUMERIC(10, 2), p_monto_pagado NUMERIC(10, 2), p_pagos JSONB)
 
 Retorno: JSONB
 
@@ -2004,6 +2020,24 @@ Retorno: JSONB
 Acceso: Usuario con acceso a la sucursal; service_role.
 
 Comportamiento: Devuelve el detalle anidado del servicio, cita, mascota, cliente, catálogos, cupón y pagos.
+
+Agregar fotos — registros_servicio_fotos_agregar
+
+Firma: registros_servicio_fotos_agregar(p_registro_servicio_id BIGINT, p_fotos_ingreso TEXT[] DEFAULT '{}', p_fotos_egreso TEXT[] DEFAULT '{}')
+
+Retorno: JSONB con todas las fotos del registro.
+
+Acceso: Usuario con acceso a la sucursal; service_role.
+
+Comportamiento: Agrega rutas nuevas de forma idempotente. Las fotos existentes se conservan.
+
+Listar fotos — registros_servicio_fotos_listar
+
+Firma: registros_servicio_fotos_listar(p_registro_servicio_id BIGINT, p_momento TEXT DEFAULT NULL)
+
+Retorno: JSONB ordenado por id. `p_momento` acepta `ingreso`, `egreso` o NULL para devolver ambas.
+
+Acceso: Usuario con acceso a la sucursal; service_role.
 
 pagos — Pagos
 

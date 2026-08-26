@@ -73,7 +73,11 @@ const appData = {
       actualEnd: "2026-06-23T10:50:00-06:00",
       groomerNotes: "",
       outcome: "",
-      satisfactionNotes: ""
+      satisfactionNotes: "",
+      intakePhotoUrls: [],
+      completionPhotoUrls: [],
+      intakePhotoPaths: [],
+      completionPhotoPaths: []
     }
   ],
   reminderLogs: []

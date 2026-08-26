@@ -359,8 +359,6 @@ export type RegistroServicioRow = {
   firma_ingreso_en: DateString | null;
   firma_entrega_url: string | null;
   firma_entrega_en: DateString | null;
-  foto_antes_url: string | null;
-  foto_despues_url: string | null;
   precio_base: string | null;
   descuento_cupon: string | null;
   monto_final: string | null;
@@ -376,6 +374,15 @@ export type RegistroServicioRow = {
   garrapatas: boolean;
   piojos: boolean;
   adicionales?: Array<{ servicio_id: number }>;
+  fotos?: RegistroServicioFotoRow[];
+};
+
+export type RegistroServicioFotoRow = {
+  id: number;
+  registro_servicio_id: number;
+  momento: "ingreso" | "egreso";
+  ruta_storage: string;
+  subida_en: DateString;
 };
 
 export type RegistroServicioInsertParams = {
@@ -395,7 +402,6 @@ export type RegistroServicioInsertParams = {
   p_piojos: boolean;
   p_observaciones_ingreso: string | null;
   p_firma_ingreso_url: string | null;
-  p_foto_antes_url: string | null;
   p_notas_servicio: string | null;
 };
 
@@ -420,8 +426,6 @@ export type RegistroServicioUpdateParams = {
   p_observaciones_ingreso: string | null;
   p_firma_ingreso_url: string | null;
   p_firma_entrega_url: string | null;
-  p_foto_antes_url: string | null;
-  p_foto_despues_url: string | null;
   p_notas_servicio: string | null;
   p_calificacion_satisfaccion: number | null;
   p_comentario_satisfaccion: string | null;
@@ -437,6 +441,12 @@ export type RegistroServicioUpdateParams = {
 export type RegistroServicioAdicionalesParams = {
   p_registro_servicio_id: number;
   p_adicionales: Array<{ servicio_id: number; cantidad: number }>;
+};
+
+export type RegistroServicioFotosAgregarParams = {
+  p_registro_servicio_id: number;
+  p_fotos_ingreso: string[];
+  p_fotos_egreso: string[];
 };
 
 export type PagoRow = {
@@ -523,8 +533,6 @@ export type RegistrosServicioCompletarParams = {
   p_tamano_id: number;
   p_cupon_id: string | null;
   p_firma_entrega_url: string | null;
-  p_foto_antes_url: string | null;
-  p_foto_despues_url: string | null;
   p_notas_servicio: string | null;
   p_calificacion_satisfaccion: number | null;
   p_comentario_satisfaccion: string | null;

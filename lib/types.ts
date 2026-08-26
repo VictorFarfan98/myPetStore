@@ -112,10 +112,10 @@ export type GroomingRecord = {
   completionSignatureImageUrl?: string;
   completionSignedAt?: string;
   satisfactionNotes: string;
-  beforePhotoUrl?: string;
-  afterPhotoUrl?: string;
-  beforePhotoPath?: string;
-  afterPhotoPath?: string;
+  intakePhotoUrls: string[];
+  completionPhotoUrls: string[];
+  intakePhotoPaths: string[];
+  completionPhotoPaths: string[];
   finalAmount?: string;
   paidAmount?: string;
   couponId?: string;

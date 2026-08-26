@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createUserSupabaseClient } from "@/lib/supabase/server";
 import {
   registrosServicioActualizar,
   registrosServicioAdicionalesReemplazar,
+  registrosServicioFotosAgregar,
   registrosServicioPromocionAplicar,
   registrosServicioEliminar,
   registrosServicioIniciar
@@ -30,26 +30,14 @@ function text(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
 }
 
-async function uploadPhoto(formData: FormData, field: "foto_antes" | "foto_despues", appointmentId: number, currentPath: string | null) {
-  const file = formData.get(field);
-  if (!(file instanceof File) || file.size === 0) return currentPath;
-  if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) {
-    throw new Error("La foto debe ser una imagen de máximo 10 MB.");
+function photoPaths(formData: FormData, field: "foto_ingreso_path" | "foto_egreso_path", appointmentId: number) {
+  const moment = field === "foto_ingreso_path" ? "ingreso" : "egreso";
+  const prefix = `services/${appointmentId}/${moment}/`;
+  const paths = formData.getAll(field).map((value) => String(value).trim());
+  if (paths.some((path) => !path.startsWith(prefix) || path.length === prefix.length)) {
+    throw new Error("Las rutas de las fotos no son válidas.");
   }
-
-  const extension = file.type.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
-  const prefix = field === "foto_antes" ? "before" : "after";
-  const path = `services/${appointmentId}/${prefix}-${crypto.randomUUID()}.${extension}`;
-  const supabase = await createUserSupabaseClient();
-  const { error } = await supabase.storage.from("petstore").upload(path, await file.arrayBuffer(), {
-    contentType: file.type,
-    upsert: false
-  });
-  if (error) {
-    console.error("uploadPhoto failed", { field, message: error.message });
-    throw new Error("No se pudo subir la foto.");
-  }
-  return path;
+  return paths;
 }
 
 function values(formData: FormData) {
@@ -96,8 +84,8 @@ export async function saveHoja(formData: FormData) {
   try {
     const input = values(formData);
     const appointmentId = input.citaId ?? input.recordId!;
-    const beforePhotoUrl = await uploadPhoto(formData, "foto_antes", appointmentId, text(formData, "foto_antes_url_actual") || null);
-    const afterPhotoUrl = await uploadPhoto(formData, "foto_despues", appointmentId, text(formData, "foto_despues_url_actual") || null);
+    const intakePhotoPaths = photoPaths(formData, "foto_ingreso_path", appointmentId);
+    const completionPhotoPaths = photoPaths(formData, "foto_egreso_path", appointmentId);
     if (input.recordId && input.adicionalesConfigurados) {
       const extras = await registrosServicioAdicionalesReemplazar({ p_registro_servicio_id: input.recordId, p_adicionales: input.adicionales });
       if (extras.error) return { error: errorMessage(extras.error) };
@@ -106,7 +94,7 @@ export async function saveHoja(formData: FormData) {
       const promo = await registrosServicioPromocionAplicar(input.recordId, formData.get("usar_promocion") === "on");
       if (promo.error) return { error: errorMessage(promo.error) };
     }
-    console.log("saveHoja input", { ...input, p_foto_antes_url: beforePhotoUrl });
+    console.log("saveHoja input", input);
     const result = input.recordId
       ? await registrosServicioActualizar({
           p_id: input.recordId,
@@ -127,8 +115,6 @@ export async function saveHoja(formData: FormData) {
           p_observaciones_ingreso: input.p_observaciones_ingreso,
           p_firma_ingreso_url: input.p_firma_ingreso_url,
           p_firma_entrega_url: input.p_firma_entrega_url,
-          p_foto_antes_url: beforePhotoUrl,
-          p_foto_despues_url: afterPhotoUrl,
           p_notas_servicio: input.p_notas_servicio,
           p_calificacion_satisfaccion: null,
           p_comentario_satisfaccion: null,
@@ -155,7 +141,6 @@ export async function saveHoja(formData: FormData) {
           p_piojos: input.p_piojos,
           p_observaciones_ingreso: input.p_observaciones_ingreso,
           p_firma_ingreso_url: input.p_firma_ingreso_url,
-          p_foto_antes_url: beforePhotoUrl,
           p_notas_servicio: input.p_notas_servicio
         });
     const recordId = result.data?.id ?? input.recordId;
@@ -170,6 +155,12 @@ export async function saveHoja(formData: FormData) {
       console.log("saveHoja RPC failed", result.error);
       return { error: errorMessage(result.error) };
     }
+    const photos = await registrosServicioFotosAgregar({
+      p_registro_servicio_id: recordId as number,
+      p_fotos_ingreso: intakePhotoPaths,
+      p_fotos_egreso: completionPhotoPaths
+    });
+    if (photos.error) return { error: errorMessage(photos.error) };
     revalidatePath("/hojas");
     revalidatePath("/agenda");
     return { ok: true, completed: Boolean(input.p_firma_entrega_url), recordId: recordId ?? 0, groomerId: input.p_peluquero_id };

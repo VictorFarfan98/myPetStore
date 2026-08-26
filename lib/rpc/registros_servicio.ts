@@ -6,6 +6,8 @@ import type {
   RegistroServicioRow,
   RegistroServicioUpdateParams,
   RegistroServicioAdicionalesParams,
+  RegistroServicioFotoRow,
+  RegistroServicioFotosAgregarParams,
   RegistrosServicioCompletarParams
 } from "./types";
 import { rpcCall } from "./core";
@@ -48,6 +50,14 @@ export function registrosServicioEliminar(p_id: number) {
 
 export function registrosServicioAdicionalesReemplazar(params: RegistroServicioAdicionalesParams) {
   return rpcCall<unknown>("registros_servicio_adicionales_reemplazar", params);
+}
+
+export function registrosServicioFotosAgregar(params: RegistroServicioFotosAgregarParams) {
+  return rpcCall<RegistroServicioFotoRow[]>("registros_servicio_fotos_agregar", params);
+}
+
+export function registrosServicioFotosListar(p_registro_servicio_id: number, p_momento: "ingreso" | "egreso" | null = null) {
+  return rpcCall<RegistroServicioFotoRow[]>("registros_servicio_fotos_listar", { p_registro_servicio_id, p_momento });
 }
 
 export function registrosServicioPromocionAplicar(p_registro_servicio_id: number, p_usar_promocion: boolean) {

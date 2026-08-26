@@ -88,7 +88,7 @@ export function getAppointmentDetails(data: AppData, appointment: Appointment) {
   const branch = data.branches.find((item) => item.id === appointment.branchId) as Branch;
   const pet = data.pets.find((item) => item.id === appointment.petId) as Pet;
   const customer = data.customers.find((item) => item.id === pet.customerId);
-  const groomer = data.users.find((item) => item.id === appointment.groomerId) as User;
+  const groomer = data.users.find((item) => item.role === "groomer" && item.id === appointment.groomerId) as User;
   const services = appointment.serviceIds
     .map((serviceId) => data.services.find((item) => item.id === serviceId))
     .filter(Boolean) as Service[];

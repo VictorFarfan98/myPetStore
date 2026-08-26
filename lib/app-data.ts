@@ -266,9 +266,11 @@ async function buildGroomingRecords(args: {
     .map(async (registro) => {
       const cita = args.citaById.get(registro.cita_id);
       const customerName = cita ? args.customerNameByPetId.get(cita.mascota_id) : undefined;
-      const [beforePhotoUrl, afterPhotoUrl] = await Promise.all([
-        signedStorageUrl(args.supabase, registro.foto_antes_url),
-        signedStorageUrl(args.supabase, registro.foto_despues_url)
+      const intakePhotoPaths = (registro.fotos ?? []).filter((photo) => photo.momento === "ingreso").map((photo) => photo.ruta_storage);
+      const completionPhotoPaths = (registro.fotos ?? []).filter((photo) => photo.momento === "egreso").map((photo) => photo.ruta_storage);
+      const [intakePhotoUrls, completionPhotoUrls] = await Promise.all([
+        Promise.all(intakePhotoPaths.map((path) => signedStorageUrl(args.supabase, path))),
+        Promise.all(completionPhotoPaths.map((path) => signedStorageUrl(args.supabase, path)))
       ]);
       const configuredPrice = args.preciosServicios.find((price) => price.activo && price.servicio_id === registro.servicio_id && price.tamano_id === registro.tamano_id)?.precio;
 
@@ -290,10 +292,10 @@ async function buildGroomingRecords(args: {
         completionSignatureImageUrl: registro.firma_entrega_url ?? undefined,
         completionSignedAt: toIso(registro.firma_entrega_en),
         satisfactionNotes: normalizeText(registro.comentario_satisfaccion),
-        beforePhotoUrl,
-        afterPhotoUrl,
-        beforePhotoPath: registro.foto_antes_url ?? undefined,
-        afterPhotoPath: registro.foto_despues_url ?? undefined,
+        intakePhotoUrls: intakePhotoUrls.filter((url): url is string => Boolean(url)),
+        completionPhotoUrls: completionPhotoUrls.filter((url): url is string => Boolean(url)),
+        intakePhotoPaths,
+        completionPhotoPaths,
         finalAmount: registro.monto_final ?? configuredPrice ?? undefined,
         usesPromotion: registro.usar_promocion,
         paidAmount: registro.monto_pagado ?? undefined,

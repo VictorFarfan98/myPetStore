@@ -189,7 +189,7 @@ export function MascotasBrowser({ data }: { data: AppData }) {
                     <div className="mt-3 space-y-3">
                       {history.map((appointment) => {
                         const { branch, groomingRecord, groomer, services } = getAppointmentDetails(data, appointment);
-                        const hasPhotos = Boolean(groomingRecord?.beforePhotoUrl || groomingRecord?.afterPhotoUrl);
+                        const hasPhotos = Boolean(groomingRecord?.intakePhotoUrls.length || groomingRecord?.completionPhotoUrls.length);
                         const hasFinalSignature = Boolean(groomingRecord?.completionSignatureName);
 
                         return (
