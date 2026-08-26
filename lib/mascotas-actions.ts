@@ -46,12 +46,14 @@ async function clienteId(formData: FormData) {
 
   const nombre = text(formData, "cliente_nombre");
   const telefono = text(formData, "cliente_telefono");
+  const email = text(formData, "cliente_email");
   if (!nombre || !telefono) throw new Error("Completa el nombre y teléfono del nuevo cliente.");
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("El correo electrónico no es válido.");
 
   const result = await clientesInsertar({
     p_nombre: nombre,
     p_telefono: toE164(telefono),
-    p_email: null,
+    p_email: email.toLowerCase() || null,
     p_whatsapp_opt_in: formData.get("cliente_whatsapp_opt_in") === "on",
     p_sms_opt_in: formData.get("cliente_sms_opt_in") === "on",
     p_notas: text(formData, "cliente_notas") || null,
