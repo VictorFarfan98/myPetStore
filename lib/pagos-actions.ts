@@ -2,12 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { pagosReemplazarLista } from "@/lib/rpc/pagos";
-import { cuponesListarPorCliente } from "@/lib/rpc/cupones";
+import { cuponesListarPorCliente, cuponesObtenerPorId } from "@/lib/rpc/cupones";
 import { registrosServicioObtenerPorId } from "@/lib/rpc/registros_servicio";
 
 function cents(value: string | number) {
   const amount = Number(value);
   return Number.isFinite(amount) ? Math.round(amount * 100) : null;
+}
+
+export async function getCouponName(couponId: string) {
+  const id = couponId.trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    return { name: "Cupón aplicado" };
+  }
+  const result = await cuponesObtenerPorId(id);
+  return { name: result.data?.nombre ?? "Cupón aplicado" };
 }
 
 export async function applyCoupon(formData: FormData) {

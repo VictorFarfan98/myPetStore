@@ -122,6 +122,7 @@ export type GroomingRecord = {
   paidAmount?: string;
   couponId?: string;
   discountAmount?: string;
+  serviceItems?: Array<{ name: string; price: string; quantity?: number }>;
   usesPromotion?: boolean;
   conditions?: string[];
   parasites?: string[];

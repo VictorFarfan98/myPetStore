@@ -285,6 +285,46 @@ export type CalificacionGroomerRow = {
   actualizado_en: DateString;
 };
 
+export type ReporteServicioRow = {
+  servicio_id: number;
+  servicio_nombre: string;
+  cantidad: number;
+  monto_total: number;
+};
+
+export type ReportePeluqueroRow = {
+  peluquero_id: number;
+  peluquero_nombre: string;
+  servicios_completados: number;
+  adicionales_realizados: number;
+  duracion_promedio_minutos: number;
+  monto_servicios: number;
+  monto_adicionales: number;
+  monto_total_generado: number;
+  calificacion_promedio: number | null;
+  servicios: ReporteServicioRow[];
+  subservicios: ReporteServicioRow[];
+};
+
+export type ReportePeluquerosResult = {
+  datos: ReportePeluqueroRow[];
+  total: number;
+};
+
+export type ReporteSucursalRow = {
+  sucursal_id: number;
+  sucursal_nombre: string;
+  direccion: string;
+  telefono: string;
+  completadas: number;
+  proximas: number;
+};
+
+export type ReporteSucursalesResult = {
+  datos: ReporteSucursalRow[];
+  total: number;
+};
+
 export type CuponRow = {
   id: string;
   nombre: string;
@@ -390,7 +430,7 @@ export type RegistroServicioRow = {
   pulgas: boolean;
   garrapatas: boolean;
   piojos: boolean;
-  adicionales?: Array<{ servicio_id: number }>;
+  adicionales?: Array<{ servicio_id: number; cantidad?: number; precio?: string }>;
   fotos?: RegistroServicioFotoRow[];
 };
 

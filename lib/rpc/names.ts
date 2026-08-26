@@ -13,5 +13,7 @@ export const RPC_NAMES = {
   groomingRecordsList: "registros_servicio_listar",
   paymentsList: "pagos_listar",
   reminderLogsList: "recordatorios_citas_listar",
-  systemConfigGet: "configuracion_sistema_obtener"
+  systemConfigGet: "configuracion_sistema_obtener",
+  groomerReport: "reportes_peluqueros_obtener",
+  branchReport: "reportes_sucursales_obtener"
 } as const;

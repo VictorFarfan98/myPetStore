@@ -20,3 +20,4 @@ export * from "./pagos";
 export * from "./recordatorios_citas";
 export * from "./auditorias";
 export * from "./relaciones";
+export * from "./reportes";

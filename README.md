@@ -2235,6 +2235,14 @@ Acceso: Administrador o propietario; service_role.
 
 Comportamiento: Actualiza completamente la configuración global, incluyendo el umbral de fidelidad y los días de vigencia del cupón automático. El programa inicia en `fidelidad_inicia_en`, establecido por la migración, por lo que no cuenta servicios históricos.
 
+Reportes
+
+`reportes_peluqueros_obtener()` devuelve los groomers activos con servicios completados agrupados por servicio principal y servicio adicional, cantidades, montos históricos y promedio de calificaciones. Solo incluye datos de sucursales visibles para el usuario.
+
+`reportes_sucursales_obtener()` devuelve las sucursales activas visibles con citas completadas y próximas.
+
+Ambas funciones devuelven JSONB con la forma `{ datos, total }` y se consultan únicamente al abrir el reporte correspondiente.
+
 calificaciones_groomer — Calificaciones
 
 `calificaciones_groomer_insertar(p_registro_servicio_id BIGINT, p_calificacion SMALLINT, p_calificacion_notas TEXT DEFAULT NULL)` inserta una sola calificación por hoja con firma de entrega, incluso si aún está `en_progreso`. La tabla no permite actualizaciones ni inserciones directas; la calificación solo se crea por RPC cuando `configuracion_sistema.habilitar_calificaciones` está activa.

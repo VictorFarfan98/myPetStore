@@ -243,6 +243,7 @@ async function signedStorageUrl(supabase: Awaited<ReturnType<typeof createUserSu
 async function buildGroomingRecords(args: {
   registros: RegistroServicioRow[];
   preciosServicios: PrecioServicioRow[];
+  serviceById: Map<number, ServicioRow>;
   citaById: Map<number, CitaRow>;
   customerNameByPetId: Map<number, string>;
   supabase: Awaited<ReturnType<typeof createUserSupabaseClient>>;
@@ -259,6 +260,18 @@ async function buildGroomingRecords(args: {
         Promise.all(completionPhotoPaths.map((path) => signedStorageUrl(args.supabase, path)))
       ]);
       const configuredPrice = args.preciosServicios.find((price) => price.activo && price.servicio_id === registro.servicio_id && price.tamano_id === registro.tamano_id)?.precio;
+      const primaryService = args.serviceById.get(registro.servicio_id);
+      const serviceItems = [
+        {
+          name: primaryService?.nombre ?? `Servicio #${registro.servicio_id}`,
+          price: registro.precio_base ?? configuredPrice ?? "0"
+        },
+        ...(registro.adicionales ?? []).map((additional) => ({
+          name: args.serviceById.get(additional.servicio_id)?.nombre ?? `Servicio adicional #${additional.servicio_id}`,
+          price: (Number(additional.precio ?? args.serviceById.get(additional.servicio_id)?.precio ?? 0) * (additional.cantidad ?? 1)).toFixed(2),
+          quantity: additional.cantidad
+        }))
+      ];
 
       return {
         id: registro.id,
@@ -287,6 +300,7 @@ async function buildGroomingRecords(args: {
         paidAmount: registro.monto_pagado ?? undefined,
         couponId: registro.cupon_id ?? undefined,
         discountAmount: registro.descuento_cupon ?? undefined,
+        serviceItems,
         conditions: [
           registro.heridas_visibles && "Heridas visibles",
           registro.raspones && "Raspones",
@@ -354,7 +368,9 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     const customers = must(customersResult, "clientes").filter((customer) => customer.activo).map(mapCustomer);
     const tamanos = must(tamanosResult, "tamanos");
     const pets = must(petsResult, "mascotas").filter((pet) => pet.activo);
-    const servicesRows = must(servicesResult, "servicios").filter((service) => service.activo);
+    const allServicesRows = must(servicesResult, "servicios");
+    const servicesRows = allServicesRows.filter((service) => service.activo);
+    const serviceById = new Map(allServicesRows.map((service) => [service.id, service]));
     const precioServicios = must(preciosServiciosResult, "precios_servicios");
     const paymentMethods = must(paymentMethodsResult, "metodos_pago").filter((method) => method.activo).map((method) => ({ id: method.id, name: method.nombre }));
     const citas = must(citasResult, "citas");
@@ -415,6 +431,7 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     const groomingRecords = await buildGroomingRecords({
       registros,
       preciosServicios: precioServicios,
+      serviceById,
       citaById,
       customerNameByPetId,
       supabase
