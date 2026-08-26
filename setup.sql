@@ -81,7 +81,10 @@ CREATE TYPE public.especie_mascota AS ENUM (
 CREATE TYPE public.origen_cita AS ENUM (
     'telefono',
     'presencial',
-    'whatsapp'
+    'whatsapp',
+    'google',
+    'pauta_whatsapp',
+    'pauta_instagram'
 );
 
 CREATE TYPE public.estado_cita AS ENUM (

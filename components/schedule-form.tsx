@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AlertTriangle, CalendarPlus, CheckCircle2, Wand2 } from "lucide-react";
 import { buildReminderMessage, hasGroomerConflict, todayInGuatemala } from "@/lib/business-rules";
 import type { AppData, Appointment } from "@/lib/types";
@@ -23,15 +22,14 @@ export function ScheduleForm({
   initialDate = todayInGuatemala(),
   initialTime = "15:00",
   appointment,
-  onClose
+  onSaved
 }: {
   data: AppData;
   initialDate?: string;
   initialTime?: string;
   appointment?: Appointment;
-  onClose?: () => void;
+  onSaved?: () => void;
 }) {
-  const router = useRouter();
   const [branchId, setBranchId] = useState(appointment?.branchId ?? data.branches[0]?.id ?? 0);
   const [petId, setPetId] = useState(appointment?.petId ?? 0);
   const [groomerId, setGroomerId] = useState(appointment?.groomerId ?? data.users.find((user) => user.role === "groomer")?.id ?? 0);
@@ -89,8 +87,7 @@ export function ScheduleForm({
     const result = appointment ? await updateCita(formData) : await createCita(formData);
     setIsPending(false);
     if (result.error) return setMessage(result.error);
-    router.refresh();
-    onClose?.();
+    onSaved?.();
   }
 
   async function remove() {
@@ -101,8 +98,7 @@ export function ScheduleForm({
     const result = await deleteCita(formData);
     setIsPending(false);
     if (result.error) return setMessage(result.error);
-    router.refresh();
-    onClose?.();
+    onSaved?.();
   }
 
   return (

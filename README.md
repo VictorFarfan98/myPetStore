@@ -68,6 +68,8 @@ Ejecutar rpc.sql.
 
 Ejecutar supabase_storage.sql una vez o cuando se quiera reafirmar la configuración del bucket.
 
+For an existing database, also apply pending migrations from `supabase/migrations/` after initialization.
+
 setup.sql no elimina el bucket petstore ni los objetos almacenados. rpc.sql puede volver a ejecutarse sin borrar tablas ni datos: recrea sus propias políticas, permisos, helpers y funciones.
 
 Inicialización de usuarios
