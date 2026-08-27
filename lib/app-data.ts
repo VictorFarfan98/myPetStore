@@ -319,7 +319,7 @@ async function buildGroomingRecords(args: {
     }));
 }
 
-export async function getAppData(options: { recordsLimit?: number | null; recordsOffset?: number; recordsBranchId?: number | null } = {}): Promise<AppData> {
+export async function getAppData(options: { recordsLimit?: number | null; recordsOffset?: number; recordsBranchId?: number | null; includeReminderLogs?: boolean; paymentsForRecords?: boolean } = {}): Promise<AppData> {
   try {
     const supabase = await createUserSupabaseClient();
 
@@ -356,8 +356,8 @@ export async function getAppData(options: { recordsLimit?: number | null; record
         p_offset: options.recordsOffset ?? 0,
         p_sucursal_id: options.recordsBranchId ?? null
       }, supabase),
-      rpcCall<RpcListEnvelope<PagoRow>>(RPC_NAMES.paymentsList, { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<RpcListEnvelope<RecordatorioCitaRow>>(RPC_NAMES.reminderLogsList, { p_limite: null, p_offset: 0 }, supabase),
+      options.paymentsForRecords ? Promise.resolve<RpcResult<RpcListEnvelope<PagoRow>>>({ data: { datos: [], total: 0, limite: 0, offset: 0 }, error: null }) : rpcCall<RpcListEnvelope<PagoRow>>(RPC_NAMES.paymentsList, { p_limite: null, p_offset: 0 }, supabase),
+      options.includeReminderLogs === false ? Promise.resolve<RpcResult<RpcListEnvelope<RecordatorioCitaRow>>>({ data: { datos: [], total: 0, limite: 0, offset: 0 }, error: null }) : rpcCall<RpcListEnvelope<RecordatorioCitaRow>>(RPC_NAMES.reminderLogsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<ConfiguracionSistemaRow>(RPC_NAMES.systemConfigGet, {}, supabase)
     ]);
 
@@ -375,7 +375,12 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     const paymentMethods = must(paymentMethodsResult, "metodos_pago").filter((method) => method.activo).map((method) => ({ id: method.id, name: method.nombre }));
     const citas = must(citasResult, "citas");
     const registros = must(registrosResult, "registros_servicio");
-    const payments = must(paymentsResult, "pagos").map((payment) => ({ id: payment.id, recordId: payment.registro_servicio_id, methodId: payment.metodo_pago_id, amount: payment.monto }));
+    let payments = must(paymentsResult, "pagos");
+    if (options.paymentsForRecords && registros.length > 0) {
+      const { data, error } = await supabase.from("pagos").select("id, registro_servicio_id, metodo_pago_id, monto").in("registro_servicio_id", registros.map((registro) => registro.id)).eq("activo", true);
+      if (error) throw new Error(`Failed to load pagos: ${error.message}`);
+      payments = (data ?? []) as PagoRow[];
+    }
     const reminderLogs = must(reminderLogsResult, "recordatorios_citas");
     const config = mustRow(configResult, "configuracion_sistema");
 
@@ -468,7 +473,7 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       services,
       serviceDurations,
       paymentMethods,
-      payments,
+      payments: payments.map((payment) => ({ id: payment.id, recordId: payment.registro_servicio_id, methodId: payment.metodo_pago_id, amount: payment.monto })),
       appointments,
       groomingRecords,
       groomingRecordsTotal: registrosResult.data?.total,

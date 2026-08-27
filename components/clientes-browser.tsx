@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Search } from "lucide-react";
 import type { ClientesData, Customer } from "@/lib/types";
@@ -9,8 +9,8 @@ import { DataTable } from "./data-table";
 
 const emptyForm = { id: "", nombre: "", telefono: "", email: "", whatsapp_opt_in: false, sms_opt_in: false, notas: "", activo: true };
 
-export function ClientesBrowser({ data }: { data: ClientesData }) {
-  const [query, setQuery] = useState("");
+export function ClientesBrowser({ data, page, initialQuery }: { data: ClientesData; page: number; initialQuery: string }) {
+  const [query, setQuery] = useState(initialQuery);
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -18,7 +18,12 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
   const editing = Boolean(form.id);
   const normalizedQuery = query.trim().toLowerCase();
 
-  console.log("Clientes", data);
+  useEffect(() => {
+    if (query === initialQuery) return;
+    const timeout = window.setTimeout(() => router.replace(`/clientes?page=1${query.trim() ? `&q=${encodeURIComponent(query.trim())}` : ""}`), 300);
+    return () => window.clearTimeout(timeout);
+  }, [initialQuery, query, router]);
+
   const rows = data.customers
     .map((customer) => ({ customer, pets: data.pets.filter((pet) => pet.customerId === customer.id) }))
     .filter(({ customer, pets }) => !normalizedQuery || [customer.name, customer.phone, customer.email, customer.notes, ...pets.flatMap((pet) => [pet.name, pet.breed])].some((value) => value.toLowerCase().includes(normalizedQuery)));
@@ -56,7 +61,7 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div><h2 className="text-xl font-semibold text-ink">Directorio de clientes</h2><p className="mt-1 text-sm text-slate-500">{rows.length} cliente{rows.length === 1 ? "" : "s"} encontrado{rows.length === 1 ? "" : "s"}.</p></div>
-          <label className="focus-ring flex w-full max-w-md items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"><Search className="h-4 w-4 text-slate-400" aria-hidden="true" /><input className="w-full bg-transparent outline-none" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar cliente o mascota" /></label>
+          <label className="focus-ring flex w-full max-w-md items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"><Search className="h-4 w-4 text-slate-400" aria-hidden="true" /><input className="w-full bg-transparent outline-none" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en esta página" /></label>
         </div>
         <div className="mt-5"><DataTable rows={rows.map(({ customer, pets }) => ({ ...customer, pets }))} columns={[
           { key: "nombre", header: "Cliente", render: (row) => <span className="font-semibold text-ink">{row.name}</span> },
@@ -70,6 +75,7 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
           } },
           { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" type="button" onClick={() => edit(row)}>Editar</button><button className="font-semibold text-red-700 hover:underline" type="button" onClick={() => remove(row.id)}>Eliminar</button></div> }
         ]} /></div>
+        {Math.ceil(data.total / data.pageSize) > 1 && <div className="mt-5 flex items-center justify-between"><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" type="button" disabled={page <= 1} onClick={() => router.push(`/clientes?page=${page - 1}${initialQuery ? `&q=${encodeURIComponent(initialQuery)}` : ""}`)}>Anterior</button><span className="text-sm text-slate-500">Página {page} de {Math.ceil(data.total / data.pageSize)}</span><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" type="button" disabled={page >= Math.ceil(data.total / data.pageSize)} onClick={() => router.push(`/clientes?page=${page + 1}${initialQuery ? `&q=${encodeURIComponent(initialQuery)}` : ""}`)}>Siguiente</button></div>}
       </div>
       <form className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-panel" onSubmit={submit}>
         <h2 className="text-xl font-semibold text-ink">{editing ? "Editar cliente" : "Nuevo cliente"}</h2>

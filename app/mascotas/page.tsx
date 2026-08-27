@@ -1,13 +1,19 @@
 import { AppShell } from "@/components/app-shell";
-import { MascotasBrowser } from "@/components/mascotas-browser";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
-import { getAppData } from "@/lib/app-data";
+import { getMascotasPageData } from "@/lib/mascotas-data";
+import nextDynamic from "next/dynamic";
 
 export const dynamic = "force-dynamic";
 
-export default async function MascotasPage() {
-  const data = await getAppData();
+const MascotasBrowser = nextDynamic(() => import("@/components/mascotas-browser").then((module) => module.MascotasBrowser), { loading: () => <div className="mt-6 h-[36rem] animate-pulse rounded-lg bg-slate-100" /> });
+
+export default async function MascotasPage({ searchParams }: { searchParams: Promise<{ page?: string; q?: string }> }) {
+  const params = await searchParams;
+  const pageSize = 20;
+  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
+  const query = params.q?.trim().slice(0, 100) ?? "";
+  const data = await getMascotasPageData(page, pageSize, query);
 
   return (
     <AppShell>
@@ -17,7 +23,7 @@ export default async function MascotasPage() {
           title="Mascotas"
           description="Busca mascotas por nombre o por su dueño, y abre su expediente con datos de grooming, salud y comportamiento."
         />
-        <MascotasBrowser data={data} />
+        <MascotasBrowser key={`${page}:${query}`} data={data} page={page} initialQuery={query} />
       </PageContainer>
     </AppShell>
   );

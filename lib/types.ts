@@ -63,6 +63,29 @@ export type Pet = {
 export type ClientesData = {
   customers: Customer[];
   pets: Pick<Pet, "id" | "customerId" | "name" | "breed">[];
+  total: number;
+  pageSize: number;
+};
+
+export type MascotasPageData = {
+  pets: Pet[];
+  customers: Customer[];
+  sizes: PetSizeOption[];
+  total: number;
+  pageSize: number;
+};
+
+export type MascotaHistoryItem = {
+  id: number;
+  scheduledStart: string;
+  status: string;
+  branchName: string;
+  serviceName: string;
+  groomerName: string;
+  notes: string;
+  outcome: string;
+  hasSignature: boolean;
+  hasPhotos: boolean;
 };
 
 export type PetSizeOption = { id: number; name: string; species: Species };

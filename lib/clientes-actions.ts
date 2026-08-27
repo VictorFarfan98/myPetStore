@@ -1,20 +1,26 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { clientesActualizar, clientesEliminar, clientesInsertar, clientesListar, clientesProgresoFidelidadListar } from "@/lib/rpc/clientes";
-import { mascotasListar } from "@/lib/rpc/mascotas";
+import { clientesActualizar, clientesBuscarListar, clientesEliminar, clientesInsertar, clientesListar, clientesProgresoFidelidadListar } from "@/lib/rpc/clientes";
 import { unwrapRpcResult } from "@/lib/rpc/core";
 import type { ClientesData } from "@/lib/types";
 import { toE164 } from "@/lib/phone";
+import { createUserSupabaseClient } from "@/lib/supabase/server";
 
-export async function getClientes(): Promise<ClientesData> {
-  const [clientesResult, mascotasResult, progresoResult] = await Promise.all([
-    clientesListar(),
-    mascotasListar(),
+export async function getClientes(page = 1, pageSize = 20, query = ""): Promise<ClientesData> {
+  const offset = (page - 1) * pageSize;
+  const normalizedQuery = query.trim().slice(0, 100);
+  const [clientesResult, progresoResult] = await Promise.all([
+    normalizedQuery ? clientesBuscarListar(normalizedQuery, pageSize, offset) : clientesListar(pageSize, offset),
     clientesProgresoFidelidadListar()
   ]);
   const clientes = unwrapRpcResult(clientesResult).datos;
-  const mascotas = mascotasResult.error ? [] : unwrapRpcResult(mascotasResult).datos;
+  const customerIds = clientes.map((cliente) => cliente.id);
+  const supabase = await createUserSupabaseClient();
+  const mascotasResult = customerIds.length
+    ? await supabase.from("mascotas").select("id, cliente_id, nombre, raza").in("cliente_id", customerIds).eq("activo", true)
+    : { data: [], error: null };
+  if (mascotasResult.error) throw new Error("No se pudieron cargar las mascotas de los clientes.");
   const progreso = new Map(unwrapRpcResult(progresoResult).map((row) => [row.cliente_id, row]));
 
   return {
@@ -32,13 +38,23 @@ export async function getClientes(): Promise<ClientesData> {
         loyaltyRequired: loyalty?.requeridos ?? 5
       };
     }),
-    pets: mascotas.filter((mascota) => mascota.activo).map((mascota) => ({
+    pets: (mascotasResult.data ?? []).map((mascota) => ({
       id: mascota.id,
       customerId: mascota.cliente_id,
       name: mascota.nombre,
-      breed: mascota.raza?.trim() ?? ""
-    }))
+      breed: String(mascota.raza ?? "").trim()
+    })),
+    total: unwrapRpcResult(clientesResult).total,
+    pageSize
   };
+}
+
+export async function searchClientes(query: string) {
+  const normalizedQuery = query.trim().slice(0, 100);
+  if (normalizedQuery.length < 2) return { customers: [] };
+  const result = await clientesBuscarListar(normalizedQuery, 20, 0);
+  if (result.error) return { error: "No se pudieron buscar clientes." };
+  return { customers: (result.data?.datos ?? []).map((customer) => ({ id: customer.id, name: customer.nombre, phone: customer.telefono })) };
 }
 
 function text(formData: FormData, name: string) {

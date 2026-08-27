@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { clientesInsertar } from "@/lib/rpc/clientes";
 import { mascotasActualizar, mascotasEliminar, mascotasInsertar } from "@/lib/rpc/mascotas";
+import { mascotasObtenerHistorial } from "@/lib/rpc/relaciones";
+import { registrosServicioFotosListar } from "@/lib/rpc/registros_servicio";
 import { toE164 } from "@/lib/phone";
+import type { MascotaHistoryItem } from "@/lib/types";
 
 function text(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -99,4 +102,39 @@ export async function deleteMascota(formData: FormData) {
   if (result.error) return { error: "No se pudo desactivar la mascota." };
   revalidatePath("/mascotas");
   return { ok: true };
+}
+
+const historyStatusLabels: Record<string, string> = {
+  atendida: "Completada",
+  cancelada: "Cancelada",
+  no_asistio: "No asistió",
+  en_progreso: "En progreso",
+  programada: "Programada"
+};
+
+export async function getMascotaHistory(petId: number): Promise<{ history?: MascotaHistoryItem[]; error?: string }> {
+  if (!Number.isInteger(petId) || petId < 1) return { error: "La mascota seleccionada no es válida." };
+  const result = await mascotasObtenerHistorial({ p_mascota_id: petId });
+  if (result.error || !result.data) return { error: "No se pudo cargar el historial de la mascota." };
+  const data = result.data as { citas?: Array<Record<string, unknown>> };
+  return {
+    history: await Promise.all((data.citas ?? []).map(async (appointment) => {
+      const record = appointment.registro_servicio as Record<string, unknown> | null;
+      const branch = appointment.sucursal as Record<string, unknown> | undefined;
+      const service = appointment.servicio as Record<string, unknown> | undefined;
+      const groomer = appointment.peluquero as Record<string, unknown> | undefined;
+      return {
+        id: Number(appointment.id),
+        scheduledStart: String(appointment.inicio_programado),
+        status: historyStatusLabels[String(appointment.estado)] ?? String(appointment.estado),
+        branchName: String(branch?.nombre ?? ""),
+        serviceName: String(service?.nombre ?? ""),
+        groomerName: String(groomer?.nombre ?? "Sin asignar"),
+        notes: String(record?.observaciones_ingreso ?? ""),
+        outcome: String(record?.estado ?? "Pendiente"),
+        hasSignature: Boolean(record?.firma_entrega_url),
+        hasPhotos: record?.id ? Boolean((await registrosServicioFotosListar(Number(record.id))).data?.length) : false
+      };
+    }))
+  };
 }

@@ -835,8 +835,6 @@ Retorno: JSONB
 
 Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Comportamiento: Lista únicamente registros activos con paginación opcional.
-
 Listar todos — usuarios_listar_todos
 
 Firma: usuarios_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
@@ -939,8 +937,6 @@ Retorno: JSONB
 
 Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
-Comportamiento: Lista únicamente registros activos con paginación opcional.
-
 Listar todos — usuarios_sucursales_listar_todos
 
 Firma: usuarios_sucursales_listar_todos(p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
@@ -1026,6 +1022,16 @@ Retorno: JSONB
 Acceso: Usuario activo según visibilidad RLS; service_role.
 
 Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Buscar globalmente — clientes_buscar_listar
+
+Firma: clientes_buscar_listar(p_busqueda TEXT, p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo según visibilidad RLS; service_role.
+
+Comportamiento: Busca globalmente en nombre, teléfono, correo y nombre o raza de mascotas asociadas, con paginación.
 
 Listar todos — clientes_listar_todos
 
@@ -1130,6 +1136,16 @@ Retorno: JSONB
 Acceso: Usuario activo según visibilidad RLS; service_role.
 
 Comportamiento: Lista únicamente registros activos con paginación opcional.
+
+Buscar globalmente — mascotas_buscar_listar
+
+Firma: mascotas_buscar_listar(p_busqueda TEXT, p_limite BIGINT DEFAULT NULL, p_offset BIGINT DEFAULT 0)
+
+Retorno: JSONB
+
+Acceso: Usuario activo según visibilidad RLS; service_role.
+
+Comportamiento: Busca globalmente en nombre, raza, especie, nombre, teléfono o correo del cliente, con paginación.
 
 Listar todos — mascotas_listar_todos
 

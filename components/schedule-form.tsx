@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { AlertTriangle, CalendarPlus, CheckCircle2, Wand2 } from "lucide-react";
 import { buildReminderMessage, hasGroomerConflict, todayInGuatemala } from "@/lib/business-rules";
 import type { AppData, Appointment } from "@/lib/types";
-import { createCita, deleteCita, updateCita } from "@/lib/citas-actions";
+import { cancelCita, createCita, deleteCita, updateCita } from "@/lib/citas-actions";
 import { SearchableSelect } from "./searchable-select";
 
 const sourceValues: Record<Appointment["source"], string> = {
@@ -96,6 +96,22 @@ export function ScheduleForm({
     formData.set("id", String(appointment.id));
     setIsPending(true);
     const result = await deleteCita(formData);
+    setIsPending(false);
+    if (result.error) return setMessage(result.error);
+    onSaved?.();
+  }
+
+  async function cancel() {
+    if (!appointment) return;
+    const reason = window.prompt("Indica el motivo de la cancelación:");
+    if (reason === null) return;
+    if (!reason.trim()) return setMessage("Escribe un motivo para cancelar la cita.");
+    const formData = new FormData();
+    formData.set("cita_id", String(appointment.id));
+    formData.set("motivo", reason);
+    setIsPending(true);
+    setMessage("");
+    const result = await cancelCita(formData);
     setIsPending(false);
     if (result.error) return setMessage(result.error);
     onSaved?.();
@@ -193,6 +209,7 @@ export function ScheduleForm({
       <input name="fin_programado" type="hidden" value={endIso} readOnly />
       <div className="mt-5 flex gap-3">
         <button className="focus-ring rounded-lg bg-jade px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={isPending} type="submit">{isPending ? "Guardando..." : appointment ? "Guardar cambios" : "Crear cita"}</button>
+        {appointment && <button className="focus-ring rounded-lg border border-amber-200 px-4 py-2.5 font-semibold text-amber-800" disabled={isPending} type="button" onClick={cancel}>Cancelar cita</button>}
         {appointment && <button className="focus-ring rounded-lg border border-red-200 px-4 py-2.5 font-semibold text-red-700" disabled={isPending} type="button" onClick={remove}>Desactivar</button>}
       </div>
       {message && <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">{message}</p>}

@@ -18,6 +18,13 @@ export function clientesListar(p_limite: number | null = null, p_offset = 0) {
   );
 }
 
+export function clientesBuscarListar(p_busqueda: string, p_limite: number | null = null, p_offset = 0) {
+  return rpcCall<{ datos: ClienteRow[]; total: number; limite: number | null; offset: number }>(
+    "clientes_buscar_listar",
+    { p_busqueda, p_limite, p_offset }
+  );
+}
+
 export function clientesListarTodos(p_limite: number | null = null, p_offset = 0) {
   return rpcCall<{ datos: ClienteRow[]; total: number; limite: number | null; offset: number }>(
     "clientes_listar_todos",
