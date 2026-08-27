@@ -32,4 +32,3 @@ export function tamanosActualizar(params: TamanoUpdateParams) {
 export function tamanosEliminar(p_id: number) {
   return rpcCall<TamanoRow>("tamanos_eliminar", { p_id });
 }
-

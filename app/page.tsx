@@ -5,14 +5,14 @@ import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { StatusPill } from "@/components/status-pill";
 import { getAppData } from "@/lib/app-data";
-import { getCompletedByBranch, getCompletedByGroomer, getStatusCounts } from "@/lib/business-rules";
+import { getCompletedByBranch, getCompletedByGroomer, getStatusCounts, todayInGuatemala } from "@/lib/business-rules";
 import { roleLabels, statusLabels } from "@/lib/labels";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const data = await getAppData();
-  const today = "2026-06-23";
+  const today = todayInGuatemala();
   const todaysAppointments = data.appointments.filter((appointment) =>
     appointment.scheduledStart.startsWith(today)
   );
@@ -97,7 +97,7 @@ export default async function DashboardPage() {
             </div>
             <div className="mt-4 space-y-3">
               {data.users.slice(0, 4).map((user) => (
-                <div key={user.id} className="flex items-center justify-between gap-3 rounded-lg bg-cloud px-3 py-2">
+                <div key={`${user.role}-${user.id}`} className="flex items-center justify-between gap-3 rounded-lg bg-cloud px-3 py-2">
                   <div>
                     <p className="font-medium text-ink">{user.name}</p>
                     <p className="text-xs text-slate-500">{user.email}</p>

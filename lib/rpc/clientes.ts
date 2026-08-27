@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { ClienteInsertParams, ClienteRow, ClienteUpdateParams } from "./types";
+import type { ClienteInsertParams, ClienteProgresoFidelidadRow, ClienteRow, ClienteUpdateParams } from "./types";
 import { rpcCall } from "./core";
 
 export function clientesInsertar(params: ClienteInsertParams) {
@@ -15,6 +15,13 @@ export function clientesListar(p_limite: number | null = null, p_offset = 0) {
   return rpcCall<{ datos: ClienteRow[]; total: number; limite: number | null; offset: number }>(
     "clientes_listar",
     { p_limite, p_offset }
+  );
+}
+
+export function clientesBuscarListar(p_busqueda: string, p_limite: number | null = null, p_offset = 0) {
+  return rpcCall<{ datos: ClienteRow[]; total: number; limite: number | null; offset: number }>(
+    "clientes_buscar_listar",
+    { p_busqueda, p_limite, p_offset }
   );
 }
 
@@ -33,3 +40,6 @@ export function clientesEliminar(p_id: number) {
   return rpcCall<ClienteRow>("clientes_eliminar", { p_id });
 }
 
+export function clientesProgresoFidelidadListar() {
+  return rpcCall<ClienteProgresoFidelidadRow[]>("clientes_progreso_fidelidad_listar");
+}

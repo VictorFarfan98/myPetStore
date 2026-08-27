@@ -5,14 +5,15 @@ import { tamanosActualizar, tamanosEliminar, tamanosInsertar } from "@/lib/rpc/t
 
 function validate(formData: FormData) {
   const nombre = String(formData.get("nombre") ?? "").trim();
-  if (!nombre) throw new Error("Ingresa un nombre para el tamaño.");
-  return { p_nombre: nombre, p_activo: formData.get("activo") !== null && formData.get("activo") !== "false" };
+  const especie = String(formData.get("especie") ?? "");
+  if (!nombre || !["perro", "gato", "otro"].includes(especie)) throw new Error("Ingresa una especie y un nombre válidos para la clasificación.");
+  return { p_especie: especie as "perro" | "gato" | "otro", p_nombre: nombre, p_activo: formData.get("activo") !== null && formData.get("activo") !== "false" };
 }
 
 function errorMessage(code?: string) {
-  if (code === "PC001") return "Ya existe un tamaño con ese nombre.";
-  if (code === "PV001") return "Los datos del tamaño no son válidos.";
-  return "No se pudo guardar el tamaño.";
+  if (code === "PC001") return "Ya existe una clasificación con ese nombre para la especie seleccionada.";
+  if (code === "PV001") return "Los datos de la clasificación no son válidos.";
+  return "No se pudo guardar la clasificación.";
 }
 
 export async function createTamano(formData: FormData) {

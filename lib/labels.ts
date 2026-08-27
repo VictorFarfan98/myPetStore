@@ -30,6 +30,9 @@ export const sourceLabels: Record<AppointmentSource, string> = {
   whatsapp: "WhatsApp",
   phone: "Telefono",
   walk_in: "Mostrador",
+  google: "Google",
+  whatsapp_ad: "Pauta WhatsApp",
+  instagram_ad: "Pauta Instagram",
   online: "Online futuro"
 };
 
@@ -37,7 +40,9 @@ export const sizeLabels: Record<PetSize, string> = {
   pequeno: "Pequeno",
   mediano: "Mediano",
   grande: "Grande",
-  gigante: "Gigante"
+  gigante: "Gigante",
+  pelo_corto: "Pelo corto",
+  pelo_largo: "Pelo largo"
 };
 
 export const speciesLabels: Record<Species, string> = {

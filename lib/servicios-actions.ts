@@ -11,14 +11,20 @@ function validate(formData: FormData) {
   const nombre = text(formData, "nombre");
   const intervalo = text(formData, "intervalo_recordatorio_dias");
   const intervaloRecordatorio = intervalo ? Number(intervalo) : null;
-
-  if (!nombre || (intervaloRecordatorio !== null && (!Number.isInteger(intervaloRecordatorio) || intervaloRecordatorio < 1))) {
-    throw new Error("Ingresa un nombre y un intervalo de recordatorio válido.");
+  const adicional = formData.get("es_adicional") !== null;
+  const duracion = text(formData, "duracion_minutos");
+  const duracionMinutos = duracion ? Number(duracion) : null;
+  const precio = text(formData, "precio");
+  if (!nombre || (intervaloRecordatorio !== null && (!Number.isInteger(intervaloRecordatorio) || intervaloRecordatorio < 1)) || (!adicional && (!Number.isInteger(duracionMinutos) || (duracionMinutos ?? 0) < 1)) || (adicional && !/^(?:\d+)(?:\.\d{1,2})?$/.test(precio))) {
+    throw new Error("Ingresa datos válidos para el servicio, su duración y su precio.");
   }
 
   return {
     p_nombre: nombre,
     p_intervalo_recordatorio_dias: intervaloRecordatorio,
+    p_duracion_minutos: adicional ? null : duracionMinutos,
+    p_es_adicional: adicional,
+    p_precio: adicional ? precio : null,
     p_activo: formData.get("activo") !== null && formData.get("activo") !== "false"
   };
 }

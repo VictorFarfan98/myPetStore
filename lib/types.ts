@@ -9,9 +9,9 @@ export type AppointmentStatus =
   | "cancelled"
   | "no_show";
 
-export type AppointmentSource = "whatsapp" | "phone" | "walk_in" | "online";
+export type AppointmentSource = "whatsapp" | "phone" | "walk_in" | "google" | "whatsapp_ad" | "instagram_ad" | "online";
 
-export type PetSize = "pequeno" | "mediano" | "grande" | "gigante";
+export type PetSize = "pequeno" | "mediano" | "grande" | "gigante" | "pelo_corto" | "pelo_largo";
 
 export type Species = "perro" | "gato" | "otro";
 
@@ -38,9 +38,12 @@ export type Customer = {
   id: number;
   name: string;
   phone: string;
+  email: string;
   whatsappOptIn: boolean;
   smsOptIn?: boolean;
   notes: string;
+  loyaltyProgress?: number;
+  loyaltyRequired?: number;
 };
 
 export type Pet = {
@@ -60,18 +63,44 @@ export type Pet = {
 export type ClientesData = {
   customers: Customer[];
   pets: Pick<Pet, "id" | "customerId" | "name" | "breed">[];
+  total: number;
+  pageSize: number;
 };
 
-export type PetSizeOption = { id: number; name: string };
+export type MascotasPageData = {
+  pets: Pet[];
+  customers: Customer[];
+  sizes: PetSizeOption[];
+  total: number;
+  pageSize: number;
+};
+
+export type MascotaHistoryItem = {
+  id: number;
+  scheduledStart: string;
+  status: string;
+  branchName: string;
+  serviceName: string;
+  groomerName: string;
+  notes: string;
+  outcome: string;
+  hasSignature: boolean;
+  hasPhotos: boolean;
+};
+
+export type PetSizeOption = { id: number; name: string; species: Species };
 
 export type Service = {
   id: number;
   name: string;
   estimatedDurationMinutes: number;
+  generalDurationMinutes?: number;
+  price?: string;
+  additional?: boolean;
   active: boolean;
 };
 
-export type ShampooOption = { id: number; name: string };
+export type ServiceDuration = { serviceId: number; species: Species; size: PetSize; minutes: number; price: string; promotionalPrice?: string };
 
 export type PaymentMethod = { id: number; name: string };
 export type ServicePayment = { id: number; recordId: number; methodId: number; amount: string };
@@ -96,7 +125,7 @@ export type GroomingRecord = {
   serviceId?: number;
   groomerId?: number;
   sizeId?: number;
-  shampooId?: number;
+  additionalServiceIds?: number[];
   actualStart?: string;
   actualEnd?: string;
   groomerNotes: string;
@@ -108,14 +137,16 @@ export type GroomingRecord = {
   completionSignatureImageUrl?: string;
   completionSignedAt?: string;
   satisfactionNotes: string;
-  beforePhotoUrl?: string;
-  afterPhotoUrl?: string;
-  beforePhotoPath?: string;
-  afterPhotoPath?: string;
+  intakePhotoUrls: string[];
+  completionPhotoUrls: string[];
+  intakePhotoPaths: string[];
+  completionPhotoPaths: string[];
   finalAmount?: string;
   paidAmount?: string;
   couponId?: string;
   discountAmount?: string;
+  serviceItems?: Array<{ name: string; price: string; quantity?: number }>;
+  usesPromotion?: boolean;
   conditions?: string[];
   parasites?: string[];
 };
@@ -137,7 +168,7 @@ export type AppData = {
   pets: Pet[];
   sizes?: PetSizeOption[];
   services: Service[];
-  shampooOptions?: ShampooOption[];
+  serviceDurations?: ServiceDuration[];
   paymentMethods?: PaymentMethod[];
   payments?: ServicePayment[];
   appointments: Appointment[];

@@ -1,12 +1,13 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Calendar as BigCalendar, dateFnsLocalizer } from "react-big-calendar";
 import type { EventPropGetter, SlotInfo, View } from "react-big-calendar";
 import { addDays, addMonths, addWeeks, format, getDay, parse, startOfWeek } from "date-fns";
 import { es } from "date-fns/locale/es";
-import { CalendarPlus, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, LoaderCircle, MapPin, X } from "lucide-react";
 import { getAppointmentDetails, todayInGuatemala } from "@/lib/business-rules";
 import type { AppData, Appointment } from "@/lib/types";
 import { ScheduleForm } from "./schedule-form";
@@ -108,10 +109,12 @@ function buildEvent(data: AppData, appointment: Appointment): GroomingCalendarEv
 }
 
 export function AgendaCalendar({ data }: { data: AppData }) {
+  const router = useRouter();
+  const [isRefreshing, startRefreshing] = useTransition();
   const [selectedBranchId, setSelectedBranchId] = useState<number | "all">("all");
   const [selectedGroomerId, setSelectedGroomerId] = useState<number | "all">("all");
   const [selectedDate, setSelectedDate] = useState(new Date(`${todayInGuatemala()}T12:00:00-06:00`));
-  const [selectedView, setSelectedView] = useState<View>("day");
+  const [selectedView, setSelectedView] = useState<View>("week");
   const [modalState, setModalState] = useState<{ date: string; time: string; appointment?: Appointment } | null>(null);
 
   const selectedBranch = data.branches.find((branch) => branch.id === selectedBranchId);
@@ -238,7 +241,7 @@ export function AgendaCalendar({ data }: { data: AppData }) {
       </header>
 
       <div className="min-h-0 flex-1 p-3">
-        <div className="h-full rounded-lg border border-slate-200 bg-white p-3 shadow-panel">
+        <div className="relative h-full rounded-lg border border-slate-200 bg-white p-3 shadow-panel" aria-busy={isRefreshing}>
           <div className="mb-3 text-center text-sm font-bold capitalize text-ink">
             {calendarTitle(selectedDate, selectedView)}
           </div>
@@ -282,6 +285,14 @@ export function AgendaCalendar({ data }: { data: AppData }) {
             view={selectedView}
             views={["day", "week", "month"]}
           />
+          {isRefreshing && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/60">
+              <div className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-ink shadow-panel" role="status" aria-live="polite">
+                <LoaderCircle className="h-4 w-4 animate-spin text-jade" aria-hidden="true" />
+                Actualizando agenda…
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -310,7 +321,10 @@ export function AgendaCalendar({ data }: { data: AppData }) {
               initialDate={modalState.date}
               initialTime={modalState.time}
               appointment={modalState.appointment}
-              onClose={() => setModalState(null)}
+              onSaved={() => {
+                setModalState(null);
+                startRefreshing(() => router.refresh());
+              }}
             />
           </div>
         </div>

@@ -9,18 +9,20 @@ function number(formData: FormData, name: string) {
 
 function validate(formData: FormData) {
   const servicioId = number(formData, "servicio_id");
+  const especie = String(formData.get("especie") ?? "");
   const tamanoId = number(formData, "tamano_id");
   const precio = String(formData.get("precio") ?? "").trim();
+  const precioPromocional = String(formData.get("precio_promocional") ?? "").trim();
   const duracion = number(formData, "duracion_minutos");
-  if (!Number.isInteger(servicioId) || servicioId < 1 || !Number.isInteger(tamanoId) || tamanoId < 1 || !/^(?:\d+)(?:\.\d{1,2})?$/.test(precio) || !Number.isInteger(duracion) || duracion < 1) {
-    throw new Error("Ingresa un servicio, tamaño, precio y duración válidos.");
+  if (!Number.isInteger(servicioId) || servicioId < 1 || !["perro", "gato", "otro"].includes(especie) || !Number.isInteger(tamanoId) || tamanoId < 1 || !/^(?:\d+)(?:\.\d{1,2})?$/.test(precio) || (precioPromocional && !/^(?:\d+)(?:\.\d{1,2})?$/.test(precioPromocional)) || !Number.isInteger(duracion) || duracion < 1) {
+    throw new Error("Ingresa un servicio, especie, clasificación, precios y duración válidos.");
   }
-  return { p_servicio_id: servicioId, p_tamano_id: tamanoId, p_precio: precio, p_duracion_minutos: duracion, p_activo: formData.get("activo") !== null && formData.get("activo") !== "false" };
+  return { p_servicio_id: servicioId, p_especie: especie as "perro" | "gato" | "otro", p_tamano_id: tamanoId, p_precio: precio, p_precio_promocional: precioPromocional || null, p_duracion_minutos: duracion, p_activo: formData.get("activo") !== null && formData.get("activo") !== "false" };
 }
 
 function errorMessage(error: { code?: string; message?: string }) {
   console.error("Error en RPC de precios_servicios", { code: error.code, message: error.message });
-  if (error.code === "PC001") return "Ya existe un precio para ese servicio y tamaño.";
+  if (error.code === "PC001") return "Ya existe un precio para ese servicio, especie y tamaño.";
   if (error.code === "PV001") return "Los datos del precio no son válidos.";
   return "No se pudo guardar el precio del servicio.";
 }
@@ -51,9 +53,10 @@ export async function updatePrecioServicio(formData: FormData) {
 
 export async function deletePrecioServicio(formData: FormData) {
   const servicioId = number(formData, "servicio_id");
+  const especie = String(formData.get("especie") ?? "");
   const tamanoId = number(formData, "tamano_id");
-  if (!Number.isInteger(servicioId) || servicioId < 1 || !Number.isInteger(tamanoId) || tamanoId < 1) return { error: "El precio seleccionado no es válido." };
-  const result = await preciosServiciosEliminar(servicioId, tamanoId);
+  if (!Number.isInteger(servicioId) || servicioId < 1 || !["perro", "gato", "otro"].includes(especie) || !Number.isInteger(tamanoId) || tamanoId < 1) return { error: "El precio seleccionado no es válido." };
+  const result = await preciosServiciosEliminar(servicioId, especie as "perro" | "gato" | "otro", tamanoId);
   if (result.error) return { error: errorMessage(result.error) };
   revalidatePath("/servicios");
   return { ok: true };

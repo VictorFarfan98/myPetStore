@@ -1,40 +1,49 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AlertTriangle, CalendarPlus, CheckCircle2, Wand2 } from "lucide-react";
 import { buildReminderMessage, hasGroomerConflict, todayInGuatemala } from "@/lib/business-rules";
 import type { AppData, Appointment } from "@/lib/types";
-import { createCita, deleteCita, updateCita } from "@/lib/citas-actions";
+import { cancelCita, createCita, deleteCita, updateCita } from "@/lib/citas-actions";
 import { SearchableSelect } from "./searchable-select";
+
+const sourceValues: Record<Appointment["source"], string> = {
+  phone: "telefono",
+  walk_in: "presencial",
+  whatsapp: "whatsapp",
+  google: "google",
+  whatsapp_ad: "pauta_whatsapp",
+  instagram_ad: "pauta_instagram",
+  online: "presencial"
+};
 
 export function ScheduleForm({
   data,
   initialDate = todayInGuatemala(),
   initialTime = "15:00",
   appointment,
-  onClose
+  onSaved
 }: {
   data: AppData;
   initialDate?: string;
   initialTime?: string;
   appointment?: Appointment;
-  onClose?: () => void;
+  onSaved?: () => void;
 }) {
-  const router = useRouter();
   const [branchId, setBranchId] = useState(appointment?.branchId ?? data.branches[0]?.id ?? 0);
   const [petId, setPetId] = useState(appointment?.petId ?? 0);
   const [groomerId, setGroomerId] = useState(appointment?.groomerId ?? data.users.find((user) => user.role === "groomer")?.id ?? 0);
-  const [serviceId, setServiceId] = useState(appointment?.serviceIds[0] ?? data.services[0]?.id ?? 0);
+  const [serviceId, setServiceId] = useState(appointment?.serviceIds[0] ?? data.services.find((service) => !service.additional)?.id ?? 0);
   const [date, setDate] = useState(appointment ? appointment.scheduledStart.slice(0, 10) : initialDate);
   const [time, setTime] = useState(appointment ? new Date(appointment.scheduledStart).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guatemala" }) : initialTime);
-  const [source, setSource] = useState(appointment?.source === "phone" ? "telefono" : appointment?.source === "whatsapp" ? "whatsapp" : "presencial");
+  const [source, setSource] = useState(sourceValues[appointment?.source ?? "walk_in"]);
   const [message, setMessage] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const primaryServices = data.services.filter((service) => !service.additional);
 
-  const selectedService = data.services.find((service) => service.id === serviceId) ?? data.services[0];
-  const selectedPet = data.pets.find((pet) => pet.id === petId) ?? data.pets[0];
-  const selectedCustomer = data.customers.find((customer) => customer.id === selectedPet?.customerId) ?? data.customers[0];
+  const selectedService = primaryServices.find((service) => service.id === serviceId) ?? primaryServices[0];
+  const selectedPet = data.pets.find((pet) => pet.id === petId);
+  const selectedCustomer = data.customers.find((customer) => customer.id === selectedPet?.customerId);
   const selectedBranch = data.branches.find((branch) => branch.id === branchId) ?? data.branches[0];
   const groomers = data.users.filter((user) => user.role === "groomer" && user.branchIds.includes(branchId));
   const petOptions = data.pets.map((pet) => {
@@ -42,9 +51,11 @@ export function ScheduleForm({
     return { value: pet.id, label: `${pet.name} · ${customer?.name ?? "Sin cliente"} · ${customer?.phone ?? ""}` };
   });
 
+  const durationForService = (id: number) => data.services.find((service) => service.id === id)?.generalDurationMinutes ?? data.serviceDurations?.find((item) => item.serviceId === id && item.species === selectedPet?.species && item.size === selectedPet?.size)?.minutes ?? 30;
+  const selectedDuration = durationForService(serviceId);
   const startIso = `${date}T${time}:00-06:00`;
   const [hours, minutes] = time.split(":").map(Number);
-  const endTotalMinutes = hours * 60 + minutes + (selectedService?.estimatedDurationMinutes ?? 30);
+  const endTotalMinutes = hours * 60 + minutes + selectedDuration;
   const endHours = String(Math.floor(endTotalMinutes / 60) % 24).padStart(2, "0");
   const endMinutes = String(endTotalMinutes % 60).padStart(2, "0");
   const endIso = `${date}T${endHours}:${endMinutes}:00-06:00`;
@@ -76,8 +87,7 @@ export function ScheduleForm({
     const result = appointment ? await updateCita(formData) : await createCita(formData);
     setIsPending(false);
     if (result.error) return setMessage(result.error);
-    router.refresh();
-    onClose?.();
+    onSaved?.();
   }
 
   async function remove() {
@@ -88,8 +98,23 @@ export function ScheduleForm({
     const result = await deleteCita(formData);
     setIsPending(false);
     if (result.error) return setMessage(result.error);
-    router.refresh();
-    onClose?.();
+    onSaved?.();
+  }
+
+  async function cancel() {
+    if (!appointment) return;
+    const reason = window.prompt("Indica el motivo de la cancelación:");
+    if (reason === null) return;
+    if (!reason.trim()) return setMessage("Escribe un motivo para cancelar la cita.");
+    const formData = new FormData();
+    formData.set("cita_id", String(appointment.id));
+    formData.set("motivo", reason);
+    setIsPending(true);
+    setMessage("");
+    const result = await cancelCita(formData);
+    setIsPending(false);
+    if (result.error) return setMessage(result.error);
+    onSaved?.();
   }
 
   return (
@@ -97,7 +122,7 @@ export function ScheduleForm({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-ink">{appointment ? "Editar cita" : "Nueva cita"}</h2>
-          <p className="text-sm text-slate-500">Entrada manual para WhatsApp, telefono o mostrador.</p>
+          <p className="text-sm text-slate-500">Registra la cita y su canal de origen.</p>
         </div>
         <CalendarPlus className="h-5 w-5 text-jade" aria-hidden="true" />
       </div>
@@ -132,9 +157,9 @@ export function ScheduleForm({
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           Servicio
           <select className="focus-ring rounded-lg border border-slate-300 px-3 py-2" value={serviceId} onChange={(event) => setServiceId(Number(event.target.value))}>
-            {data.services.map((service) => (
+            {primaryServices.map((service) => (
               <option key={service.id} value={service.id}>
-                {service.name} · {service.estimatedDurationMinutes} min
+                {service.name} · {durationForService(service.id)} min
               </option>
             ))}
           </select>
@@ -153,11 +178,14 @@ export function ScheduleForm({
             <option value="presencial">Mostrador</option>
             <option value="whatsapp">WhatsApp</option>
             <option value="telefono">Telefono</option>
+            <option value="google">Google</option>
+            <option value="pauta_whatsapp">Pauta WhatsApp</option>
+            <option value="pauta_instagram">Pauta Instagram</option>
           </select>
         </label>
       </div>
 
-      <div className={`mt-5 rounded-lg border p-3 text-sm ${hasConflict ? "border-rose-200 bg-rose-50 text-rose-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+      <div className={`mt-5 rounded-lg border p-3 text-sm ${hasConflict ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
         <div className="flex items-center gap-2 font-semibold">
           {hasConflict ? <AlertTriangle className="h-4 w-4" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
           {hasConflict ? "Conflicto de agenda detectado" : "Horario disponible para este groomer"}
@@ -170,6 +198,7 @@ export function ScheduleForm({
           Mensaje WhatsApp sugerido
         </div>
         <p className="mt-2 text-sm leading-6 text-slate-100">{reminder}</p>
+        <p className="mt-2 text-sm text-slate-300">Teléfono del cliente: {selectedCustomer?.phone || "Sin teléfono"}</p>
       </div>
       <input name="id" type="hidden" value={appointment?.id ?? ""} readOnly />
       <input name="sucursal_id" type="hidden" value={branchId} readOnly />
@@ -180,6 +209,7 @@ export function ScheduleForm({
       <input name="fin_programado" type="hidden" value={endIso} readOnly />
       <div className="mt-5 flex gap-3">
         <button className="focus-ring rounded-lg bg-jade px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={isPending} type="submit">{isPending ? "Guardando..." : appointment ? "Guardar cambios" : "Crear cita"}</button>
+        {appointment && <button className="focus-ring rounded-lg border border-amber-200 px-4 py-2.5 font-semibold text-amber-800" disabled={isPending} type="button" onClick={cancel}>Cancelar cita</button>}
         {appointment && <button className="focus-ring rounded-lg border border-red-200 px-4 py-2.5 font-semibold text-red-700" disabled={isPending} type="button" onClick={remove}>Desactivar</button>}
       </div>
       {message && <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">{message}</p>}

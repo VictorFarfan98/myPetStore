@@ -10,7 +10,7 @@ const emptyForm = { id: "", nombre: "", direccion: "", telefono: "", activo: tru
 
 export function SucursalesBrowser({ rows }: { rows: SucursalRow[] }) {
   const [form, setForm] = useState(emptyForm);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const editing = Boolean(form.id);
@@ -20,9 +20,9 @@ export function SucursalesBrowser({ rows }: { rows: SucursalRow[] }) {
     const data = new FormData(event.currentTarget);
     startTransition(async () => {
       const result = editing ? await updateSucursal(data) : await createSucursal(data);
-      if (result.error) return setMessage(result.error);
+      if (result.error) return setMessage({ text: result.error, error: true });
       setForm(emptyForm);
-      setMessage(editing ? "Sucursal actualizada." : "Sucursal creada.");
+      setMessage({ text: editing ? "Sucursal actualizada." : "Sucursal creada.", error: false });
       router.refresh();
     });
   }
@@ -33,7 +33,7 @@ export function SucursalesBrowser({ rows }: { rows: SucursalRow[] }) {
     data.set("id", String(id));
     startTransition(async () => {
       const result = await deleteSucursal(data);
-      setMessage(result.error ?? "Sucursal eliminada.");
+      setMessage({ text: result.error ?? "Sucursal eliminada.", error: Boolean(result.error) });
       if (!result.error) router.refresh();
     });
   }
@@ -55,7 +55,7 @@ export function SucursalesBrowser({ rows }: { rows: SucursalRow[] }) {
         <div className="mt-5 space-y-4">
           {([["nombre", "Nombre", "text"], ["direccion", "Dirección", "text"], ["telefono", "Teléfono", "tel"]] as const).map(([name, label, type]) => <label className="block text-sm font-medium text-ink" key={name}>{label}<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name={name} onChange={(event) => setForm({ ...form, [name]: event.target.value })} required type={type} value={form[name]} />{name === "telefono" && <span className="mt-1 block text-xs font-normal text-slate-500">Puedes ingresar 8 dígitos; se guardará como +502XXXXXXXX.</span>}</label>)}
           <label className="flex items-center gap-2 text-sm font-medium text-ink"><input checked={form.activo} name="activo" onChange={(event) => setForm({ ...form, activo: event.target.checked })} type="checkbox" /> Sucursal activa</label>
-          {message && <p className="rounded-lg bg-cloud px-3 py-2 text-sm text-slate-700" role="status">{message}</p>}
+          {message && <p className={`rounded-lg px-3 py-2 text-sm ${message.error ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`} role={message.error ? "alert" : "status"}>{message.text}</p>}
           <div className="flex gap-3"><button className="focus-ring rounded-lg bg-jade px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={isPending} type="submit">{isPending ? "Guardando..." : editing ? "Guardar cambios" : "Crear sucursal"}</button>{editing && <button className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700" onClick={() => setForm(emptyForm)} type="button">Cancelar</button>}</div>
         </div>
       </form>

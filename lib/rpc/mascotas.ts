@@ -18,6 +18,13 @@ export function mascotasListar(p_limite: number | null = null, p_offset = 0) {
   );
 }
 
+export function mascotasBuscarListar(p_busqueda: string, p_limite: number | null = null, p_offset = 0) {
+  return rpcCall<{ datos: MascotaRow[]; total: number; limite: number | null; offset: number }>(
+    "mascotas_buscar_listar",
+    { p_busqueda, p_limite, p_offset }
+  );
+}
+
 export function mascotasListarTodos(p_limite: number | null = null, p_offset = 0) {
   return rpcCall<{ datos: MascotaRow[]; total: number; limite: number | null; offset: number }>(
     "mascotas_listar_todos",
@@ -32,4 +39,3 @@ export function mascotasActualizar(params: MascotaUpdateParams) {
 export function mascotasEliminar(p_id: number) {
   return rpcCall<MascotaRow>("mascotas_eliminar", { p_id });
 }
-

@@ -1,43 +1,48 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Search } from "lucide-react";
 import type { ClientesData, Customer } from "@/lib/types";
 import { createCliente, deleteCliente, updateCliente } from "@/lib/clientes-actions";
 import { DataTable } from "./data-table";
 
-const emptyForm = { id: "", nombre: "", telefono: "", whatsapp_opt_in: false, sms_opt_in: false, notas: "", activo: true };
+const emptyForm = { id: "", nombre: "", telefono: "", email: "", whatsapp_opt_in: false, sms_opt_in: false, notas: "", activo: true };
 
-export function ClientesBrowser({ data }: { data: ClientesData }) {
-  const [query, setQuery] = useState("");
+export function ClientesBrowser({ data, page, initialQuery }: { data: ClientesData; page: number; initialQuery: string }) {
+  const [query, setQuery] = useState(initialQuery);
   const [form, setForm] = useState(emptyForm);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const editing = Boolean(form.id);
   const normalizedQuery = query.trim().toLowerCase();
 
-  console.log("Clientes", data);
+  useEffect(() => {
+    if (query === initialQuery) return;
+    const timeout = window.setTimeout(() => router.replace(`/clientes?page=1${query.trim() ? `&q=${encodeURIComponent(query.trim())}` : ""}`), 300);
+    return () => window.clearTimeout(timeout);
+  }, [initialQuery, query, router]);
+
   const rows = data.customers
     .map((customer) => ({ customer, pets: data.pets.filter((pet) => pet.customerId === customer.id) }))
-    .filter(({ customer, pets }) => !normalizedQuery || [customer.name, customer.phone, customer.notes, ...pets.flatMap((pet) => [pet.name, pet.breed])].some((value) => value.toLowerCase().includes(normalizedQuery)));
+    .filter(({ customer, pets }) => !normalizedQuery || [customer.name, customer.phone, customer.email, customer.notes, ...pets.flatMap((pet) => [pet.name, pet.breed])].some((value) => value.toLowerCase().includes(normalizedQuery)));
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     startTransition(async () => {
       const result = editing ? await updateCliente(formData) : await createCliente(formData);
-      if (result.error) return setMessage(result.error);
+      if (result.error) return setMessage({ text: result.error, error: true });
       setForm(emptyForm);
-      setMessage(editing ? "Cliente actualizado." : "Cliente creado.");
+      setMessage({ text: editing ? "Cliente actualizado." : "Cliente creado.", error: false });
       router.refresh();
     });
   }
 
   function edit(customer: Customer) {
-    setForm({ id: String(customer.id), nombre: customer.name, telefono: customer.phone, whatsapp_opt_in: customer.whatsappOptIn, sms_opt_in: Boolean(customer.smsOptIn), notas: customer.notes, activo: true });
-    setMessage("");
+    setForm({ id: String(customer.id), nombre: customer.name, telefono: customer.phone, email: customer.email, whatsapp_opt_in: customer.whatsappOptIn, sms_opt_in: Boolean(customer.smsOptIn), notas: customer.notes, activo: true });
+    setMessage(null);
   }
 
   function remove(id: number) {
@@ -46,7 +51,7 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
     formData.set("id", String(id));
     startTransition(async () => {
       const result = await deleteCliente(formData);
-      setMessage(result.error ?? "Cliente desactivado.");
+      setMessage({ text: result.error ?? "Cliente desactivado.", error: Boolean(result.error) });
       if (!result.error) router.refresh();
     });
   }
@@ -56,23 +61,32 @@ export function ClientesBrowser({ data }: { data: ClientesData }) {
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div><h2 className="text-xl font-semibold text-ink">Directorio de clientes</h2><p className="mt-1 text-sm text-slate-500">{rows.length} cliente{rows.length === 1 ? "" : "s"} encontrado{rows.length === 1 ? "" : "s"}.</p></div>
-          <label className="focus-ring flex w-full max-w-md items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"><Search className="h-4 w-4 text-slate-400" aria-hidden="true" /><input className="w-full bg-transparent outline-none" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar cliente o mascota" /></label>
+          <label className="focus-ring flex w-full max-w-md items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"><Search className="h-4 w-4 text-slate-400" aria-hidden="true" /><input className="w-full bg-transparent outline-none" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en esta página" /></label>
         </div>
         <div className="mt-5"><DataTable rows={rows.map(({ customer, pets }) => ({ ...customer, pets }))} columns={[
           { key: "nombre", header: "Cliente", render: (row) => <span className="font-semibold text-ink">{row.name}</span> },
           { key: "contacto", header: "Contacto", render: (row) => <span>{row.phone}{row.smsOptIn ? " · SMS" : ""}</span> },
+          { key: "email", header: "Correo electrónico", render: (row) => <span>{row.email || "—"}</span> },
           { key: "mascotas", header: "Mascotas", render: (row) => row.pets.map((pet) => pet.name).join(", ") || "—" },
+          { key: "fidelidad", header: "Fidelidad", render: (row) => {
+            const completed = row.loyaltyProgress ?? 0;
+            const required = row.loyaltyRequired ?? 5;
+            return <div className="w-32" aria-label={`${completed} de ${required} servicios completados`}><div className="mb-1 flex justify-between text-xs"><span>{completed}/{required}</span><span>{Math.round(completed / required * 100)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-jade" style={{ width: `${completed / required * 100}%` }} /></div></div>;
+          } },
           { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" type="button" onClick={() => edit(row)}>Editar</button><button className="font-semibold text-red-700 hover:underline" type="button" onClick={() => remove(row.id)}>Eliminar</button></div> }
         ]} /></div>
+        {Math.ceil(data.total / data.pageSize) > 1 && <div className="mt-5 flex items-center justify-between"><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" type="button" disabled={page <= 1} onClick={() => router.push(`/clientes?page=${page - 1}${initialQuery ? `&q=${encodeURIComponent(initialQuery)}` : ""}`)}>Anterior</button><span className="text-sm text-slate-500">Página {page} de {Math.ceil(data.total / data.pageSize)}</span><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" type="button" disabled={page >= Math.ceil(data.total / data.pageSize)} onClick={() => router.push(`/clientes?page=${page + 1}${initialQuery ? `&q=${encodeURIComponent(initialQuery)}` : ""}`)}>Siguiente</button></div>}
       </div>
       <form className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-panel" onSubmit={submit}>
         <h2 className="text-xl font-semibold text-ink">{editing ? "Editar cliente" : "Nuevo cliente"}</h2>
         <div className="mt-5 space-y-4">
+          <input name="id" type="hidden" value={form.id} />
           <label className="block text-sm font-medium text-ink">Nombre<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="nombre" required value={form.nombre} onChange={(event) => setForm({ ...form, nombre: event.target.value })} /></label>
           <label className="block text-sm font-medium text-ink">Teléfono<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="telefono" required type="tel" value={form.telefono} onChange={(event) => setForm({ ...form, telefono: event.target.value })} /><span className="mt-1 block text-xs font-normal text-slate-500">8 dígitos o formato E.164.</span></label>
+          <label className="block text-sm font-medium text-ink">Correo electrónico<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
           <div className="space-y-2 text-sm"><label className="flex items-center gap-2"><input name="whatsapp_opt_in" type="checkbox" checked={form.whatsapp_opt_in} onChange={(event) => setForm({ ...form, whatsapp_opt_in: event.target.checked })} /> Acepta WhatsApp</label><label className="flex items-center gap-2"><input name="sms_opt_in" type="checkbox" checked={form.sms_opt_in} onChange={(event) => setForm({ ...form, sms_opt_in: event.target.checked })} /> Acepta SMS</label></div>
           <label className="block text-sm font-medium text-ink">Notas<textarea className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" name="notas" rows={3} value={form.notas} onChange={(event) => setForm({ ...form, notas: event.target.value })} /></label>
-          {message && <p className="rounded-lg bg-cloud px-3 py-2 text-sm text-slate-700" role="status">{message}</p>}
+          {message && <p className={`rounded-lg px-3 py-2 text-sm ${message.error ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`} role={message.error ? "alert" : "status"}>{message.text}</p>}
           <div className="flex gap-3"><button className="focus-ring rounded-lg bg-jade px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={isPending} type="submit">{isPending ? "Guardando..." : editing ? "Guardar cambios" : "Crear cliente"}</button>{editing && <button className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700" type="button" onClick={() => setForm(emptyForm)}>Cancelar</button>}</div>
         </div>
       </form>

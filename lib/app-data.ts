@@ -15,7 +15,6 @@ import type {
   RegistroServicioRow,
   RecordatorioCitaRow,
   ServicioRow,
-  OpcionShampooRow,
   SucursalRow,
   TamanoRow,
   UsuarioRow,
@@ -57,6 +56,8 @@ function normalizeSpecies(value: string | null | undefined): Species {
 
 function normalizeSize(value: string | null | undefined): PetSize {
   const normalized = normalizeText(value).toLowerCase();
+  if (normalized.includes("pelo corto")) return "pelo_corto";
+  if (normalized.includes("pelo largo")) return "pelo_largo";
   if (normalized.includes("pequ")) return "pequeno";
   if (normalized.includes("med")) return "mediano";
   if (normalized.includes("gig")) return "gigante";
@@ -80,6 +81,9 @@ function normalizeSource(value: string | null | undefined): AppointmentSource {
   if (value === "telefono") return "phone";
   if (value === "presencial") return "walk_in";
   if (value === "whatsapp") return "whatsapp";
+  if (value === "google") return "google";
+  if (value === "pauta_whatsapp") return "whatsapp_ad";
+  if (value === "pauta_instagram") return "instagram_ad";
   return "online";
 }
 
@@ -118,6 +122,7 @@ function mapCustomer(row: ClienteRow) {
     id: row.id,
     name: row.nombre,
     phone: row.telefono,
+    email: normalizeText(row.email),
     whatsappOptIn: row.whatsapp_opt_in,
     smsOptIn: row.sms_opt_in,
     notes: normalizeText(row.notas)
@@ -145,7 +150,6 @@ function buildUsers(args: {
   peluqueros: PeluqueroRow[];
   assignments: UsuarioSucursalRow[];
   activeBranchIds: number[];
-  appointments: CitaRow[];
   employeeIdMap: Map<string, number>;
   groomerIdMap: Map<number, number>;
 }) {
@@ -158,19 +162,6 @@ function buildUsers(args: {
     if (!branchIds.includes(assignment.sucursal_id)) {
       branchIds.push(assignment.sucursal_id);
       employeeBranchMap.set(userId, branchIds);
-    }
-  });
-
-  const groomerBranchMap = new Map<number, number[]>();
-  args.appointments.forEach((appointment) => {
-    if (!appointment.peluquero_id) return;
-    const groomerId = args.groomerIdMap.get(appointment.peluquero_id);
-    if (!groomerId) return;
-
-    const branchIds = groomerBranchMap.get(groomerId) ?? [];
-    if (!branchIds.includes(appointment.sucursal_id)) {
-      branchIds.push(appointment.sucursal_id);
-      groomerBranchMap.set(groomerId, branchIds);
     }
   });
 
@@ -207,7 +198,7 @@ function buildUsers(args: {
         email: row.telefono ?? row.nombre,
         phone: row.telefono ?? "",
         role: "groomer" as const,
-        branchIds: groomerBranchMap.get(id) ?? args.activeBranchIds,
+        branchIds: args.activeBranchIds,
         active: row.activo,
         calendarColor: row.color_calendario ?? colorForIndex(index)
       };
@@ -252,6 +243,7 @@ async function signedStorageUrl(supabase: Awaited<ReturnType<typeof createUserSu
 async function buildGroomingRecords(args: {
   registros: RegistroServicioRow[];
   preciosServicios: PrecioServicioRow[];
+  serviceById: Map<number, ServicioRow>;
   citaById: Map<number, CitaRow>;
   customerNameByPetId: Map<number, string>;
   supabase: Awaited<ReturnType<typeof createUserSupabaseClient>>;
@@ -261,11 +253,25 @@ async function buildGroomingRecords(args: {
     .map(async (registro) => {
       const cita = args.citaById.get(registro.cita_id);
       const customerName = cita ? args.customerNameByPetId.get(cita.mascota_id) : undefined;
-      const [beforePhotoUrl, afterPhotoUrl] = await Promise.all([
-        signedStorageUrl(args.supabase, registro.foto_antes_url),
-        signedStorageUrl(args.supabase, registro.foto_despues_url)
+      const intakePhotoPaths = (registro.fotos ?? []).filter((photo) => photo.momento === "ingreso").map((photo) => photo.ruta_storage);
+      const completionPhotoPaths = (registro.fotos ?? []).filter((photo) => photo.momento === "egreso").map((photo) => photo.ruta_storage);
+      const [intakePhotoUrls, completionPhotoUrls] = await Promise.all([
+        Promise.all(intakePhotoPaths.map((path) => signedStorageUrl(args.supabase, path))),
+        Promise.all(completionPhotoPaths.map((path) => signedStorageUrl(args.supabase, path)))
       ]);
       const configuredPrice = args.preciosServicios.find((price) => price.activo && price.servicio_id === registro.servicio_id && price.tamano_id === registro.tamano_id)?.precio;
+      const primaryService = args.serviceById.get(registro.servicio_id);
+      const serviceItems = [
+        {
+          name: primaryService?.nombre ?? `Servicio #${registro.servicio_id}`,
+          price: registro.precio_base ?? configuredPrice ?? "0"
+        },
+        ...(registro.adicionales ?? []).map((additional) => ({
+          name: args.serviceById.get(additional.servicio_id)?.nombre ?? `Servicio adicional #${additional.servicio_id}`,
+          price: (Number(additional.precio ?? args.serviceById.get(additional.servicio_id)?.precio ?? 0) * (additional.cantidad ?? 1)).toFixed(2),
+          quantity: additional.cantidad
+        }))
+      ];
 
       return {
         id: registro.id,
@@ -273,7 +279,7 @@ async function buildGroomingRecords(args: {
         serviceId: registro.servicio_id,
         groomerId: registro.peluquero_id,
         sizeId: registro.tamano_id,
-        shampooId: registro.shampoo_id ?? undefined,
+        additionalServiceIds: registro.adicionales?.map((additional) => additional.servicio_id) ?? [],
         actualStart: toIso(registro.inicio_real),
         actualEnd: toIso(registro.fin_real),
         groomerNotes: normalizeText(registro.notas_servicio),
@@ -285,14 +291,16 @@ async function buildGroomingRecords(args: {
         completionSignatureImageUrl: registro.firma_entrega_url ?? undefined,
         completionSignedAt: toIso(registro.firma_entrega_en),
         satisfactionNotes: normalizeText(registro.comentario_satisfaccion),
-        beforePhotoUrl,
-        afterPhotoUrl,
-        beforePhotoPath: registro.foto_antes_url ?? undefined,
-        afterPhotoPath: registro.foto_despues_url ?? undefined,
+        intakePhotoUrls: intakePhotoUrls.filter((url): url is string => Boolean(url)),
+        completionPhotoUrls: completionPhotoUrls.filter((url): url is string => Boolean(url)),
+        intakePhotoPaths,
+        completionPhotoPaths,
         finalAmount: registro.monto_final ?? configuredPrice ?? undefined,
+        usesPromotion: registro.usar_promocion,
         paidAmount: registro.monto_pagado ?? undefined,
         couponId: registro.cupon_id ?? undefined,
         discountAmount: registro.descuento_cupon ?? undefined,
+        serviceItems,
         conditions: [
           registro.heridas_visibles && "Heridas visibles",
           registro.raspones && "Raspones",
@@ -311,7 +319,7 @@ async function buildGroomingRecords(args: {
     }));
 }
 
-export async function getAppData(options: { recordsLimit?: number | null; recordsOffset?: number; recordsBranchId?: number | null } = {}): Promise<AppData> {
+export async function getAppData(options: { recordsLimit?: number | null; recordsOffset?: number; recordsBranchId?: number | null; includeReminderLogs?: boolean; paymentsForRecords?: boolean } = {}): Promise<AppData> {
   try {
     const supabase = await createUserSupabaseClient();
 
@@ -324,7 +332,6 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       petsResult,
       tamanosResult,
       servicesResult,
-      shampooOptionsResult,
       preciosServiciosResult,
       paymentMethodsResult,
       citasResult,
@@ -341,7 +348,6 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       rpcCall<RpcListEnvelope<MascotaRow>>(RPC_NAMES.petsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<TamanoRow>>(RPC_NAMES.sizesList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<ServicioRow>>(RPC_NAMES.servicesList, { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<RpcListEnvelope<OpcionShampooRow>>(RPC_NAMES.shampooOptionsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<PrecioServicioRow>>(RPC_NAMES.servicePricesList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<MetodoPagoRow>>(RPC_NAMES.paymentMethodsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<CitaRow>>(RPC_NAMES.appointmentsList, { p_limite: null, p_offset: 0 }, supabase),
@@ -350,8 +356,8 @@ export async function getAppData(options: { recordsLimit?: number | null; record
         p_offset: options.recordsOffset ?? 0,
         p_sucursal_id: options.recordsBranchId ?? null
       }, supabase),
-      rpcCall<RpcListEnvelope<PagoRow>>(RPC_NAMES.paymentsList, { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<RpcListEnvelope<RecordatorioCitaRow>>(RPC_NAMES.reminderLogsList, { p_limite: null, p_offset: 0 }, supabase),
+      options.paymentsForRecords ? Promise.resolve<RpcResult<RpcListEnvelope<PagoRow>>>({ data: { datos: [], total: 0, limite: 0, offset: 0 }, error: null }) : rpcCall<RpcListEnvelope<PagoRow>>(RPC_NAMES.paymentsList, { p_limite: null, p_offset: 0 }, supabase),
+      options.includeReminderLogs === false ? Promise.resolve<RpcResult<RpcListEnvelope<RecordatorioCitaRow>>>({ data: { datos: [], total: 0, limite: 0, offset: 0 }, error: null }) : rpcCall<RpcListEnvelope<RecordatorioCitaRow>>(RPC_NAMES.reminderLogsList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<ConfiguracionSistemaRow>(RPC_NAMES.systemConfigGet, {}, supabase)
     ]);
 
@@ -362,13 +368,19 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     const customers = must(customersResult, "clientes").filter((customer) => customer.activo).map(mapCustomer);
     const tamanos = must(tamanosResult, "tamanos");
     const pets = must(petsResult, "mascotas").filter((pet) => pet.activo);
-    const servicesRows = must(servicesResult, "servicios").filter((service) => service.activo);
-    const shampooOptions = must(shampooOptionsResult, "opciones_shampoo").filter((option) => option.activo).map((option) => ({ id: option.id, name: option.nombre }));
+    const allServicesRows = must(servicesResult, "servicios");
+    const servicesRows = allServicesRows.filter((service) => service.activo);
+    const serviceById = new Map(allServicesRows.map((service) => [service.id, service]));
     const precioServicios = must(preciosServiciosResult, "precios_servicios");
     const paymentMethods = must(paymentMethodsResult, "metodos_pago").filter((method) => method.activo).map((method) => ({ id: method.id, name: method.nombre }));
     const citas = must(citasResult, "citas");
     const registros = must(registrosResult, "registros_servicio");
-    const payments = must(paymentsResult, "pagos").map((payment) => ({ id: payment.id, recordId: payment.registro_servicio_id, methodId: payment.metodo_pago_id, amount: payment.monto }));
+    let payments = must(paymentsResult, "pagos");
+    if (options.paymentsForRecords && registros.length > 0) {
+      const { data, error } = await supabase.from("pagos").select("id, registro_servicio_id, metodo_pago_id, monto").in("registro_servicio_id", registros.map((registro) => registro.id)).eq("activo", true);
+      if (error) throw new Error(`Failed to load pagos: ${error.message}`);
+      payments = (data ?? []) as PagoRow[];
+    }
     const reminderLogs = must(reminderLogsResult, "recordatorios_citas");
     const config = mustRow(configResult, "configuracion_sistema");
 
@@ -400,7 +412,6 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       peluqueros,
       assignments,
       activeBranchIds: branches.map((branch) => branch.id),
-      appointments: citas,
       employeeIdMap: createdByMap,
       groomerIdMap: groomerMap
     });
@@ -425,25 +436,30 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     const groomingRecords = await buildGroomingRecords({
       registros,
       preciosServicios: precioServicios,
+      serviceById,
       citaById,
       customerNameByPetId,
       supabase
     });
 
-    const serviceDurationById = new Map<number, number>();
-    precioServicios.forEach((row) => {
-      const current = serviceDurationById.get(row.servicio_id);
-      if (current === undefined || row.duracion_minutos < current) {
-        serviceDurationById.set(row.servicio_id, row.duracion_minutos);
-      }
-    });
+    const serviceDurations = precioServicios.map((row) => ({
+      serviceId: row.servicio_id,
+      species: normalizeSpecies(row.especie),
+      size: normalizeSize(sizeById.get(row.tamano_id)),
+      minutes: row.duracion_minutos,
+      price: row.precio,
+      promotionalPrice: row.precio_promocional ?? undefined
+    }));
 
     const petsData = pets.map((pet) => mapPet(pet, sizeById));
 
     const services = servicesRows.map((service) => ({
       id: service.id,
       name: service.nombre,
-      estimatedDurationMinutes: serviceDurationById.get(service.id) ?? 30,
+      estimatedDurationMinutes: service.duracion_minutos ?? Math.min(...serviceDurations.filter((item) => item.serviceId === service.id).map((item) => item.minutes), 30),
+      generalDurationMinutes: service.duracion_minutos ?? undefined,
+      price: service.precio ?? undefined,
+      additional: service.es_adicional,
       active: service.activo
     }));
 
@@ -453,11 +469,11 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       users: appUsers,
       customers,
       pets: petsData,
-      sizes: tamanos.filter((tamano) => tamano.activo).map((tamano) => ({ id: tamano.id, name: tamano.nombre })),
+      sizes: tamanos.filter((tamano) => tamano.activo).map((tamano) => ({ id: tamano.id, name: tamano.nombre, species: normalizeSpecies(tamano.especie) })),
       services,
-      shampooOptions,
+      serviceDurations,
       paymentMethods,
-      payments,
+      payments: payments.map((payment) => ({ id: payment.id, recordId: payment.registro_servicio_id, methodId: payment.metodo_pago_id, amount: payment.monto })),
       appointments,
       groomingRecords,
       groomingRecordsTotal: registrosResult.data?.total,

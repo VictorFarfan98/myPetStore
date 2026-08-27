@@ -23,7 +23,7 @@ const appData = {
       calendarColor: "#0F766E"
     }
   ],
-  customers: [{ id: 1, name: "Valeria Castillo", phone: "+50255555555", whatsappOptIn: true, notes: "" }],
+  customers: [{ id: 1, name: "Valeria Castillo", phone: "+50255555555", email: "", whatsappOptIn: true, notes: "" }],
   pets: [
     {
       id: 1,
@@ -73,7 +73,11 @@ const appData = {
       actualEnd: "2026-06-23T10:50:00-06:00",
       groomerNotes: "",
       outcome: "",
-      satisfactionNotes: ""
+      satisfactionNotes: "",
+      intakePhotoUrls: [],
+      completionPhotoUrls: [],
+      intakePhotoPaths: [],
+      completionPhotoPaths: []
     }
   ],
   reminderLogs: []
