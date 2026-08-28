@@ -13,6 +13,7 @@ export * from "./metodos_pago";
 export * from "./usuarios";
 export * from "./configuracion_sistema";
 export * from "./cupones";
+export * from "./paquetes";
 export * from "./citas";
 export * from "./registros_servicio";
 export * from "./calificaciones_groomer";

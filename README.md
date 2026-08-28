@@ -172,6 +172,12 @@ Lectura
 
 Administración completa
 
+Paquetes
+
+No
+
+Administración completa
+
 Configuración
 
 Lectura
@@ -259,6 +265,10 @@ pagos;
 cupones;
 
 configuración del sistema.
+
+Paquetes y asignaciones
+
+`paquetes` define el precio y `paquetes_servicios` las cantidades de servicios principales incluidos. `paquetes_asignaciones` conserva el cliente, el precio pagado y el usuario que realizó la asignación. Cada asignación genera un cupón de 100% por unidad incluida, con origen `paquete`; esos cupones se consumen desde la hoja del servicio y no se pueden editar individualmente.
 
 En un UPDATE, valores_anteriores y valores_nuevos contienen únicamente las columnas que cambiaron. Si no hubo cambios reales, no se genera auditoría. En un INSERT, valores_nuevos contiene la fila creada. En un soft delete se registra únicamente el cambio de activo.
 
@@ -518,7 +528,7 @@ Las carpetas son prefijos lógicos y aparecen cuando se sube el primer objeto. L
 
 Referencia organizada de RPC
 
-La capa RPC expone 111 funciones públicas después de aplicar las migraciones. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
+La capa RPC expone 114 funciones públicas después de aplicar las migraciones. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
 
 Convención de esta sección
 
@@ -1808,6 +1818,56 @@ Retorno: JSONB
 Acceso: Usuario activo para lectura; administrador o propietario para cambios; service_role.
 
 Comportamiento: Lista los cupones propios del cliente y las promociones globales. El canje valida y calcula el descuento sobre el servicio principal y todos sus adicionales; los cupones reutilizables permanecen activos hasta su desactivación manual.
+
+paquetes — Paquetes y asignaciones
+
+Resumen
+
+Valor
+
+Objeto principal
+
+public.paquetes
+
+Cantidad de RPC
+
+3
+
+Operaciones específicas
+
+Crear paquete, listar paquetes, asignar paquete a cliente
+
+Acciones
+
+Crear — paquetes_crear
+
+Firma: paquetes_crear(p_nombre TEXT, p_precio NUMERIC(10, 2), p_servicios JSONB)
+
+Retorno: public.paquetes
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Crea el paquete y sus servicios principales en una operación atómica. `p_servicios` contiene objetos `{ servicio_id, cantidad }` y no acepta servicios adicionales.
+
+Listar — paquetes_listar
+
+Firma: paquetes_listar()
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Devuelve los paquetes con sus servicios, clientes asignados, usuario creador y precio histórico de cada asignación.
+
+Asignar — paquetes_asignar
+
+Firma: paquetes_asignar(p_paquete_id BIGINT, p_cliente_id BIGINT)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Registra la asignación al precio actual del paquete y genera un cupón de 100% de descuento, de uso único, por cada unidad de servicio incluida. La operación es atómica y queda auditada.
 
 citas — Citas
 

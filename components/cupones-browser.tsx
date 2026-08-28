@@ -16,7 +16,7 @@ type FormState = {
   fecha_expiracion: string;
   uso_unico: boolean;
   activo: boolean;
-  origen: "manual" | "automatico";
+  origen: "manual" | "automatico" | "paquete";
 };
 
 const emptyForm: FormState = { id: "", nombre: "", cliente_id: "", servicio_id: "", tipo_descuento: "porcentaje", valor: "", fecha_expiracion: "", uso_unico: true, activo: true, origen: "manual" };
@@ -70,14 +70,14 @@ export function CuponesBrowser({ coupons, customers, services, users }: { coupon
     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-xl font-semibold text-ink">Cupones creados</h2><p className="mt-1 text-sm text-slate-500">{rows.length} cupón{rows.length === 1 ? "" : "es"} visible{rows.length === 1 ? "" : "s"}.</p></div><label className="text-sm font-medium text-ink">Filtrar por cliente<select className="focus-ring mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2" value={customerFilter} onChange={(event) => setCustomerFilter(event.target.value)}><option value="">Todos los clientes</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.nombre}</option>)}</select></label></div>
       <DataTable rows={rows} columns={[
-        { key: "nombre", header: "Cupón", render: (row) => <div><p className="font-semibold text-ink">{row.nombre}</p><p className="text-xs text-slate-500">{row.origen === "automatico" ? "Automático" : "Manual"} · {row.uso_unico ? "Uso único" : "Reutilizable"}</p></div> },
+        { key: "nombre", header: "Cupón", render: (row) => <div><p className="font-semibold text-ink">{row.nombre}</p><p className="text-xs text-slate-500">{row.origen === "automatico" ? "Automático" : row.origen === "paquete" ? "Paquete" : "Manual"} · {row.uso_unico ? "Uso único" : "Reutilizable"}</p></div> },
         { key: "cliente", header: "Cliente", render: (row) => row.cliente_id ? customerNames.get(row.cliente_id) ?? "Cliente desconocido" : "Todos" },
         { key: "servicio", header: "Servicio", render: (row) => row.servicio_id ? serviceNames.get(row.servicio_id) ?? "Servicio desconocido" : "Todos" },
         { key: "descuento", header: "Descuento", render: (row) => row.tipo_descuento === "porcentaje" ? `${Number(row.valor)}%` : `Q ${Number(row.valor).toFixed(2)}` },
         { key: "vigencia", header: "Vigencia", render: (row) => row.fecha_expiracion ? new Date(`${String(row.fecha_expiracion).slice(0, 10)}T12:00:00`).toLocaleDateString("es-GT") : "Indefinida" },
         { key: "creador", header: "Creado por", render: (row) => row.creado_por_usuario_id ? userNames.get(row.creado_por_usuario_id) ?? "Usuario" : "Sistema" },
         { key: "estado", header: "Estado", render: (row) => <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.activo ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>{row.activo ? "Activo" : row.canjeado_en ? "Canjeado" : "Inactivo"}</span> },
-        { key: "acciones", header: "Acciones", render: (row) => row.canjeado_en ? "—" : <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" onClick={() => edit(row)} type="button">Editar</button>{row.activo && <button className="font-semibold text-red-700 hover:underline" onClick={() => remove(row.id)} type="button">Desactivar</button>}</div> }
+        { key: "acciones", header: "Acciones", render: (row) => row.canjeado_en || row.origen === "paquete" ? "—" : <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" onClick={() => edit(row)} type="button">Editar</button>{row.activo && <button className="font-semibold text-red-700 hover:underline" onClick={() => remove(row.id)} type="button">Desactivar</button>}</div> }
       ]} />
     </div>
     <form className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-panel" onSubmit={submit}>

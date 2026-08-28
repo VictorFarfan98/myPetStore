@@ -336,9 +336,41 @@ export type CuponRow = {
   canjeado_en: DateString | null;
   activo: boolean;
   uso_unico: boolean;
-  origen: "manual" | "automatico";
+  origen: "manual" | "automatico" | "paquete";
   registro_origen_id: number | null;
   creado_por_usuario_id: string | null;
+};
+
+export type PaqueteServicioRow = {
+  servicio_id: number;
+  servicio_nombre: string;
+  cantidad: number;
+};
+
+export type PaqueteAsignacionRow = {
+  id: number;
+  cliente_id: number;
+  cliente_nombre: string;
+  precio_pagado: string | number;
+  asignado_por_usuario_id: string;
+  asignado_en: DateString;
+};
+
+export type PaqueteRow = {
+  id: number;
+  nombre: string;
+  precio: string | number;
+  activo: boolean;
+  creado_por_usuario_id: string;
+  creado_en: DateString;
+  servicios: PaqueteServicioRow[];
+  asignaciones: PaqueteAsignacionRow[];
+};
+
+export type PaqueteCrearParams = {
+  p_nombre: string;
+  p_precio: string;
+  p_servicios: Array<{ servicio_id: number; cantidad: number }>;
 };
 
 export type CuponInsertParams = {

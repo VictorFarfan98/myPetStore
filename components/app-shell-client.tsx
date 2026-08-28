@@ -10,6 +10,7 @@ import {
   ClipboardList,
   History,
   LogOut,
+  Package,
   PawPrint,
   Scissors,
   Settings,
@@ -27,6 +28,7 @@ const navItems = [
   { label: "Mascotas", href: "/mascotas", icon: PawPrint },
   { label: "Clientes", href: "/clientes", icon: UsersRound },
   { label: "Cupones", href: "/cupones", icon: TicketPercent },
+  { label: "Paquetes", href: "/paquetes", icon: Package },
   { label: "Servicios", href: "/servicios", icon: Scissors },
   { label: "Sucursales", href: "/sucursales", icon: Store },
   { label: "Equipo", href: "/equipo", icon: UserCog },
@@ -52,7 +54,7 @@ export function AppShellClient({ children, role }: { children: ReactNode; role?:
           </div>
         </Link>
         <nav className="mt-8 space-y-1">
-          {navItems.filter((item) => !["/sucursales", "/equipo", "/configuracion", "/cupones", "/auditorias"].includes(item.href) || canManageAdmin).map((item) => {
+          {navItems.filter((item) => !["/sucursales", "/equipo", "/configuracion", "/cupones", "/paquetes", "/auditorias"].includes(item.href) || canManageAdmin).map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
