@@ -2,21 +2,23 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Pencil, Plus, Trash2 } from "lucide-react";
 import type { ClienteRow, PaqueteRow, ServicioRow, UsuarioRow } from "@/lib/rpc/types";
-import { assignPaquete, createPaquete } from "@/lib/paquetes-actions";
+import { assignPaquete, createPaquete, updatePaquete } from "@/lib/paquetes-actions";
 
 type PackageItem = { servicio_id: number; cantidad: number };
 
-const emptyForm = { nombre: "", precio: "", vigencia_dias: "90" };
+const emptyForm = { id: "", nombre: "", precio: "", vigencia_dias: "90" };
 
-  const dateFormatter = new Intl.DateTimeFormat("es-GT", {
+const dateFormatter = new Intl.DateTimeFormat("es-GT", {
   dateStyle: "medium",
   timeZone: "America/Guatemala"
 });
 
-function formatDate(value: string) {
-  return dateFormatter.format(new Date(`${value.slice(0, 10)}T12:00:00`));
+function formatDate(value: string | null | undefined) {
+  if (!value) return "No definida";
+  const date = new Date(`${value.slice(0, 10)}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? "No definida" : dateFormatter.format(date);
 }
 
 export function PaquetesBrowser({ packages, customers, services, users }: { packages: PaqueteRow[]; customers: ClienteRow[]; services: ServicioRow[]; users: UsuarioRow[] }) {
@@ -29,6 +31,7 @@ export function PaquetesBrowser({ packages, customers, services, users }: { pack
   const serviceNames = new Map(services.map((service) => [service.id, service.nombre]));
   const userNames = new Map(users.map((user) => [user.id, user.nombre]));
   const availableCustomers = customers.filter((customer) => customer.activo);
+  const editing = Boolean(form.id);
 
   function addService() {
     const serviceId = Number(serviceToAdd);
@@ -48,17 +51,30 @@ export function PaquetesBrowser({ packages, customers, services, users }: { pack
     setItems((current) => current.filter((item) => item.servicio_id !== serviceId));
   }
 
+  function editPackage(pkg: PaqueteRow) {
+    setForm({ id: String(pkg.id), nombre: pkg.nombre, precio: String(pkg.precio), vigencia_dias: String(pkg.vigencia_dias) });
+    setItems(pkg.servicios.map((item) => ({ servicio_id: item.servicio_id, cantidad: item.cantidad })));
+    setServiceToAdd(String(pkg.servicios[0]?.servicio_id ?? services[0]?.id ?? ""));
+    setMessage(null);
+  }
+
+  function resetForm() {
+    setForm(emptyForm);
+    setItems([]);
+    setMessage(null);
+  }
+
   function submitCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
     const data = new FormData(event.currentTarget);
     data.set("servicios", JSON.stringify(items));
+    const wasEditing = editing;
     startTransition(async () => {
-      const result = await createPaquete(data);
-      if (result.error) return setMessage({ text: result.error, error: true });
-      setForm(emptyForm);
-      setItems([]);
-      setMessage({ text: "Paquete creado.", error: false });
+      const result = wasEditing ? await updatePaquete(data) : await createPaquete(data);
+      if ("error" in result) return setMessage({ text: result.error, error: true });
+      resetForm();
+      setMessage({ text: wasEditing ? "Paquete actualizado." : "Paquete creado.", error: false });
       router.refresh();
     });
   }
@@ -66,12 +82,12 @@ export function PaquetesBrowser({ packages, customers, services, users }: { pack
   function submitAssign(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
-    const form = event.currentTarget;
+    const assignmentForm = event.currentTarget;
     const data = new FormData(event.currentTarget);
     startTransition(async () => {
       const result = await assignPaquete(data);
       if (result.error) return setMessage({ text: result.error, error: true });
-      form.reset();
+      assignmentForm.reset();
       setMessage({ text: `Paquete asignado. Se generaron ${result.coupons ?? 0} cupones de servicio.`, error: false });
       router.refresh();
     });
@@ -88,7 +104,7 @@ export function PaquetesBrowser({ packages, customers, services, users }: { pack
         <div className="mt-5 border-t border-slate-100 pt-4">
           <p className="text-sm font-semibold text-ink">Clientes con este paquete <span className="font-normal text-slate-500">({pkg.asignaciones.length})</span></p>
           {pkg.asignaciones.length > 0 && <div className="mt-2 space-y-1 text-sm text-slate-600">{pkg.asignaciones.slice(0, 5).map((assignment) => <p key={assignment.id}>{assignment.cliente_nombre} · válido hasta {formatDate(assignment.fecha_expiracion)}</p>)}{pkg.asignaciones.length > 5 && <p>…</p>}</div>}
-          <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={submitAssign}>
+          <div className="mt-3 flex flex-wrap items-center gap-3"><button className="focus-ring inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" onClick={() => editPackage(pkg)} type="button"><Pencil className="h-4 w-4" aria-hidden="true" />Editar</button><form className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row" onSubmit={submitAssign}>
             <input name="paquete_id" type="hidden" value={pkg.id} />
             <label className="sr-only" htmlFor={`cliente-${pkg.id}`}>Cliente para asignar {pkg.nombre}</label>
             <select className="focus-ring min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5" defaultValue="" id={`cliente-${pkg.id}`} name="cliente_id" required>
@@ -96,15 +112,16 @@ export function PaquetesBrowser({ packages, customers, services, users }: { pack
               {availableCustomers.map((customer) => <option key={customer.id} value={customer.id}>{customer.nombre} · {customer.telefono}</option>)}
             </select>
             <button className="focus-ring rounded-lg bg-coral px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={pending || availableCustomers.length === 0} type="submit">Asignar</button>
-          </form>
+          </form></div>
         </div>
       </article>)}
       {!packages.length && <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">Todavía no hay paquetes creados.</div>}
     </div>
     <form className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-panel" onSubmit={submitCreate}>
-      <h2 className="text-xl font-semibold text-ink">Nuevo paquete</h2>
-      <p className="mt-1 text-sm text-slate-500">Cada unidad incluida generará un cupón de servicio al asignarlo.</p>
+      <h2 className="text-xl font-semibold text-ink">{editing ? "Editar paquete" : "Nuevo paquete"}</h2>
+      <p className="mt-1 text-sm text-slate-500">{editing ? "Los cambios aplican a futuras asignaciones; las compras existentes conservan sus cupones." : "Cada unidad incluida generará un cupón de servicio al asignarlo."}</p>
       <div className="mt-5 space-y-4">
+        <input name="paquete_id" type="hidden" value={form.id} />
         <label className="block text-sm font-medium text-ink" htmlFor="paquete-nombre">Nombre<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" id="paquete-nombre" name="nombre" onChange={(event) => setForm({ ...form, nombre: event.target.value })} required value={form.nombre} /></label>
         <label className="block text-sm font-medium text-ink" htmlFor="paquete-precio">Precio del paquete (GTQ)<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" id="paquete-precio" min="0.01" name="precio" onChange={(event) => setForm({ ...form, precio: event.target.value })} required step="0.01" type="number" value={form.precio} /></label>
         <label className="block text-sm font-medium text-ink" htmlFor="paquete-vigencia">Válido por (días)<span className="mt-1 block text-xs font-normal text-slate-500">La cuenta inicia al asignar el paquete al cliente.</span><input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" id="paquete-vigencia" min="1" name="vigencia_dias" onChange={(event) => setForm({ ...form, vigencia_dias: event.target.value })} required type="number" value={form.vigencia_dias} /></label>
@@ -115,7 +132,7 @@ export function PaquetesBrowser({ packages, customers, services, users }: { pack
         </div>
         <input name="servicios" type="hidden" value={JSON.stringify(items)} />
         {message && <p className={`rounded-lg px-3 py-2 text-sm ${message.error ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`} role={message.error ? "alert" : "status"}>{message.text}</p>}
-        <button className="focus-ring w-full rounded-lg bg-jade px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={pending || items.length === 0} type="submit">{pending ? "Guardando..." : "Crear paquete"}</button>
+        <div className="flex gap-2"><button className="focus-ring flex-1 rounded-lg bg-jade px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={pending || items.length === 0} type="submit">{pending ? "Guardando..." : editing ? "Guardar cambios" : "Crear paquete"}</button>{editing && <button className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700" disabled={pending} onClick={resetForm} type="button">Cancelar</button>}</div>
       </div>
     </form>
   </section>;

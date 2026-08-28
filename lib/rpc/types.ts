@@ -353,6 +353,7 @@ export type PaqueteAsignacionRow = {
   cliente_nombre: string;
   precio_pagado: string | number;
   fecha_expiracion: DateString;
+  servicios_incluidos: PaqueteServicioRow[];
   asignado_por_usuario_id: string;
   asignado_en: DateString;
 };

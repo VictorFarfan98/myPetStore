@@ -268,7 +268,7 @@ configuración del sistema.
 
 Paquetes y asignaciones
 
-`paquetes` define el precio, la vigencia en días y `paquetes_servicios` las cantidades de servicios principales incluidos. `paquetes_asignaciones` conserva el cliente, el precio pagado, la fecha de expiración y el usuario que realizó la asignación. Cada asignación genera un cupón de 100% por unidad incluida, con origen `paquete` y la misma fecha de expiración; esos cupones se consumen desde la hoja del servicio y no se pueden editar individualmente.
+`paquetes` define el precio, la vigencia en días y `paquetes_servicios` las cantidades de servicios principales incluidos. `paquetes_asignaciones` conserva el cliente, el precio pagado, la fecha de expiración, el usuario que realizó la asignación y una instantánea de los servicios incluidos. Cada asignación genera un cupón de 100% por unidad incluida, con origen `paquete` y la misma fecha de expiración; esos cupones se consumen desde la hoja del servicio y no se pueden editar individualmente. Editar un paquete solo cambia su definición para futuras asignaciones; las existentes conservan sus cupones y su instantánea original.
 
 En un UPDATE, valores_anteriores y valores_nuevos contienen únicamente las columnas que cambiaron. Si no hubo cambios reales, no se genera auditoría. En un INSERT, valores_nuevos contiene la fila creada. En un soft delete se registra únicamente el cambio de activo.
 
@@ -528,7 +528,7 @@ Las carpetas son prefijos lógicos y aparecen cuando se sube el primer objeto. L
 
 Referencia organizada de RPC
 
-La capa RPC expone 114 funciones públicas después de aplicar las migraciones. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
+La capa RPC expone 115 funciones públicas después de aplicar las migraciones. Esta referencia está organizada por dominio y por tabla para que sea fácil localizar una operación desde Next.js.
 
 Convención de esta sección
 
@@ -1831,11 +1831,11 @@ public.paquetes
 
 Cantidad de RPC
 
-3
+4
 
 Operaciones específicas
 
-Crear paquete, listar paquetes, asignar paquete a cliente
+Crear paquete, listar paquetes, actualizar paquete, asignar paquete a cliente
 
 Acciones
 
@@ -1848,6 +1848,16 @@ Retorno: public.paquetes
 Acceso: Administrador o propietario; service_role.
 
 Comportamiento: Crea el paquete y sus servicios principales en una operación atómica. `p_vigencia_dias` define cuántos días tendrá cada asignación. `p_servicios` contiene objetos `{ servicio_id, cantidad }` y no acepta servicios adicionales.
+
+Actualizar — paquetes_actualizar
+
+Firma: paquetes_actualizar(p_id BIGINT, p_nombre TEXT, p_precio NUMERIC(10, 2), p_vigencia_dias INTEGER, p_servicios JSONB)
+
+Retorno: public.paquetes
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Actualiza la definición del paquete y sus servicios para futuras asignaciones. Las asignaciones existentes conservan el precio pagado, la fecha de expiración, la instantánea de servicios y los cupones generados.
 
 Listar — paquetes_listar
 
