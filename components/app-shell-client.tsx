@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   ClipboardList,
+  History,
   LogOut,
   PawPrint,
   Scissors,
@@ -30,12 +31,13 @@ const navItems = [
   { label: "Sucursales", href: "/sucursales", icon: Store },
   { label: "Equipo", href: "/equipo", icon: UserCog },
   { label: "Configuración", href: "/configuracion", icon: Settings },
-  { label: "Reportes", href: "/reportes", icon: ClipboardList }
+  { label: "Reportes", href: "/reportes", icon: ClipboardList },
+  { label: "Auditoría", href: "/auditorias", icon: History }
 ];
 
 export function AppShellClient({ children, role }: { children: ReactNode; role?: string }) {
   const pathname = usePathname();
-  const canManageBranches = role === "administrador" || role === "propietario";
+  const canManageAdmin = role === "administrador" || role === "propietario";
 
   return (
     <div className="min-h-screen bg-cloud">
@@ -50,7 +52,7 @@ export function AppShellClient({ children, role }: { children: ReactNode; role?:
           </div>
         </Link>
         <nav className="mt-8 space-y-1">
-          {navItems.filter((item) => !["/sucursales", "/equipo", "/configuracion", "/cupones"].includes(item.href) || canManageBranches).map((item) => {
+          {navItems.filter((item) => !["/sucursales", "/equipo", "/configuracion", "/cupones", "/auditorias"].includes(item.href) || canManageAdmin).map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (

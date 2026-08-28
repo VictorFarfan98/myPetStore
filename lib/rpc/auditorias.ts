@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { AuditoriaRow } from "./types";
+import type { AuditoriaDiaResult, AuditoriaRow } from "./types";
 import { rpcCall } from "./core";
 
 export function auditoriasObtenerPorId(p_id: number) {
@@ -21,3 +21,6 @@ export function auditoriasListarTodos(p_limite: number | null = null, p_offset =
   );
 }
 
+export function auditoriasListarPorDia(p_fecha: string) {
+  return rpcCall<AuditoriaDiaResult>("auditorias_listar_por_dia", { p_fecha });
+}

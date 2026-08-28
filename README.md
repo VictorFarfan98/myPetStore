@@ -2275,7 +2275,7 @@ public.auditorias
 
 Cantidad de RPC
 
-3
+4
 
 Operaciones estándar
 
@@ -2283,7 +2283,7 @@ obtener, listar, listar todos
 
 Operaciones específicas
 
-—
+Listar por día
 
 Acciones
 
@@ -2316,6 +2316,16 @@ Retorno: JSONB
 Acceso: Administrador o propietario; service_role.
 
 Comportamiento: Lista registros activos e inactivos con paginación opcional.
+
+Listar por día — auditorias_listar_por_dia
+
+Firma: auditorias_listar_por_dia(p_fecha DATE)
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Lista todos los registros del día indicado usando la zona horaria `America/Guatemala`, sin limitar la cantidad de resultados.
 
 Referencias técnicas
 
