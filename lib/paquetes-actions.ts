@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { paquetesAsignar, paquetesCrear } from "@/lib/rpc/paquetes";
+import { paquetesActualizar, paquetesAsignar, paquetesCrear } from "@/lib/rpc/paquetes";
 
 function text(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -36,26 +36,48 @@ function errorMessage(code?: string, fallback = "No se pudo completar la operaci
   if (code === "PC001") return "Ya existe un paquete con ese nombre.";
   if (code === "PN001") return "El paquete o cliente seleccionado no existe o está inactivo.";
   if (code === "PV001") return "Revisa los datos del paquete.";
+  if (["PGRST202", "42703", "42883"].includes(code ?? "")) return "La actualización de paquetes aún no está habilitada en la base de datos. Aplica las migraciones pendientes.";
   return fallback;
+}
+
+function packageInput(formData: FormData) {
+  const nombre = text(formData, "nombre");
+  const precio = text(formData, "precio");
+  const vigencia = text(formData, "vigencia_dias");
+  const numericPrice = Number(precio);
+  const vigenciaDias = Number(vigencia);
+  if (!nombre || !/^\d+(?:\.\d{1,2})?$/.test(precio) || !Number.isFinite(numericPrice) || numericPrice <= 0 || !/^\d+$/.test(vigencia) || !Number.isInteger(vigenciaDias) || vigenciaDias < 1) {
+    throw new Error("Ingresa un nombre, precio y vigencia válidos para el paquete.");
+  }
+  return { p_nombre: nombre, p_precio: numericPrice.toFixed(2), p_vigencia_dias: vigenciaDias, p_servicios: packageItems(formData) };
+}
+
+function validationError(error: unknown, fallback: string) {
+  const message = error instanceof Error ? error.message : "";
+  return { error: ["Agrega al menos un servicio al paquete.", "Los servicios y cantidades del paquete no son válidos.", "No repitas servicios dentro del paquete.", "Ingresa un nombre, precio y vigencia válidos para el paquete."].includes(message) ? message : fallback };
 }
 
 export async function createPaquete(formData: FormData) {
   try {
-    const nombre = text(formData, "nombre");
-    const precio = text(formData, "precio");
-    const vigencia = text(formData, "vigencia_dias");
-    const numericPrice = Number(precio);
-    const vigenciaDias = Number(vigencia);
-    if (!nombre || !/^\d+(?:\.\d{1,2})?$/.test(precio) || !Number.isFinite(numericPrice) || numericPrice <= 0 || !/^\d+$/.test(vigencia) || !Number.isInteger(vigenciaDias) || vigenciaDias < 1) {
-      throw new Error("Ingresa un nombre, precio y vigencia válidos para el paquete.");
-    }
-    const result = await paquetesCrear({ p_nombre: nombre, p_precio: numericPrice.toFixed(2), p_vigencia_dias: vigenciaDias, p_servicios: packageItems(formData) });
+    const result = await paquetesCrear(packageInput(formData));
     if (result.error) return { error: errorMessage(result.error.code, "No se pudo crear el paquete.") };
     revalidatePath("/paquetes");
     return { ok: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    return { error: ["Agrega al menos un servicio al paquete.", "Los servicios y cantidades del paquete no son válidos.", "No repitas servicios dentro del paquete.", "Ingresa un nombre, precio y vigencia válidos para el paquete."].includes(message) ? message : "No se pudo crear el paquete." };
+    return validationError(error, "No se pudo crear el paquete.");
+  }
+}
+
+export async function updatePaquete(formData: FormData) {
+  const packageId = Number(formData.get("paquete_id"));
+  if (!Number.isInteger(packageId) || packageId < 1) return { error: "El paquete seleccionado no es válido." };
+  try {
+    const result = await paquetesActualizar({ p_id: packageId, ...packageInput(formData) });
+    if (result.error) return { error: errorMessage(result.error.code, "No se pudo actualizar el paquete.") };
+    revalidatePath("/paquetes");
+    return { ok: true };
+  } catch (error) {
+    return validationError(error, "No se pudo actualizar el paquete.");
   }
 }
 

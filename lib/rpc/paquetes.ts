@@ -7,6 +7,10 @@ export function paquetesCrear(params: PaqueteCrearParams) {
   return rpcCall<PaqueteRow>("paquetes_crear", params);
 }
 
+export function paquetesActualizar(params: PaqueteCrearParams & { p_id: number }) {
+  return rpcCall<PaqueteRow>("paquetes_actualizar", params);
+}
+
 export function paquetesListar() {
   return rpcCall<PaqueteRow[]>("paquetes_listar");
 }
