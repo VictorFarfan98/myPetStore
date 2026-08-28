@@ -268,7 +268,7 @@ configuración del sistema.
 
 Paquetes y asignaciones
 
-`paquetes` define el precio y `paquetes_servicios` las cantidades de servicios principales incluidos. `paquetes_asignaciones` conserva el cliente, el precio pagado y el usuario que realizó la asignación. Cada asignación genera un cupón de 100% por unidad incluida, con origen `paquete`; esos cupones se consumen desde la hoja del servicio y no se pueden editar individualmente.
+`paquetes` define el precio, la vigencia en días y `paquetes_servicios` las cantidades de servicios principales incluidos. `paquetes_asignaciones` conserva el cliente, el precio pagado, la fecha de expiración y el usuario que realizó la asignación. Cada asignación genera un cupón de 100% por unidad incluida, con origen `paquete` y la misma fecha de expiración; esos cupones se consumen desde la hoja del servicio y no se pueden editar individualmente.
 
 En un UPDATE, valores_anteriores y valores_nuevos contienen únicamente las columnas que cambiaron. Si no hubo cambios reales, no se genera auditoría. En un INSERT, valores_nuevos contiene la fila creada. En un soft delete se registra únicamente el cambio de activo.
 
@@ -1841,13 +1841,13 @@ Acciones
 
 Crear — paquetes_crear
 
-Firma: paquetes_crear(p_nombre TEXT, p_precio NUMERIC(10, 2), p_servicios JSONB)
+Firma: paquetes_crear(p_nombre TEXT, p_precio NUMERIC(10, 2), p_vigencia_dias INTEGER, p_servicios JSONB)
 
 Retorno: public.paquetes
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Crea el paquete y sus servicios principales en una operación atómica. `p_servicios` contiene objetos `{ servicio_id, cantidad }` y no acepta servicios adicionales.
+Comportamiento: Crea el paquete y sus servicios principales en una operación atómica. `p_vigencia_dias` define cuántos días tendrá cada asignación. `p_servicios` contiene objetos `{ servicio_id, cantidad }` y no acepta servicios adicionales.
 
 Listar — paquetes_listar
 
@@ -1867,7 +1867,7 @@ Retorno: JSONB
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Registra la asignación al precio actual del paquete y genera un cupón de 100% de descuento, de uso único, por cada unidad de servicio incluida. La operación es atómica y queda auditada.
+Comportamiento: Registra la asignación al precio actual del paquete, calcula su fecha de expiración y genera un cupón de 100% de descuento, de uso único y con esa fecha, por cada unidad de servicio incluida. La operación es atómica y queda auditada.
 
 citas — Citas
 

@@ -8,12 +8,16 @@ import { assignPaquete, createPaquete } from "@/lib/paquetes-actions";
 
 type PackageItem = { servicio_id: number; cantidad: number };
 
-const emptyForm = { nombre: "", precio: "" };
+const emptyForm = { nombre: "", precio: "", vigencia_dias: "90" };
 
-const dateFormatter = new Intl.DateTimeFormat("es-GT", {
+  const dateFormatter = new Intl.DateTimeFormat("es-GT", {
   dateStyle: "medium",
   timeZone: "America/Guatemala"
 });
+
+function formatDate(value: string) {
+  return dateFormatter.format(new Date(`${value.slice(0, 10)}T12:00:00`));
+}
 
 export function PaquetesBrowser({ packages, customers, services, users }: { packages: PaqueteRow[]; customers: ClienteRow[]; services: ServicioRow[]; users: UsuarioRow[] }) {
   const [form, setForm] = useState(emptyForm);
@@ -77,13 +81,13 @@ export function PaquetesBrowser({ packages, customers, services, users }: { pack
     <div className="space-y-4">
       {packages.map((pkg) => <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel" key={pkg.id}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div><h2 className="text-xl font-semibold text-ink">{pkg.nombre}</h2><p className="mt-1 text-sm text-slate-500">Creado por {userNames.get(pkg.creado_por_usuario_id) ?? "Usuario"} · {dateFormatter.format(new Date(pkg.creado_en))}</p></div>
+          <div><h2 className="text-xl font-semibold text-ink">{pkg.nombre}</h2><p className="mt-1 text-sm text-slate-500">Válido por {pkg.vigencia_dias} días · creado por {userNames.get(pkg.creado_por_usuario_id) ?? "Usuario"} · {dateFormatter.format(new Date(pkg.creado_en))}</p></div>
           <p className="text-2xl font-semibold text-jade">Q {Number(pkg.precio).toFixed(2)}</p>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">{pkg.servicios.map((item) => <span className="rounded-full bg-cloud px-3 py-1.5 text-sm font-medium text-slate-700" key={item.servicio_id}>{item.cantidad} × {item.servicio_nombre}</span>)}</div>
         <div className="mt-5 border-t border-slate-100 pt-4">
           <p className="text-sm font-semibold text-ink">Clientes con este paquete <span className="font-normal text-slate-500">({pkg.asignaciones.length})</span></p>
-          {pkg.asignaciones.length > 0 && <p className="mt-2 text-sm text-slate-600">{pkg.asignaciones.slice(0, 5).map((assignment) => assignment.cliente_nombre).join(", ")}{pkg.asignaciones.length > 5 ? "…" : ""}</p>}
+          {pkg.asignaciones.length > 0 && <div className="mt-2 space-y-1 text-sm text-slate-600">{pkg.asignaciones.slice(0, 5).map((assignment) => <p key={assignment.id}>{assignment.cliente_nombre} · válido hasta {formatDate(assignment.fecha_expiracion)}</p>)}{pkg.asignaciones.length > 5 && <p>…</p>}</div>}
           <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={submitAssign}>
             <input name="paquete_id" type="hidden" value={pkg.id} />
             <label className="sr-only" htmlFor={`cliente-${pkg.id}`}>Cliente para asignar {pkg.nombre}</label>
@@ -103,6 +107,7 @@ export function PaquetesBrowser({ packages, customers, services, users }: { pack
       <div className="mt-5 space-y-4">
         <label className="block text-sm font-medium text-ink" htmlFor="paquete-nombre">Nombre<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" id="paquete-nombre" name="nombre" onChange={(event) => setForm({ ...form, nombre: event.target.value })} required value={form.nombre} /></label>
         <label className="block text-sm font-medium text-ink" htmlFor="paquete-precio">Precio del paquete (GTQ)<input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" id="paquete-precio" min="0.01" name="precio" onChange={(event) => setForm({ ...form, precio: event.target.value })} required step="0.01" type="number" value={form.precio} /></label>
+        <label className="block text-sm font-medium text-ink" htmlFor="paquete-vigencia">Válido por (días)<span className="mt-1 block text-xs font-normal text-slate-500">La cuenta inicia al asignar el paquete al cliente.</span><input className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal" id="paquete-vigencia" min="1" name="vigencia_dias" onChange={(event) => setForm({ ...form, vigencia_dias: event.target.value })} required type="number" value={form.vigencia_dias} /></label>
         <div>
           <p className="text-sm font-medium text-ink">Servicios incluidos</p>
           <div className="mt-1 flex gap-2"><label className="sr-only" htmlFor="paquete-servicio">Servicio</label><select className="focus-ring min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5" id="paquete-servicio" onChange={(event) => setServiceToAdd(event.target.value)} value={serviceToAdd}><option value="">Selecciona un servicio</option>{services.map((service) => <option key={service.id} value={service.id}>{service.nombre}</option>)}</select><button className="focus-ring inline-flex items-center gap-1 rounded-lg border border-jade px-3 py-2 font-semibold text-jade disabled:opacity-50" disabled={!serviceToAdd || items.some((item) => item.servicio_id === Number(serviceToAdd))} onClick={addService} type="button"><Plus className="h-4 w-4" aria-hidden="true" />Agregar</button></div>
