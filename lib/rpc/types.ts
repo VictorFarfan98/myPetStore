@@ -352,6 +352,7 @@ export type PaqueteAsignacionRow = {
   cliente_id: number;
   cliente_nombre: string;
   precio_pagado: string | number;
+  fecha_expiracion: DateString;
   asignado_por_usuario_id: string;
   asignado_en: DateString;
 };
@@ -360,6 +361,7 @@ export type PaqueteRow = {
   id: number;
   nombre: string;
   precio: string | number;
+  vigencia_dias: number;
   activo: boolean;
   creado_por_usuario_id: string;
   creado_en: DateString;
@@ -370,6 +372,7 @@ export type PaqueteRow = {
 export type PaqueteCrearParams = {
   p_nombre: string;
   p_precio: string;
+  p_vigencia_dias: number;
   p_servicios: Array<{ servicio_id: number; cantidad: number }>;
 };
 

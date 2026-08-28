@@ -43,17 +43,19 @@ export async function createPaquete(formData: FormData) {
   try {
     const nombre = text(formData, "nombre");
     const precio = text(formData, "precio");
+    const vigencia = text(formData, "vigencia_dias");
     const numericPrice = Number(precio);
-    if (!nombre || !/^\d+(?:\.\d{1,2})?$/.test(precio) || !Number.isFinite(numericPrice) || numericPrice <= 0) {
-      throw new Error("Ingresa un nombre y precio válidos para el paquete.");
+    const vigenciaDias = Number(vigencia);
+    if (!nombre || !/^\d+(?:\.\d{1,2})?$/.test(precio) || !Number.isFinite(numericPrice) || numericPrice <= 0 || !/^\d+$/.test(vigencia) || !Number.isInteger(vigenciaDias) || vigenciaDias < 1) {
+      throw new Error("Ingresa un nombre, precio y vigencia válidos para el paquete.");
     }
-    const result = await paquetesCrear({ p_nombre: nombre, p_precio: numericPrice.toFixed(2), p_servicios: packageItems(formData) });
+    const result = await paquetesCrear({ p_nombre: nombre, p_precio: numericPrice.toFixed(2), p_vigencia_dias: vigenciaDias, p_servicios: packageItems(formData) });
     if (result.error) return { error: errorMessage(result.error.code, "No se pudo crear el paquete.") };
     revalidatePath("/paquetes");
     return { ok: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
-    return { error: ["Agrega al menos un servicio al paquete.", "Los servicios y cantidades del paquete no son válidos.", "No repitas servicios dentro del paquete.", "Ingresa un nombre y precio válidos para el paquete."].includes(message) ? message : "No se pudo crear el paquete." };
+    return { error: ["Agrega al menos un servicio al paquete.", "Los servicios y cantidades del paquete no son válidos.", "No repitas servicios dentro del paquete.", "Ingresa un nombre, precio y vigencia válidos para el paquete."].includes(message) ? message : "No se pudo crear el paquete." };
   }
 }
 
