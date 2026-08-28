@@ -557,6 +557,12 @@ export type AuditoriaRow = {
   sucursal_id: number | null;
   usuario_id: string | null;
   motivo: string | null;
+  creado_en: DateString;
+};
+
+export type AuditoriaDiaResult = {
+  datos: AuditoriaRow[];
+  total: number;
 };
 
 export type CitasAgendaParams = {
