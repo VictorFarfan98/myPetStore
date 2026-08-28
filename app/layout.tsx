@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -15,7 +16,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es-GT">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
