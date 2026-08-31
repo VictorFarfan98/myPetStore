@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
-    supabase_url: process.env.supabase_url,
-    supabase_publishable_key: process.env.supabase_publishable_key
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY
   },
   images: {
     remotePatterns: [
