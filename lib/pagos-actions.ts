@@ -78,7 +78,7 @@ export async function savePayments(formData: FormData) {
 
   const record = await registrosServicioObtenerPorId(recordId);
   const totalAmount = record.data?.monto_final;
-  if (record.error || !totalAmount || cents(totalAmount) === null) {
+  if (record.error || totalAmount === null || totalAmount === undefined || String(totalAmount).trim() === "" || cents(totalAmount) === null) {
     return { error: "No se pudo validar el total de la hoja de servicio." };
   }
   const total = cents(totalAmount)!;
