@@ -33,6 +33,19 @@ Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
 Most pages now read through `lib/app-data.ts`, which loads live data through Supabase RPC.
 
+## Notificaciones de servicio completado
+
+La migración `supabase/migrations/20260831000200_add_email_notifications.sql` crea el historial idempotente de correos y sus RPC protegidas. La ruta `/correos` permite consultar por rango de fechas o cliente y reintentar envíos fallidos respetando el acceso a sucursales.
+
+Para habilitar Gmail en Vercel configura `EMAIL_PROVIDER=gmail`, `EMAIL_FROM_NAME`, `GMAIL_USER` y `GMAIL_APP_PASSWORD`. Si faltan variables, los servicios siguen operando y la notificación queda marcada como fallida con un motivo seguro.
+
+Configuración manual de Gmail:
+
+1. Crea una cuenta dedicada para el Pet Shop y no uses una cuenta personal.
+2. En la cuenta dedicada, activa la verificación en dos pasos desde Seguridad de Google.
+3. En Seguridad, abre `Contraseñas de aplicaciones`, crea una aplicación llamada `MyPetStore` y copia la contraseña generada de 16 caracteres.
+4. Guarda esa contraseña en Vercel como `GMAIL_APP_PASSWORD`, junto con `GMAIL_USER`, `EMAIL_FROM_NAME` y `EMAIL_PROVIDER=gmail`; redepliega sin publicar la contraseña en el repositorio.
+
 
 ## CRUD INFO
 

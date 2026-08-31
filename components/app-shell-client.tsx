@@ -10,6 +10,7 @@ import {
   ClipboardList,
   History,
   LogOut,
+  Mail,
   Package,
   PawPrint,
   Scissors,
@@ -34,7 +35,8 @@ const navItems = [
   { label: "Equipo", href: "/equipo", icon: UserCog },
   { label: "Configuración", href: "/configuracion", icon: Settings },
   { label: "Reportes", href: "/reportes", icon: ClipboardList },
-  { label: "Auditoría", href: "/auditorias", icon: History }
+  { label: "Auditoría", href: "/auditorias", icon: History },
+  { label: "Correos", href: "/correos", icon: Mail }
 ];
 
 export function AppShellClient({ children, role }: { children: ReactNode; role?: string }) {

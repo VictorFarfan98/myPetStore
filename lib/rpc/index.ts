@@ -22,3 +22,4 @@ export * from "./recordatorios_citas";
 export * from "./auditorias";
 export * from "./relaciones";
 export * from "./reportes";
+export * from "./notificaciones_email";

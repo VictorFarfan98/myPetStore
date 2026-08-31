@@ -7,6 +7,7 @@ import { isMatch } from "date-fns";
 import nextDynamic from "next/dynamic";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const LazyHojasBrowser = nextDynamic(() => import("@/components/hojas-browser").then((module) => module.HojasBrowser), { loading: () => <div className="h-[32rem] animate-pulse rounded-lg bg-slate-100" /> });
 
