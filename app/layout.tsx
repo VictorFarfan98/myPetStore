@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
@@ -24,6 +25,9 @@ export default function RootLayout({
   return (
     <html lang="es-GT">
       <body className={`${plusJakartaSans.variable} ${plusJakartaSans.className}`}>{children}</body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
