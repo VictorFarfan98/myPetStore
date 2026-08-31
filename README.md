@@ -1936,7 +1936,7 @@ Operaciones específicas
 
 Reprogramar cita, Cancelar cita, Marcar no asistencia, Obtener agenda
 
-Valores de `origen_cita`: `telefono`, `presencial`, `whatsapp`, `google`, `pauta_whatsapp`, `pauta_instagram`.
+Valores de `origen_cita`: `telefono`, `presencial`, `whatsapp`, `google`, `pauta_whatsapp`, `pauta_instagram`, `servicio_domicilio`.
 
 Acciones
 

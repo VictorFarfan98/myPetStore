@@ -14,6 +14,7 @@ const sourceValues: Record<Appointment["source"], string> = {
   google: "google",
   whatsapp_ad: "pauta_whatsapp",
   instagram_ad: "pauta_instagram",
+  home_service: "servicio_domicilio",
   online: "presencial"
 };
 
@@ -181,6 +182,7 @@ export function ScheduleForm({
             <option value="google">Google</option>
             <option value="pauta_whatsapp">Pauta WhatsApp</option>
             <option value="pauta_instagram">Pauta Instagram</option>
+            <option value="servicio_domicilio">Servicio a domicilio</option>
           </select>
         </label>
       </div>

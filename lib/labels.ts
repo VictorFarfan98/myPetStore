@@ -33,6 +33,7 @@ export const sourceLabels: Record<AppointmentSource, string> = {
   google: "Google",
   whatsapp_ad: "Pauta WhatsApp",
   instagram_ad: "Pauta Instagram",
+  home_service: "Servicio a domicilio",
   online: "Online futuro"
 };
 

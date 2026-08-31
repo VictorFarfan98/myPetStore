@@ -84,7 +84,8 @@ CREATE TYPE public.origen_cita AS ENUM (
     'whatsapp',
     'google',
     'pauta_whatsapp',
-    'pauta_instagram'
+    'pauta_instagram',
+    'servicio_domicilio'
 );
 
 CREATE TYPE public.estado_cita AS ENUM (

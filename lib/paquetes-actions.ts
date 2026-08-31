@@ -89,7 +89,10 @@ export async function assignPaquete(formData: FormData) {
   }
   try {
     const result = await paquetesAsignar(packageId, customerId);
-    if (result.error) return { error: errorMessage(result.error.code, "No se pudo asignar el paquete.") };
+    if (result.error) {
+      console.error("Error al asignar paquete", { packageId, customerId, ...result.error });
+      return { error: errorMessage(result.error.code, "No se pudo asignar el paquete.") };
+    }
     revalidatePath("/paquetes");
     revalidatePath("/cupones");
     revalidatePath("/hojas");

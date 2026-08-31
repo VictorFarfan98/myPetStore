@@ -25,7 +25,7 @@ function hojaState(value?: string) {
   }
 }
 
-function SignaturePad({ name, label, defaultValue, required = false }: { name: string; label: string; defaultValue?: string; required?: boolean }) {
+function SignaturePad({ name, label, defaultValue, required = false, onValidityChange }: { name: string; label: string; defaultValue?: string; required?: boolean; onValidityChange?: (valid: boolean) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [value, setValue] = useState(defaultValue ?? "");
   const drawing = useRef(false);
@@ -50,6 +50,8 @@ function SignaturePad({ name, label, defaultValue, required = false }: { name: s
     const { x, y } = point(event);
     const context = canvasRef.current!.getContext("2d")!;
     context.beginPath(); context.moveTo(x, y); context.lineTo(x, y); context.stroke();
+    setValue(canvasRef.current!.toDataURL("image/png"));
+    onValidityChange?.(true);
   }
 
   function draw(event: React.PointerEvent<HTMLCanvasElement>) {
@@ -64,6 +66,7 @@ function SignaturePad({ name, label, defaultValue, required = false }: { name: s
     const canvas = canvasRef.current!;
     canvas.getContext("2d")!.clearRect(0, 0, canvas.width, canvas.height);
     setValue("");
+    onValidityChange?.(false);
   }
 
   return <div className="grid gap-1 text-sm font-medium text-slate-700">
@@ -127,6 +130,7 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved, onRefresh }:
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [clientSigning, setClientSigning] = useState(false);
+  const [hasSignature, setHasSignature] = useState(Boolean(record?.intakeSignatureImageUrl));
   const [serviceId, setServiceId] = useState(String(record?.serviceId ?? appointment.serviceIds[0]));
   const [usePromotion, setUsePromotion] = useState(Boolean(record?.usesPromotion));
   const [additionalIds, setAdditionalIds] = useState<number[]>(record?.additionalServiceIds ?? []);
@@ -144,9 +148,9 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved, onRefresh }:
     const form = new FormData(event.currentTarget);
     form.set("adicionales_configurados", String(additionalTouched));
     form.set("usar_promocion", usePromotion && Boolean(selectedPrice?.promotionalPrice) ? "on" : "off");
-    if (clientSigning && !String(form.get("firma_ingreso_url") ?? "").trim()) {
+    if (!hasSignature || !String(form.get("firma_ingreso_url") ?? "").trim()) {
       setPending(false);
-      return setMessage("El cliente debe firmar antes de confirmar el ingreso.");
+      return setMessage(clientSigning ? "El cliente debe firmar antes de confirmar el ingreso." : "Agrega la firma de ingreso antes de guardar la hoja.");
     }
     [...conditions, ...parasites].forEach((value) => { if (selected.includes(value)) form.set(value === "Piel irritada / enrojecida" ? "piel_irritada" : value.toLowerCase().replaceAll(" ", "_"), "on"); });
     additionalIds.forEach((id) => form.append("adicional_id", String(id)));
@@ -191,9 +195,9 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved, onRefresh }:
       <label className="grid gap-1 text-sm font-medium text-slate-700">Agregar fotos de ingreso<input name="fotos_ingreso" type="file" accept="image/*" capture="environment" multiple className="focus-ring rounded-lg border border-slate-300 px-3 py-2" /></label>
       </div>
     </div>
-    <div className={clientSigning ? "rounded-lg border border-amber-300 bg-amber-50 p-4" : undefined}><SignaturePad name="firma_ingreso_url" label={clientSigning ? "Firma del cliente para confirmar ingreso" : "Firma de ingreso"} defaultValue={record?.intakeSignatureImageUrl} required />{clientSigning && <p className="mt-2 text-sm font-semibold text-amber-900" role="status">El formulario está bloqueado. El cliente solo puede firmar y confirmar el ingreso.</p>}</div>
+    <div className={clientSigning ? "rounded-lg border border-amber-300 bg-amber-50 p-4" : undefined}><SignaturePad name="firma_ingreso_url" label={clientSigning ? "Firma del cliente para confirmar ingreso" : "Firma de ingreso"} defaultValue={record?.intakeSignatureImageUrl} onValidityChange={setHasSignature} required />{clientSigning && <p className="mt-2 text-sm font-semibold text-amber-900" role="status">El formulario está bloqueado. El cliente solo puede firmar y confirmar el ingreso.</p>}</div>
     {message && <p className="text-sm text-rose-700" role="alert">{message}</p>}
-    <div className="flex flex-wrap gap-2">{!clientSigning && <button type="button" disabled={pending} onClick={() => { setClientSigning(true); setMessage(""); }} className="focus-ring rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900">Solicitar firma cliente</button>}<button disabled={pending} className="focus-ring inline-flex items-center gap-2 rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" aria-busy={pending}>{pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}{clientSigning ? "Confirmar ingreso" : record ? "Guardar cambios" : "Crear y guardar hoja"}</button>{!clientSigning && <button type="button" disabled={pending} onClick={onClose} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cerrar hoja</button>}{record && !clientSigning && <button type="button" disabled={pending} onClick={remove} className="focus-ring inline-flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700"><Trash2 className="h-4 w-4" />{pending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}Desactivar</button>}</div>
+    <div className="flex flex-wrap gap-2">{!clientSigning && <button type="button" disabled={pending} onClick={() => { setClientSigning(true); setMessage(""); }} className="focus-ring rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900">Solicitar firma cliente</button>}<button disabled={pending || !hasSignature} className="focus-ring inline-flex items-center gap-2 rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" aria-busy={pending}>{pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}{clientSigning ? "Confirmar ingreso" : record ? "Guardar cambios" : "Crear y guardar hoja"}</button>{!clientSigning && <button type="button" disabled={pending} onClick={onClose} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cerrar hoja</button>}{record && !clientSigning && <button type="button" disabled={pending} onClick={remove} className="focus-ring inline-flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700"><Trash2 className="h-4 w-4" />{pending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}Desactivar</button>}</div>
   </form>;
 }
 
@@ -207,6 +211,7 @@ function CompletionForm({ data, appointmentId, record, onClose, onSaved, onRefre
   const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [pending, setPending] = useState(false);
   const [clientSigning, setClientSigning] = useState(false);
+  const [hasSignature, setHasSignature] = useState(Boolean(record.completionSignatureImageUrl));
   const serviceId = record.serviceId ?? appointment.serviceIds[0];
   const additionalIds = record.additionalServiceIds ?? [];
   const usePromotion = Boolean(record.usesPromotion);
@@ -246,7 +251,7 @@ function CompletionForm({ data, appointmentId, record, onClose, onSaved, onRefre
     form.set("descuento_cupon", discount);
     form.set("adicionales_configurados", "false");
     form.set("usar_promocion", usePromotion ? "on" : "off");
-    if (clientSigning && !String(form.get("firma_entrega_url") ?? "").trim()) {
+    if (clientSigning && (!hasSignature || !String(form.get("firma_entrega_url") ?? "").trim())) {
       setPending(false);
       return setMessage("El cliente debe firmar antes de confirmar la entrega.");
     }
@@ -278,9 +283,9 @@ function CompletionForm({ data, appointmentId, record, onClose, onSaved, onRefre
       <label className="grid gap-1 text-sm font-medium text-slate-700">Agregar fotos de egreso<input name="fotos_egreso" type="file" accept="image/*" capture="environment" multiple className="focus-ring rounded-lg border border-slate-300 px-3 py-2" /></label>
       </div>
     </div>
-    <div className={clientSigning ? "rounded-lg border border-amber-300 bg-amber-50 p-4" : undefined}><SignaturePad name="firma_entrega_url" label={clientSigning ? "Firma del cliente para confirmar entrega" : "Firma de entrega"} defaultValue={record.completionSignatureImageUrl} required={clientSigning} />{clientSigning && <p className="mt-2 text-sm font-semibold text-amber-900" role="status">El formulario está bloqueado. El cliente solo puede firmar y confirmar la entrega.</p>}</div>
+    <div className={clientSigning ? "rounded-lg border border-amber-300 bg-amber-50 p-4" : undefined}><SignaturePad name="firma_entrega_url" label={clientSigning ? "Firma del cliente para confirmar entrega" : "Firma de entrega"} defaultValue={record.completionSignatureImageUrl} onValidityChange={setHasSignature} required={clientSigning} />{clientSigning && <p className="mt-2 text-sm font-semibold text-amber-900" role="status">El formulario está bloqueado. El cliente solo puede firmar y confirmar la entrega.</p>}</div>
     {message && <p className="text-sm text-rose-700" role="alert">{message}</p>}
-    <div className="flex flex-wrap gap-2">{!clientSigning && <button type="button" disabled={pending} onClick={() => { setClientSigning(true); setMessage(""); }} className="focus-ring rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900">Solicitar firma cliente</button>}<button disabled={pending} className="focus-ring inline-flex items-center gap-2 rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" aria-busy={pending}>{pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}{clientSigning ? "Confirmar entrega" : "Guardar cambios"}</button>{!clientSigning && <button type="button" disabled={pending} onClick={onClose} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cerrar</button>}</div>
+    <div className="flex flex-wrap gap-2">{!clientSigning && <button type="button" disabled={pending} onClick={() => { setClientSigning(true); setMessage(""); }} className="focus-ring rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900">Solicitar firma cliente</button>}<button disabled={pending || (clientSigning && !hasSignature)} className="focus-ring inline-flex items-center gap-2 rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" aria-busy={pending}>{pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}{clientSigning ? "Confirmar entrega" : "Guardar cambios"}</button>{!clientSigning && <button type="button" disabled={pending} onClick={onClose} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cerrar</button>}</div>
   </form>;
 }
 
