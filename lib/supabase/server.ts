@@ -17,8 +17,8 @@ export async function createUserSupabaseClient() {
   const cookieStore = await cookies();
 
   return createServerClient(
-    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    requireEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    requireEnv("supabase_url"),
+    requireEnv("supabase_publishable_key"),
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
@@ -38,7 +38,7 @@ export async function createUserSupabaseClient() {
 
 export function createServiceSupabaseClient() {
   return createClient(
-    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requireEnv("supabase_url"),
     requireEnv("SUPABASE_SERVICE_ROLE_KEY")
   );
 }
