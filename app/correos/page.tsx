@@ -1,12 +1,14 @@
 import { AppShell } from "@/components/app-shell";
-import { EmailHistoryBrowser } from "@/components/email-history-browser";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { clientesBuscarListar, clientesListar, clientesObtenerPorId } from "@/lib/rpc/clientes";
 import { notificacionesEmailListar } from "@/lib/rpc/notificaciones_email";
+import nextDynamic from "next/dynamic";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+const EmailHistoryBrowser = nextDynamic(() => import("@/components/email-history-browser").then((module) => module.EmailHistoryBrowser), { loading: () => <div className="mt-6 h-[36rem] animate-pulse rounded-lg bg-slate-100" /> });
 
 function validDate(value?: string) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
