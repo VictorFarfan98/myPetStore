@@ -33,6 +33,19 @@ Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
 Most pages now read through `lib/app-data.ts`, which loads live data through Supabase RPC.
 
+## Notificaciones de servicio completado
+
+La migración `supabase/migrations/20260831000200_add_email_notifications.sql` crea el historial idempotente de correos y sus RPC protegidas. La ruta `/correos` permite consultar por rango de fechas o cliente y reintentar envíos fallidos respetando el acceso a sucursales.
+
+Para habilitar Gmail en Vercel configura `EMAIL_PROVIDER=gmail`, `EMAIL_FROM_NAME`, `GMAIL_USER` y `GMAIL_APP_PASSWORD`. Si faltan variables, los servicios siguen operando y la notificación queda marcada como fallida con un motivo seguro.
+
+Configuración manual de Gmail:
+
+1. Crea una cuenta dedicada para el Pet Shop y no uses una cuenta personal.
+2. En la cuenta dedicada, activa la verificación en dos pasos desde Seguridad de Google.
+3. En Seguridad, abre `Contraseñas de aplicaciones`, crea una aplicación llamada `MyPetStore` y copia la contraseña generada de 16 caracteres.
+4. Guarda esa contraseña en Vercel como `GMAIL_APP_PASSWORD`, junto con `GMAIL_USER`, `EMAIL_FROM_NAME` y `EMAIL_PROVIDER=gmail`; redepliega sin publicar la contraseña en el repositorio.
+
 
 ## CRUD INFO
 
@@ -1091,7 +1104,29 @@ Retorno: JSONB
 
 Acceso: Usuario activo; service_role.
 
-Comportamiento: Devuelve el avance de cada cliente desde `configuracion_sistema.fidelidad_inicia_en`. Cuenta servicios completados sin cupón o con cupón reutilizable y excluye cualquier cupón de uso único.
+Comportamiento: Devuelve el avance almacenado de cada cliente desde `fidelidad_clientes`, representado como `MOD(creditos_acumulados, servicios_requeridos_cupon)`.
+
+La tabla `fidelidad_clientes` es la fuente de verdad de los créditos acumulados. `fidelidad_ajustes` registra los cambios manuales hechos por administradores o propietarios. El progreso visible y la generación automática de cupones usan `MOD(creditos_acumulados, servicios_requeridos_cupon)`, y los servicios completados actualizan el valor mediante un trigger.
+
+Ajustar fidelidad — clientes_fidelidad_actualizar
+
+Firma: clientes_fidelidad_actualizar(p_cliente_id BIGINT, p_completados INTEGER, p_motivo TEXT)
+
+Retorno: public.fidelidad_clientes
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Ajusta el progreso visible del cliente, conserva el historial en `fidelidad_ajustes` y registra auditoría. No modifica servicios ni cupones.
+
+Reconciliar fidelidad — clientes_fidelidad_reconciliar
+
+Firma: clientes_fidelidad_reconciliar()
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Devuelve únicamente los clientes cuyo progreso almacenado difiere del progreso calculado con servicios elegibles. Es una revisión manual de consistencia; la tabla `fidelidad_clientes` continúa siendo la fuente de verdad y esta función no repara ni sobrescribe datos.
 
 mascotas — Mascotas
 

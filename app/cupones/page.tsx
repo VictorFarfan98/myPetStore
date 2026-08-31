@@ -10,12 +10,17 @@ import { usuariosListarTodos, usuariosObtenerPerfilActual } from "@/lib/rpc/usua
 
 export const dynamic = "force-dynamic";
 
-export default async function CuponesPage() {
+export default async function CuponesPage({ searchParams }: { searchParams: Promise<{ page?: string; cliente_id?: string }> }) {
   const profile = await usuariosObtenerPerfilActual();
   if (profile.error || !["administrador", "propietario"].includes(String(profile.data?.rol))) redirect("/");
 
+  const params = await searchParams;
+  const pageSize = 20;
+  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
+  const parsedCustomerId = Number.parseInt(params.cliente_id ?? "", 10);
+  const customerId = Number.isInteger(parsedCustomerId) && parsedCustomerId > 0 ? parsedCustomerId : null;
   const [coupons, customers, services, users] = await Promise.all([
-    cuponesListarTodos(),
+    cuponesListarTodos(customerId ? null : pageSize, customerId ? 0 : (page - 1) * pageSize),
     clientesListarTodos(),
     serviciosListarTodos(),
     usuariosListarTodos()
@@ -24,5 +29,5 @@ export default async function CuponesPage() {
     throw new Error("No se pudo cargar la administración de cupones.");
   }
 
-  return <AppShell><PageContainer><PageHeader eyebrow="Promociones" title="Cupones" description="Administra recompensas y promociones aplicables a los servicios." /><CuponesBrowser coupons={coupons.data.datos} customers={customers.data.datos} services={services.data.datos.filter((service) => !service.es_adicional)} users={users.data.datos} /></PageContainer></AppShell>;
+  return <AppShell><PageContainer><PageHeader eyebrow="Promociones" title="Cupones" description="Administra recompensas y promociones aplicables a los servicios." /><CuponesBrowser key={`${page}:${customerId ?? "todos"}`} coupons={coupons.data.datos} customers={customers.data.datos} services={services.data.datos.filter((service) => !service.es_adicional)} users={users.data.datos} page={page} pageSize={pageSize} total={coupons.data.total} initialCustomerId={customerId} /></PageContainer></AppShell>;
 }

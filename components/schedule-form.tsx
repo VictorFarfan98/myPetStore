@@ -194,7 +194,7 @@ export function ScheduleForm({
 
       <div className="mt-5 rounded-lg bg-ink p-4 text-white">
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <Wand2 className="h-4 w-4 text-maize" aria-hidden="true" />
+          <Wand2 className="h-4 w-4 text-brand-gold" aria-hidden="true" />
           Mensaje WhatsApp sugerido
         </div>
         <p className="mt-2 text-sm leading-6 text-slate-100">{reminder}</p>

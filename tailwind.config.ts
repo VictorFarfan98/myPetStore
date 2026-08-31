@@ -8,14 +8,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#1f2933",
-        jade: "#277c6b",
-        coral: "#d95f43",
-        maize: "#f2b84b",
-        cloud: "#f5f7f2"
+        brand: {
+          white: "#FFFFFF",
+          black: "#101010",
+          gold: "#D6AC63"
+        },
+        // Keep existing utility names as compatibility aliases while the UI migrates.
+        ink: "#101010",
+        jade: "#101010",
+        coral: "#101010",
+        maize: "#D6AC63",
+        cloud: "#F6F4EF"
       },
       boxShadow: {
-        panel: "0 16px 40px rgba(31, 41, 51, 0.08)"
+        panel: "0 12px 30px rgba(16, 16, 16, 0.07)"
+      },
+      fontFamily: {
+        sans: ["var(--font-plus-jakarta)", "sans-serif"]
       }
     }
   },

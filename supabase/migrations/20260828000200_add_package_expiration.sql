@@ -13,6 +13,13 @@ WHERE p.id = pa.paquete_id;
 ALTER TABLE public.paquetes_asignaciones
     ALTER COLUMN fecha_expiracion SET NOT NULL;
 
+UPDATE public.cupones c
+SET fecha_expiracion = pa.fecha_expiracion
+FROM public.paquetes_asignaciones pa
+WHERE c.paquete_asignacion_id = pa.id
+  AND c.origen = 'paquete'
+  AND c.fecha_expiracion IS NULL;
+
 ALTER TABLE public.cupones
     DROP CONSTRAINT IF EXISTS cupones_paquete_validos,
     ADD CONSTRAINT cupones_paquete_validos CHECK (

@@ -2,18 +2,22 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Search } from "lucide-react";
+import { Search, Wrench } from "lucide-react";
 import type { ClientesData, Customer } from "@/lib/types";
-import { createCliente, deleteCliente, updateCliente } from "@/lib/clientes-actions";
+import type { ClienteFidelidadReconciliacionRow } from "@/lib/rpc/types";
+import { createCliente, deleteCliente, reconcileClientesFidelidad, updateCliente, updateClienteFidelidad } from "@/lib/clientes-actions";
 import { DataTable } from "./data-table";
 
 const emptyForm = { id: "", nombre: "", telefono: "", email: "", whatsapp_opt_in: false, sms_opt_in: false, notas: "", activo: true };
 
-export function ClientesBrowser({ data, page, initialQuery }: { data: ClientesData; page: number; initialQuery: string }) {
+export function ClientesBrowser({ data, page, initialQuery, canManageFidelity }: { data: ClientesData; page: number; initialQuery: string; canManageFidelity: boolean }) {
   const [query, setQuery] = useState(initialQuery);
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [fidelityMismatches, setFidelityMismatches] = useState<ClienteFidelidadReconciliacionRow[] | null>(null);
+  const [fidelityMessage, setFidelityMessage] = useState<string | null>(null);
+  const [adjustingCustomerId, setAdjustingCustomerId] = useState<number | null>(null);
   const router = useRouter();
   const editing = Boolean(form.id);
   const normalizedQuery = query.trim().toLowerCase();
@@ -56,6 +60,28 @@ export function ClientesBrowser({ data, page, initialQuery }: { data: ClientesDa
     });
   }
 
+  function reconcileFidelity() {
+    setFidelityMessage(null);
+    startTransition(async () => {
+      const result = await reconcileClientesFidelidad();
+      setFidelityMismatches(result.mismatches ?? null);
+      setFidelityMessage(result.error ?? null);
+    });
+  }
+
+  function submitFidelityAdjustment(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(async () => {
+      const result = await updateClienteFidelidad(formData);
+      setFidelityMessage(result.error ?? (result.ok ? "Fidelidad actualizada." : null));
+      if (result.ok) {
+        setAdjustingCustomerId(null);
+        router.refresh();
+      }
+    });
+  }
+
   return (
     <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
@@ -63,6 +89,7 @@ export function ClientesBrowser({ data, page, initialQuery }: { data: ClientesDa
           <div><h2 className="text-xl font-semibold text-ink">Directorio de clientes</h2><p className="mt-1 text-sm text-slate-500">{rows.length} cliente{rows.length === 1 ? "" : "s"} encontrado{rows.length === 1 ? "" : "s"}.</p></div>
           <label className="focus-ring flex w-full max-w-md items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"><Search className="h-4 w-4 text-slate-400" aria-hidden="true" /><input className="w-full bg-transparent outline-none" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar en esta página" /></label>
         </div>
+        {canManageFidelity && <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h3 className="font-semibold text-amber-950">Revisión de fidelidad</h3><p className="mt-1 text-sm text-amber-900">Compara el progreso guardado con los servicios completados. Esta revisión no modifica datos.</p></div><button className="focus-ring inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-950 disabled:opacity-60" disabled={isPending} onClick={reconcileFidelity} type="button"><Wrench className="h-4 w-4" aria-hidden="true" />{isPending ? "Revisando..." : "Revisar ahora"}</button></div>{fidelityMessage && <p className="mt-3 text-sm text-red-800" role="alert">{fidelityMessage}</p>}{fidelityMismatches && <div className="mt-4">{fidelityMismatches.length ? <DataTable rows={fidelityMismatches.map((mismatch) => ({ ...mismatch, id: mismatch.cliente_id }))} emptyMessage="No hay diferencias." columns={[{ key: "cliente", header: "Cliente", render: (row) => row.cliente_nombre }, { key: "actual", header: "Actual", render: (row) => `${row.actual}/${row.requeridos}` }, { key: "esperado", header: "Esperado", render: (row) => `${row.esperado}/${row.requeridos}` }, { key: "servicios", header: "Servicios", render: (row) => row.servicios_completados }]} /> : <p className="rounded-lg bg-emerald-100 px-3 py-2 text-sm text-emerald-900">No se encontraron diferencias.</p>}</div>}</div>}
         <div className="mt-5"><DataTable rows={rows.map(({ customer, pets }) => ({ ...customer, pets }))} columns={[
           { key: "nombre", header: "Cliente", render: (row) => <span className="font-semibold text-ink">{row.name}</span> },
           { key: "contacto", header: "Contacto", render: (row) => <span>{row.phone}{row.smsOptIn ? " · SMS" : ""}</span> },
@@ -73,7 +100,7 @@ export function ClientesBrowser({ data, page, initialQuery }: { data: ClientesDa
             const required = row.loyaltyRequired ?? 5;
             return <div className="w-32" aria-label={`${completed} de ${required} servicios completados`}><div className="mb-1 flex justify-between text-xs"><span>{completed}/{required}</span><span>{Math.round(completed / required * 100)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-jade" style={{ width: `${completed / required * 100}%` }} /></div></div>;
           } },
-          { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" type="button" onClick={() => edit(row)}>Editar</button><button className="font-semibold text-red-700 hover:underline" type="button" onClick={() => remove(row.id)}>Eliminar</button></div> }
+          { key: "acciones", header: "Acciones", render: (row) => adjustingCustomerId === row.id ? <form className="grid min-w-48 gap-2" onSubmit={submitFidelityAdjustment}><input name="cliente_id" type="hidden" value={row.id} /><label className="text-xs font-medium text-slate-600">Servicios<input className="focus-ring mt-1 w-full rounded border border-slate-300 px-2 py-1" defaultValue={row.loyaltyProgress ?? 0} min="0" name="completados" required type="number" /></label><label className="text-xs font-medium text-slate-600">Motivo<input className="focus-ring mt-1 w-full rounded border border-slate-300 px-2 py-1" name="motivo" placeholder="Depuración" required /></label><div className="flex gap-2"><button className="font-semibold text-jade hover:underline" disabled={isPending} type="submit">Guardar</button><button className="font-semibold text-slate-500 hover:underline" onClick={() => setAdjustingCustomerId(null)} type="button">Cancelar</button></div></form> : <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" type="button" onClick={() => edit(row)}>Editar</button>{canManageFidelity && <button className="font-semibold text-amber-700 hover:underline" type="button" onClick={() => setAdjustingCustomerId(row.id)}>Ajustar fidelidad</button>}<button className="font-semibold text-red-700 hover:underline" type="button" onClick={() => remove(row.id)}>Eliminar</button></div> }
         ]} /></div>
         {Math.ceil(data.total / data.pageSize) > 1 && <div className="mt-5 flex items-center justify-between"><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" type="button" disabled={page <= 1} onClick={() => router.push(`/clientes?page=${page - 1}${initialQuery ? `&q=${encodeURIComponent(initialQuery)}` : ""}`)}>Anterior</button><span className="text-sm text-slate-500">Página {page} de {Math.ceil(data.total / data.pageSize)}</span><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" type="button" disabled={page >= Math.ceil(data.total / data.pageSize)} onClick={() => router.push(`/clientes?page=${page + 1}${initialQuery ? `&q=${encodeURIComponent(initialQuery)}` : ""}`)}>Siguiente</button></div>}
       </div>

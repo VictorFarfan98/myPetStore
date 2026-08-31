@@ -111,7 +111,7 @@ export function PaquetesBrowser({ packages, customers, services, users }: { pack
               <option value="">Selecciona un cliente</option>
               {availableCustomers.map((customer) => <option key={customer.id} value={customer.id}>{customer.nombre} · {customer.telefono}</option>)}
             </select>
-            <button className="focus-ring rounded-lg bg-coral px-4 py-2.5 font-semibold text-white disabled:opacity-60" disabled={pending || availableCustomers.length === 0} type="submit">Asignar</button>
+            <button className="focus-ring rounded-lg bg-brand-gold px-4 py-2.5 font-semibold text-brand-black disabled:opacity-60" disabled={pending || availableCustomers.length === 0} type="submit">Asignar</button>
           </form></div>
         </div>
       </article>)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ClipboardCheck, LoaderCircle, Save, Star, Trash2, X } from "lucide-react";
 import type { AppData, GroomingRecord } from "@/lib/types";
@@ -79,8 +79,7 @@ function PhotoPreviews({ label, urls }: { label: string; urls: string[] }) {
   return <section aria-label={label}><p className="mb-2 text-sm font-semibold text-ink">{label}</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{urls.map((src, index) => <figure key={src} className="space-y-1"><img src={src} alt={`${label} ${index + 1}`} className="aspect-[4/3] w-full rounded-lg border border-slate-200 bg-slate-100 object-contain" /><figcaption className="text-xs text-slate-500">Foto {index + 1}</figcaption></figure>)}</div></section>;
 }
 
-function PaymentEditor({ data, record, totalAmount, methods, payments, onClose }: { data: AppData; record: GroomingRecord; totalAmount?: string; methods: NonNullable<AppData["paymentMethods"]>; payments: NonNullable<AppData["payments"]>; onClose: () => void }) {
-  const router = useRouter();
+function PaymentEditor({ data, record, totalAmount, methods, payments, onClose, onRefresh }: { data: AppData; record: GroomingRecord; totalAmount?: string; methods: NonNullable<AppData["paymentMethods"]>; payments: NonNullable<AppData["payments"]>; onClose: () => void; onRefresh: () => void }) {
   const [message, setMessage] = useState("");
   const [couponName, setCouponName] = useState(record.couponId ? "Consultando..." : "Sin cupón");
   const [pending, setPending] = useState(false);
@@ -116,14 +115,13 @@ function PaymentEditor({ data, record, totalAmount, methods, payments, onClose }
     setPending(false);
     if (result.error) return setMessage(result.error);
     onClose();
-    router.refresh();
+    onRefresh();
   }
 
   return <form className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4" onSubmit={submit}><input name="registro_servicio_id" type="hidden" value={record.id} readOnly /><div className="mb-3"><h3 className="font-semibold text-ink">Pagos del servicio</h3><p className="text-sm text-slate-500">Ingresa el monto recibido por cada método de pago.</p></div><div className="mb-4 grid gap-2 rounded-lg bg-white p-3 text-sm sm:grid-cols-2 lg:grid-cols-5"><p>Total requerido: <strong>{Number.isFinite(chargeTotal) ? money(chargeTotal) : "Pendiente de definir"}</strong></p><p>Total sin cupón: <strong>{Number.isFinite(totalBeforeCoupon) ? money(totalBeforeCoupon) : "Pendiente de definir"}</strong></p><p>Descuento del cupón: <strong>{money(discount)}</strong></p><p>Ingresado: <strong>{money(entered)}</strong></p><p className={remaining !== null && remaining < 0 ? "text-rose-700" : "text-slate-700"}>{remaining === null ? "Saldo: pendiente de definir" : remaining >= 0 ? <span>Saldo restante: <strong>{money(remaining)}</strong></span> : <span>Excedente: <strong>{money(Math.abs(remaining))}</strong></span>}</p></div><div className="mb-4 rounded-lg bg-white p-3 text-sm"><p className="font-semibold text-ink">Servicios solicitados</p><ul className="mt-2 space-y-1 text-slate-600">{serviceItems.map((item) => <li key={item.name} className="flex justify-between gap-3"><span>{item.name}{item.quantity && item.quantity > 1 ? ` × ${item.quantity}` : ""}</span><strong className="shrink-0 text-slate-700">{money(Number(item.price))}</strong></li>)}</ul></div><label className="mb-4 grid gap-1 text-sm font-medium text-slate-700">Cupón aplicado<input type="text" value={couponName} readOnly className="rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-slate-600" /></label><div className="grid gap-3 sm:grid-cols-2">{methods.filter((method) => method.name.toLowerCase() !== "cupón").map((method) => <label key={method.id} className="grid gap-1 text-sm font-medium text-slate-700">{method.name}<input name={`pago_${method.id}`} type="number" min="0" step="0.01" value={amounts[method.id] ?? ""} onChange={(event) => setAmounts({ ...amounts, [method.id]: event.target.value })} className="focus-ring rounded-lg border border-slate-300 px-3 py-2" placeholder="0.00" /></label>)}</div>{message && <p className="mt-3 text-sm text-rose-700" role="alert">{message}</p>}<div className="mt-4 flex gap-2"><button disabled={pending || !canSave} className="focus-ring inline-flex items-center gap-2 rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{pending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}{pending ? "Guardando..." : "Guardar pagos"}</button><button type="button" disabled={pending} onClick={onClose} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cerrar pagos</button></div></form>;
 }
 
-function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: AppData; appointmentId: number; record?: GroomingRecord; onClose: () => void; onSaved: (result: { completed?: boolean; recordId?: number; groomerId?: number }) => void }) {
-  const router = useRouter();
+function SheetForm({ data, appointmentId, record, onClose, onSaved, onRefresh }: { data: AppData; appointmentId: number; record?: GroomingRecord; onClose: () => void; onSaved: (result: { completed?: boolean; recordId?: number; groomerId?: number }) => void; onRefresh: () => void }) {
   const appointment = data.appointments.find((item) => item.id === appointmentId)!;
   const pet = data.pets.find((item) => item.id === appointment.petId)!;
   const [message, setMessage] = useState("");
@@ -165,14 +163,14 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
     setPending(false);
     if (result.error) return setMessage(result.error);
     onSaved(result);
-    router.refresh();
+    onRefresh();
   }
 
   async function remove() {
     if (!record || !window.confirm("¿Deseas desactivar esta hoja de servicio?")) return;
     const form = new FormData(); form.set("registro_id", String(record.id));
     setPending(true); const result = await deleteHoja(form); setPending(false);
-    if (result.error) return setMessage(result.error); router.refresh();
+    if (result.error) return setMessage(result.error); onRefresh();
   }
 
   return <form className="mt-4 grid gap-4 border-t border-slate-200 pt-4" onSubmit={submit}>
@@ -195,12 +193,11 @@ function SheetForm({ data, appointmentId, record, onClose, onSaved }: { data: Ap
     </div>
     <div className={clientSigning ? "rounded-lg border border-amber-300 bg-amber-50 p-4" : undefined}><SignaturePad name="firma_ingreso_url" label={clientSigning ? "Firma del cliente para confirmar ingreso" : "Firma de ingreso"} defaultValue={record?.intakeSignatureImageUrl} required />{clientSigning && <p className="mt-2 text-sm font-semibold text-amber-900" role="status">El formulario está bloqueado. El cliente solo puede firmar y confirmar el ingreso.</p>}</div>
     {message && <p className="text-sm text-rose-700" role="alert">{message}</p>}
-    <div className="flex flex-wrap gap-2">{record && !clientSigning && <button type="button" disabled={pending} onClick={() => { setClientSigning(true); setMessage(""); }} className="focus-ring rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900">Solicitar firma cliente</button>}<button disabled={pending} className="focus-ring inline-flex items-center gap-2 rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" aria-busy={pending}>{pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}{clientSigning ? "Confirmar ingreso" : record ? "Guardar cambios" : "Crear y guardar hoja"}</button>{!clientSigning && <button type="button" disabled={pending} onClick={onClose} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cerrar hoja</button>}{record && !clientSigning && <button type="button" disabled={pending} onClick={remove} className="focus-ring inline-flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700"><Trash2 className="h-4 w-4" />{pending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}Desactivar</button>}</div>
+    <div className="flex flex-wrap gap-2">{!clientSigning && <button type="button" disabled={pending} onClick={() => { setClientSigning(true); setMessage(""); }} className="focus-ring rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900">Solicitar firma cliente</button>}<button disabled={pending} className="focus-ring inline-flex items-center gap-2 rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" aria-busy={pending}>{pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}{clientSigning ? "Confirmar ingreso" : record ? "Guardar cambios" : "Crear y guardar hoja"}</button>{!clientSigning && <button type="button" disabled={pending} onClick={onClose} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cerrar hoja</button>}{record && !clientSigning && <button type="button" disabled={pending} onClick={remove} className="focus-ring inline-flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700"><Trash2 className="h-4 w-4" />{pending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}Desactivar</button>}</div>
   </form>;
 }
 
-function CompletionForm({ data, appointmentId, record, onClose, onSaved }: { data: AppData; appointmentId: number; record: GroomingRecord; onClose: () => void; onSaved: (result: { completed?: boolean; recordId?: number; groomerId?: number }) => void }) {
-  const router = useRouter();
+function CompletionForm({ data, appointmentId, record, onClose, onSaved, onRefresh }: { data: AppData; appointmentId: number; record: GroomingRecord; onClose: () => void; onSaved: (result: { completed?: boolean; recordId?: number; groomerId?: number }) => void; onRefresh: () => void }) {
   const appointment = data.appointments.find((item) => item.id === appointmentId)!;
   const pet = data.pets.find((item) => item.id === appointment.petId)!;
   const [message, setMessage] = useState("");
@@ -266,7 +263,7 @@ function CompletionForm({ data, appointmentId, record, onClose, onSaved }: { dat
     setPending(false);
     if (result.error) return setMessage(result.error);
     onSaved(result);
-    router.refresh();
+    onRefresh();
   }
 
   const fields = [...(record.conditions ?? []), ...(record.parasites ?? [])];
@@ -334,6 +331,7 @@ export function HojasBrowser({
   const [actionError, setActionError] = useState("");
   const [appointmentActionId, setAppointmentActionId] = useState<number | null>(null);
   const [rating, setRating] = useState<{ recordId: number; groomerName: string } | null>(null);
+  const [isRefreshing, startRefresh] = useTransition();
   const [view, setView] = useState<"today" | "history">(initialView);
   const today = todayInGuatemala();
   const [selectedDate, setSelectedDate] = useState(initialDate || today);
@@ -342,6 +340,7 @@ export function HojasBrowser({
   const onlyBranch = data.branches.length === 1 ? data.branches[0] : undefined;
   const [branchId, setBranchId] = useState<number | "all">(initialBranchId ?? onlyBranch?.id ?? "all");
   const router = useRouter();
+  const refreshPage = () => startRefresh(() => router.refresh());
   const appointmentDate = (value: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Guatemala", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
   const recordsByAppointment = useMemo(() => new Map(data.groomingRecords.map((record) => [record.appointmentId, record])), [data.groomingRecords]);
   const appointments = useMemo(() => {
@@ -391,6 +390,7 @@ export function HojasBrowser({
     router.refresh();
   }
   return <div>
+    {isRefreshing && <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60" role="status" aria-live="polite"><div className="flex items-center gap-3 rounded-lg bg-white px-5 py-4 text-sm font-semibold text-slate-700 shadow-lg"><LoaderCircle className="h-5 w-5 animate-spin text-jade" aria-hidden="true" />Actualizando la hoja…</div></div>}
     {rating && <RatingModal recordId={rating.recordId} groomerName={rating.groomerName} onClose={() => { setRating(null); setSavedMessage("La hoja de servicio se guardó correctamente."); }} />}
     {savedMessage && <div className="mb-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 shadow-sm" role="status" aria-live="polite"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /><p className="flex-1 text-sm font-semibold">{savedMessage}</p><button type="button" onClick={() => setSavedMessage("")} className="focus-ring rounded p-1" aria-label="Cerrar confirmación"><X className="h-4 w-4" aria-hidden="true" /></button></div>}
     {actionError && <div className="mb-5 flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-900 shadow-sm" role="alert"><p className="flex-1 text-sm font-semibold">{actionError}</p><button type="button" onClick={() => setActionError("")} className="focus-ring rounded p-1" aria-label="Cerrar error"><X className="h-4 w-4" aria-hidden="true" /></button></div>}
@@ -417,7 +417,7 @@ export function HojasBrowser({
           setRating({ recordId: result.recordId, groomerName: data.users.find((user) => user.role === "groomer" && user.id === result.groomerId)?.name ?? "el groomer" });
         } else setSavedMessage("La hoja de servicio se guardó correctamente.");
       };
-      return <article key={appointment.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-jade" /><h2 className="text-xl font-semibold text-ink">{pet?.name}</h2></div><p className="mt-1 text-sm text-slate-500">{customer?.name} · {new Date(appointment.scheduledStart).toLocaleString("es-GT", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Guatemala" })}</p><p className="mt-1 text-sm text-slate-600">{record ? `Hoja #${record.id}` : "Hoja pendiente de ingreso"} <span className={`ml-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${state.className}`}>{cancelled ? state.label : record ? state.label : "Pendiente"}</span></p></div><div className="flex flex-wrap gap-2">{canRegisterPayment && <button onClick={() => { setPaymentOpenId(paymentOpenId === appointment.id ? null : appointment.id); setOpenId(null); setCompletionOpenId(null); }} className="focus-ring rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800" type="button">{paymentOpenId === appointment.id ? "Cerrar pagos" : "Registrar pagos"}</button>}{editable ? <button onClick={() => { setOpenId(openId === appointment.id ? null : appointment.id); setPaymentOpenId(null); setCompletionOpenId(null); }} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button">{openId === appointment.id ? "Cerrar" : record ? "Editar hoja" : "Llenar hoja"}</button> : <span className={`rounded-lg px-3 py-2 text-sm font-semibold ${state.className}`}>{state.label}</span>}{canComplete && <button onClick={() => { setCompletionOpenId(completionOpenId === appointment.id ? null : appointment.id); setOpenId(null); setPaymentOpenId(null); }} className="focus-ring rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800" type="button">{completionOpenId === appointment.id ? "Cerrar" : "Completar servicio"}</button>}{canCancel && <button type="button" disabled={actionPending} onClick={() => void cancelAppointment(appointment.id)} className="focus-ring inline-flex items-center gap-2 rounded-lg border border-amber-200 px-3 py-2 text-sm font-semibold text-amber-800">{actionPending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}{actionPending ? "Procesando..." : "Cancelar cita"}</button>}</div></div>{canRegisterPayment && paymentOpenId === appointment.id && record && <PaymentEditor data={data} record={record} totalAmount={record.finalAmount} methods={data.paymentMethods ?? []} payments={data.payments ?? []} onClose={() => setPaymentOpenId(null)} />}{openId === appointment.id && editable && <SheetForm data={data} appointmentId={appointment.id} record={record} onClose={() => setOpenId(null)} onSaved={onSaved} />}{completionOpenId === appointment.id && canComplete && record && <CompletionForm data={data} appointmentId={appointment.id} record={record} onClose={() => setCompletionOpenId(null)} onSaved={onSaved} />}</article>;
+      return <article key={appointment.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-jade" /><h2 className="text-xl font-semibold text-ink">{pet?.name}</h2></div><p className="mt-1 text-sm text-slate-500">{customer?.name} · {new Date(appointment.scheduledStart).toLocaleString("es-GT", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Guatemala" })}</p><p className="mt-1 text-sm text-slate-600">{record ? `Hoja #${record.id}` : "Hoja pendiente de ingreso"} <span className={`ml-1 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${state.className}`}>{cancelled ? state.label : record ? state.label : "Pendiente"}</span></p></div><div className="flex flex-wrap gap-2">{canRegisterPayment && <button onClick={() => { setPaymentOpenId(paymentOpenId === appointment.id ? null : appointment.id); setOpenId(null); setCompletionOpenId(null); }} className="focus-ring rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800" type="button">{paymentOpenId === appointment.id ? "Cerrar pagos" : "Registrar pagos"}</button>}{editable ? <button onClick={() => { setOpenId(openId === appointment.id ? null : appointment.id); setPaymentOpenId(null); setCompletionOpenId(null); }} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button">{openId === appointment.id ? "Cerrar" : record ? "Editar hoja" : "Llenar hoja"}</button> : <span className={`rounded-lg px-3 py-2 text-sm font-semibold ${state.className}`}>{state.label}</span>}{canComplete && <button onClick={() => { setCompletionOpenId(completionOpenId === appointment.id ? null : appointment.id); setOpenId(null); setPaymentOpenId(null); }} className="focus-ring rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800" type="button">{completionOpenId === appointment.id ? "Cerrar" : "Completar servicio"}</button>}{canCancel && <button type="button" disabled={actionPending} onClick={() => void cancelAppointment(appointment.id)} className="focus-ring inline-flex items-center gap-2 rounded-lg border border-amber-200 px-3 py-2 text-sm font-semibold text-amber-800">{actionPending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}{actionPending ? "Procesando..." : "Cancelar cita"}</button>}</div></div>{canRegisterPayment && paymentOpenId === appointment.id && record && <PaymentEditor data={data} record={record} totalAmount={record.finalAmount} methods={data.paymentMethods ?? []} payments={data.payments ?? []} onClose={() => setPaymentOpenId(null)} onRefresh={refreshPage} />}{openId === appointment.id && editable && <SheetForm data={data} appointmentId={appointment.id} record={record} onClose={() => setOpenId(null)} onSaved={onSaved} onRefresh={refreshPage} />}{completionOpenId === appointment.id && canComplete && record && <CompletionForm data={data} appointmentId={appointment.id} record={record} onClose={() => setCompletionOpenId(null)} onSaved={onSaved} onRefresh={refreshPage} />}</article>;
     })}</div>
     {!appointments.length && <div className="rounded-lg border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">No hay hojas para los filtros seleccionados.</div>}
     {view === "history" && totalPages > 1 && <div className="mt-5 flex items-center justify-between"><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" disabled={historyPage <= 1} onClick={() => router.push(`/hojas?view=history&page=${historyPage - 1}${branchId === "all" ? "" : `&sucursal_id=${branchId}`}`)} type="button">Anterior</button><span className="text-sm text-slate-500">Página {historyPage} de {totalPages}</span><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" disabled={historyPage >= totalPages} onClick={() => router.push(`/hojas?view=history&page=${historyPage + 1}${branchId === "all" ? "" : `&sucursal_id=${branchId}`}`)} type="button">Siguiente</button></div>}

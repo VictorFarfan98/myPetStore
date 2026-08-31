@@ -9,6 +9,8 @@ import {
   registrosServicioEliminar,
   registrosServicioIniciar
 } from "@/lib/rpc/registros_servicio";
+import { pagosReemplazarLista } from "@/lib/rpc/pagos";
+import { sendNewServiceCompletedEmail } from "@/lib/email/delivery";
 
 const conditionFields = [
   ["heridas_visibles", "Heridas visibles"],
@@ -161,6 +163,11 @@ export async function saveHoja(formData: FormData) {
       p_fotos_egreso: completionPhotoPaths
     });
     if (photos.error) return { error: errorMessage(photos.error) };
+    if (input.p_firma_entrega_url && recordId && Number(result.data?.monto_final) === 0) {
+      const payment = await pagosReemplazarLista({ p_registro_servicio_id: recordId, p_pagos: [], p_motivo: null });
+      if (payment.error) return { error: "No se pudo completar automáticamente la hoja de servicio." };
+    }
+    if (input.p_firma_entrega_url && recordId) await sendNewServiceCompletedEmail(recordId);
     revalidatePath("/hojas");
     revalidatePath("/agenda");
     return { ok: true, completed: Boolean(input.p_firma_entrega_url), recordId: recordId ?? 0, groomerId: input.p_peluquero_id };

@@ -58,6 +58,29 @@ export type ClienteRow = {
   activo: boolean;
 };
 
+export type EmailNotificationRow = {
+  id: number;
+  registro_servicio_id: number;
+  cita_id: number;
+  cliente_id: number;
+  tipo_notificacion: string;
+  destinatario: string | null;
+  proveedor: string;
+  estado: "pending" | "sent" | "failed";
+  intentos: number;
+  proveedor_mensaje_id: string | null;
+  ultimo_error: string | null;
+  enviado_en: DateString | null;
+  procesando_token?: string | null;
+  procesando_en?: DateString | null;
+  creado_en: DateString;
+  actualizado_en: DateString;
+  cliente_nombre: string;
+  mascota_nombre: string;
+  sucursal_nombre: string;
+  servicio_nombre: string;
+};
+
 export type ClienteInsertParams = {
   p_nombre: string;
   p_telefono: string;
@@ -394,6 +417,15 @@ export type CuponUpdateParams = CuponInsertParams;
 export type ClienteProgresoFidelidadRow = {
   cliente_id: number;
   completados: number;
+  requeridos: number;
+};
+
+export type ClienteFidelidadReconciliacionRow = {
+  cliente_id: number;
+  cliente_nombre: string;
+  actual: number;
+  esperado: number;
+  servicios_completados: number;
   requeridos: number;
 };
 
