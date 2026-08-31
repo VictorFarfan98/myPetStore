@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es-GT">
-      <body className={`${plusJakartaSans.variable} ${plusJakartaSans.className}`}>{children}</body>
+      <body className={`${plusJakartaSans.variable} ${plusJakartaSans.className}`}>
         {children}
         <Analytics />
       </body>
