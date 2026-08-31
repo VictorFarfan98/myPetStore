@@ -36,14 +36,14 @@ export default async function LoginPage({
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-cloud px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-panel">
+      <section className="w-full max-w-md rounded-2xl border border-slate-200 border-t-4 border-t-brand-gold bg-white p-8 shadow-panel">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-jade text-white">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-gold text-brand-black">
             <PawPrint className="h-6 w-6" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-lg font-semibold text-ink">MyPetStore</p>
-            <p className="text-sm text-slate-500">Grooming GT</p>
+            <p className="text-lg font-semibold text-ink">Miranda&apos;s Pet Boutique</p>
+            <p className="text-sm text-slate-500">Operación de grooming</p>
           </div>
         </div>
 
@@ -96,7 +96,7 @@ export default async function LoginPage({
           </div>
 
           <button
-            className="w-full rounded-lg bg-jade px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-jade focus:ring-offset-2"
+            className="w-full rounded-lg bg-brand-black px-4 py-2.5 font-semibold text-white transition hover:bg-brand-black focus:outline-none focus:ring-2 focus:ring-brand-black focus:ring-offset-2"
             type="submit"
           >
             Entrar

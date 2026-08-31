@@ -76,7 +76,7 @@ function calendarTitle(date: Date, view: View) {
 }
 
 function hexToRgba(hexColor: string | undefined, alpha: number) {
-  const fallback = "#0F766E";
+  const fallback = "#101010";
   const hex = /^#[0-9A-F]{6}$/i.test(hexColor ?? "") ? hexColor! : fallback;
   const red = Number.parseInt(hex.slice(1, 3), 16);
   const green = Number.parseInt(hex.slice(3, 5), 16);
@@ -88,9 +88,9 @@ function eventStyle(calendarColor?: string): CSSProperties {
   return {
     backgroundColor: hexToRgba(calendarColor, 0.18),
     border: `1px solid ${hexToRgba(calendarColor, 0.44)}`,
-    borderLeft: `4px solid ${calendarColor ?? "#0F766E"}`,
+    borderLeft: `4px solid ${calendarColor ?? "#101010"}`,
     borderRadius: 8,
-    color: "#1f2933",
+    color: "#101010",
     fontWeight: 600,
     paddingLeft: 6
   };
@@ -229,7 +229,7 @@ export function AgendaCalendar({ data }: { data: AppData }) {
               onChange={(event) => setSelectedDate(new Date(`${event.target.value}T12:00:00-06:00`))}
             />
             <button
-              className="focus-ring inline-flex h-10 items-center gap-2 rounded-lg bg-jade px-4 text-sm font-semibold text-white shadow-panel transition hover:bg-emerald-700"
+              className="focus-ring inline-flex h-10 items-center gap-2 rounded-lg bg-brand-black px-4 text-sm font-semibold text-white shadow-panel transition hover:bg-brand-black"
               type="button"
               onClick={() => openAppointmentModal(atHour(selectedDate, 9))}
             >

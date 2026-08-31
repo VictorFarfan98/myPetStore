@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -21,6 +22,7 @@ import {
   UsersRound
 } from "lucide-react";
 import { signOut } from "@/lib/auth-actions";
+import logo from "../logo/Mirandas logo.svg";
 
 const navItems = [
   { label: "Panel", href: "/", icon: BarChart3 },
@@ -45,14 +47,13 @@ export function AppShellClient({ children, role }: { children: ReactNode; role?:
 
   return (
     <div className="min-h-screen bg-cloud">
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-200 bg-white px-4 py-5 lg:flex lg:flex-col">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-brand-black bg-brand-black px-4 py-5 lg:flex lg:flex-col">
         <Link className="flex items-center gap-3 px-2" href="/">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-jade text-white">
-            <PawPrint className="h-5 w-5" aria-hidden="true" />
+          <span className="flex h-10 w-10 items-center justify-center">
+            <Image src={logo} alt="Miranda's Pet Boutique" width={32} height={32} className="object-contain" />
           </span>
           <div>
-            <p className="text-base font-semibold text-ink">MyPetStore</p>
-            <p className="text-xs text-slate-500">Grooming GT</p>
+            <p className="text-base font-semibold text-white">Miranda&apos;s Pet Boutique</p>
           </div>
         </Link>
         <nav className="mt-8 space-y-1">
@@ -62,9 +63,10 @@ export function AppShellClient({ children, role }: { children: ReactNode; role?:
             return (
               <Link
                 key={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                  isActive ? "bg-jade text-white" : "text-slate-600 hover:bg-cloud hover:text-ink"
-                }`}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                    isActive ? "bg-brand-gold text-brand-black" : "text-slate-200 hover:bg-white/10 hover:text-white"
+                  }`}
                 href={item.href}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
@@ -75,7 +77,7 @@ export function AppShellClient({ children, role }: { children: ReactNode; role?:
         </nav>
         <form action={signOut} className="mt-auto pt-6">
           <button
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-cloud hover:text-ink focus:outline-none focus:ring-2 focus:ring-jade focus:ring-offset-2"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-black"
             type="submit"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />

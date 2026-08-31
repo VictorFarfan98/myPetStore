@@ -18,7 +18,7 @@ export function DataTable<T extends { id: number | string }>({
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200">
       <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-        <thead className="bg-cloud/70 text-xs uppercase tracking-wide text-slate-500">
+        <thead className="bg-cloud/70 text-xs uppercase tracking-wide text-slate-600">
           <tr>{columns.map((column) => <th className="px-4 py-3 font-semibold" key={column.key}>{column.header}</th>)}</tr>
         </thead>
         <tbody className="divide-y divide-slate-100 bg-white">

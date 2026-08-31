@@ -13,9 +13,9 @@ export function StatCard({ label, value, hint, icon: Icon }: StatCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-2 text-3xl font-semibold text-ink">{value}</p>
+          <p className="mt-2 text-3xl font-bold text-ink">{value}</p>
         </div>
-        <span className="rounded-lg bg-cloud p-2 text-jade">
+        <span className="rounded-lg bg-brand-gold p-2 text-brand-black">
           <Icon className="h-5 w-5" aria-hidden="true" />
         </span>
       </div>
