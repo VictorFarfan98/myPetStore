@@ -1093,6 +1093,28 @@ Acceso: Usuario activo; service_role.
 
 Comportamiento: Devuelve el avance de cada cliente desde `configuracion_sistema.fidelidad_inicia_en`. Cuenta servicios completados sin cupón o con cupón reutilizable y excluye cualquier cupón de uso único.
 
+La tabla `fidelidad_clientes` conserva los créditos acumulados para lecturas rápidas; `fidelidad_ajustes` registra los cambios manuales hechos por administradores o propietarios. El progreso visible sigue siendo `MOD(creditos_acumulados, servicios_requeridos_cupon)` y los servicios completados actualizan el valor mediante un trigger.
+
+Ajustar fidelidad — clientes_fidelidad_actualizar
+
+Firma: clientes_fidelidad_actualizar(p_cliente_id BIGINT, p_completados INTEGER, p_motivo TEXT)
+
+Retorno: public.fidelidad_clientes
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Ajusta el progreso visible del cliente, conserva el historial en `fidelidad_ajustes` y registra auditoría. No modifica servicios ni cupones.
+
+Reconciliar fidelidad — clientes_fidelidad_reconciliar
+
+Firma: clientes_fidelidad_reconciliar()
+
+Retorno: JSONB
+
+Acceso: Administrador o propietario; service_role.
+
+Comportamiento: Devuelve únicamente los clientes cuyo progreso almacenado difiere del progreso calculado con servicios elegibles. Es una consulta de solo lectura y no repara datos.
+
 mascotas — Mascotas
 
 Resumen

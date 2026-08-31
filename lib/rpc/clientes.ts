@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { ClienteInsertParams, ClienteProgresoFidelidadRow, ClienteRow, ClienteUpdateParams } from "./types";
+import type { ClienteFidelidadReconciliacionRow, ClienteInsertParams, ClienteProgresoFidelidadRow, ClienteRow, ClienteUpdateParams } from "./types";
 import { rpcCall } from "./core";
 
 export function clientesInsertar(params: ClienteInsertParams) {
@@ -42,4 +42,12 @@ export function clientesEliminar(p_id: number) {
 
 export function clientesProgresoFidelidadListar() {
   return rpcCall<ClienteProgresoFidelidadRow[]>("clientes_progreso_fidelidad_listar");
+}
+
+export function clientesFidelidadActualizar(p_cliente_id: number, p_completados: number, p_motivo: string) {
+  return rpcCall<Record<string, unknown>>("clientes_fidelidad_actualizar", { p_cliente_id, p_completados, p_motivo });
+}
+
+export function clientesFidelidadReconciliar() {
+  return rpcCall<ClienteFidelidadReconciliacionRow[]>("clientes_fidelidad_reconciliar");
 }

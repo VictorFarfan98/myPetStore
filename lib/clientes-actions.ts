@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { clientesActualizar, clientesBuscarListar, clientesEliminar, clientesInsertar, clientesListar, clientesProgresoFidelidadListar } from "@/lib/rpc/clientes";
+import { clientesActualizar, clientesBuscarListar, clientesEliminar, clientesFidelidadActualizar, clientesFidelidadReconciliar, clientesInsertar, clientesListar, clientesProgresoFidelidadListar } from "@/lib/rpc/clientes";
 import { unwrapRpcResult } from "@/lib/rpc/core";
 import type { ClientesData } from "@/lib/types";
+import type { ClienteFidelidadReconciliacionRow } from "@/lib/rpc/types";
 import { toE164 } from "@/lib/phone";
 import { createUserSupabaseClient } from "@/lib/supabase/server";
 
@@ -121,4 +122,29 @@ export async function deleteCliente(formData: FormData) {
   if (result.error) return { error: "No se pudo desactivar el cliente." };
   revalidatePath("/clientes");
   return { ok: true };
+}
+
+export async function updateClienteFidelidad(formData: FormData) {
+  const clienteId = Number(formData.get("cliente_id"));
+  const completados = Number(formData.get("completados"));
+  const motivo = text(formData, "motivo");
+  if (!Number.isInteger(clienteId) || clienteId < 1 || !Number.isInteger(completados) || completados < 0 || !motivo) {
+    return { error: "Ingresa un cliente, progreso y motivo válidos." };
+  }
+
+  const result = await clientesFidelidadActualizar(clienteId, completados, motivo);
+  if (result.error) {
+    if (result.error.code === "PV001") return { error: "El progreso o motivo no son válidos." };
+    if (result.error.code === "PN001") return { error: "El cliente no existe." };
+    return { error: "No se pudo actualizar la fidelidad." };
+  }
+
+  revalidatePath("/clientes");
+  return { ok: true };
+}
+
+export async function reconcileClientesFidelidad(): Promise<{ mismatches?: ClienteFidelidadReconciliacionRow[]; error?: string }> {
+  const result = await clientesFidelidadReconciliar();
+  if (result.error) return { error: "No se pudo revisar la fidelidad." };
+  return { mismatches: unwrapRpcResult(result) };
 }

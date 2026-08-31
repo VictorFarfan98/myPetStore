@@ -397,6 +397,15 @@ export type ClienteProgresoFidelidadRow = {
   requeridos: number;
 };
 
+export type ClienteFidelidadReconciliacionRow = {
+  cliente_id: number;
+  cliente_nombre: string;
+  actual: number;
+  esperado: number;
+  servicios_completados: number;
+  requeridos: number;
+};
+
 export type CitaRow = {
   id: number;
   mascota_id: number;
