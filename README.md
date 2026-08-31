@@ -27,7 +27,7 @@ Open `http://localhost:3000`.
 
 ## Database setup
 
-Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+Set `supabase_url` and `supabase_publishable_key`.
 
 `SUPABASE_SERVICE_ROLE_KEY` is only needed for trusted internal processes, not for the web application.
 
@@ -362,8 +362,8 @@ export async function createUserSupabaseClient() {
   const cookieStore = await cookies()
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    process.env.supabase_url!,
+    process.env.supabase_publishable_key!,
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
@@ -445,7 +445,7 @@ Proceso interno con service_role
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.supabase_url!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { persistSession: false, autoRefreshToken: false } }
 )
