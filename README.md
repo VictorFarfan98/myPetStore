@@ -1093,7 +1093,7 @@ Acceso: Usuario activo; service_role.
 
 Comportamiento: Devuelve el avance de cada cliente desde `configuracion_sistema.fidelidad_inicia_en`. Cuenta servicios completados sin cupón o con cupón reutilizable y excluye cualquier cupón de uso único.
 
-La tabla `fidelidad_clientes` conserva los créditos acumulados para lecturas rápidas; `fidelidad_ajustes` registra los cambios manuales hechos por administradores o propietarios. El progreso visible sigue siendo `MOD(creditos_acumulados, servicios_requeridos_cupon)` y los servicios completados actualizan el valor mediante un trigger.
+La tabla `fidelidad_clientes` conserva los créditos acumulados para lecturas rápidas; sus inserciones y actualizaciones están limitadas a administradores y propietarios. `fidelidad_ajustes` registra los cambios manuales hechos por administradores o propietarios. El progreso visible sigue siendo `MOD(creditos_acumulados, servicios_requeridos_cupon)` y los servicios completados actualizan el valor mediante un trigger.
 
 Ajustar fidelidad — clientes_fidelidad_actualizar
 
