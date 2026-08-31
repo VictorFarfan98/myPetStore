@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { LoaderCircle } from "lucide-react";
 import type { ClienteRow, CuponRow, ServicioRow, UsuarioRow } from "@/lib/rpc/types";
 import { createCupon, deleteCupon, updateCupon } from "@/lib/cupones-actions";
 import { DataTable } from "./data-table";
+import { SearchableSelect } from "./searchable-select";
 
 type FormState = {
   id: string;
@@ -21,18 +23,31 @@ type FormState = {
 
 const emptyForm: FormState = { id: "", nombre: "", cliente_id: "", servicio_id: "", tipo_descuento: "porcentaje", valor: "", fecha_expiracion: "", uso_unico: true, activo: true, origen: "manual" };
 
-export function CuponesBrowser({ coupons, customers, services, users }: { coupons: CuponRow[]; customers: ClienteRow[]; services: ServicioRow[]; users: UsuarioRow[] }) {
-  const [customerFilter, setCustomerFilter] = useState("");
+export function CuponesBrowser({ coupons, customers, services, users, page, pageSize, total, initialCustomerId }: { coupons: CuponRow[]; customers: ClienteRow[]; services: ServicioRow[]; users: UsuarioRow[]; page: number; pageSize: number; total: number; initialCustomerId: number | null }) {
+  const [filteredPage, setFilteredPage] = useState(1);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [pending, startTransition] = useTransition();
+  const [navigating, startNavigation] = useTransition();
   const router = useRouter();
+  const loading = pending || navigating;
   const editing = Boolean(form.id);
   const automatic = form.origen === "automatico";
   const customerNames = new Map(customers.map((customer) => [customer.id, customer.nombre]));
   const serviceNames = new Map(services.map((service) => [service.id, service.nombre]));
   const userNames = new Map(users.map((user) => [user.id, user.nombre]));
-  const rows = coupons.filter((coupon) => !customerFilter || coupon.cliente_id === Number(customerFilter) || coupon.cliente_id === null);
+  const filteredRows = initialCustomerId === null ? coupons : coupons.filter((coupon) => coupon.cliente_id === initialCustomerId || coupon.cliente_id === null);
+  const totalPages = Math.max(1, Math.ceil((initialCustomerId === null ? total : filteredRows.length) / pageSize));
+  const rows = initialCustomerId === null ? filteredRows : filteredRows.slice((filteredPage - 1) * pageSize, filteredPage * pageSize);
+
+  function changeCustomer(customerId: number | null) {
+    if (customerId === null) return;
+    startNavigation(() => router.push(`/cupones?cliente_id=${customerId}`));
+  }
+
+  function navigate(path: string) {
+    startNavigation(() => router.push(path));
+  }
 
   function reset() {
     setForm(emptyForm);
@@ -67,8 +82,9 @@ export function CuponesBrowser({ coupons, customers, services, users }: { coupon
   }
 
   return <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
-      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-xl font-semibold text-ink">Cupones creados</h2><p className="mt-1 text-sm text-slate-500">{rows.length} cupón{rows.length === 1 ? "" : "es"} visible{rows.length === 1 ? "" : "s"}.</p></div><label className="text-sm font-medium text-ink">Filtrar por cliente<select className="focus-ring mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2" value={customerFilter} onChange={(event) => setCustomerFilter(event.target.value)}><option value="">Todos los clientes</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.nombre}</option>)}</select></label></div>
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-xl font-semibold text-ink">Cupones creados</h2><p className="mt-1 text-sm text-slate-500">{initialCustomerId === null ? total : filteredRows.length} cupón{(initialCustomerId === null ? total : filteredRows.length) === 1 ? "" : "es"} visible{(initialCustomerId === null ? total : filteredRows.length) === 1 ? "" : "s"}.</p></div><label className="text-sm font-medium text-ink">Filtrar por cliente<SearchableSelect options={customers.map((customer) => ({ value: customer.id, label: customer.nombre }))} value={initialCustomerId} onChange={changeCustomer} placeholder="Escribe el nombre del cliente" />{initialCustomerId !== null && <button className="mt-1 text-left text-xs font-semibold text-slate-500 hover:text-ink" type="button" onClick={() => navigate("/cupones?page=1")}>Mostrar todos los clientes</button>}</label></div>
+      <div className="relative" aria-busy={loading}>
       <DataTable rows={rows} columns={[
         { key: "nombre", header: "Cupón", render: (row) => <div><p className="font-semibold text-ink">{row.nombre}</p><p className="text-xs text-slate-500">{row.origen === "automatico" ? "Automático" : row.origen === "paquete" ? "Paquete" : "Manual"} · {row.uso_unico ? "Uso único" : "Reutilizable"}</p></div> },
         { key: "cliente", header: "Cliente", render: (row) => row.cliente_id ? customerNames.get(row.cliente_id) ?? "Cliente desconocido" : "Todos" },
@@ -79,6 +95,9 @@ export function CuponesBrowser({ coupons, customers, services, users }: { coupon
         { key: "estado", header: "Estado", render: (row) => <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.activo ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>{row.activo ? "Activo" : row.canjeado_en ? "Canjeado" : "Inactivo"}</span> },
         { key: "acciones", header: "Acciones", render: (row) => row.canjeado_en || row.origen === "paquete" ? "—" : <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" onClick={() => edit(row)} type="button">Editar</button>{row.activo && <button className="font-semibold text-red-700 hover:underline" onClick={() => remove(row.id)} type="button">Desactivar</button>}</div> }
       ]} />
+      {loading && <div className="absolute inset-0 flex items-center justify-center bg-white/70" role="status"><span className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"><LoaderCircle className="h-5 w-5 animate-spin text-jade" aria-hidden="true" />Cargando cupones...</span></div>}
+      </div>
+      {totalPages > 1 && <div className="mt-5 flex items-center justify-between"><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" type="button" disabled={loading || (initialCustomerId === null ? page : filteredPage) <= 1} onClick={() => initialCustomerId === null ? navigate(`/cupones?page=${page - 1}`) : setFilteredPage(filteredPage - 1)}>Anterior</button><span className="text-sm text-slate-500">Página {initialCustomerId === null ? page : filteredPage} de {totalPages}</span><button className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40" type="button" disabled={loading || (initialCustomerId === null ? page : filteredPage) >= totalPages} onClick={() => initialCustomerId === null ? navigate(`/cupones?page=${page + 1}`) : setFilteredPage(filteredPage + 1)}>Siguiente</button></div>}
     </div>
     <form className="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-panel" onSubmit={submit}>
       <h2 className="text-xl font-semibold text-ink">{editing ? "Editar cupón" : "Nuevo cupón"}</h2>
