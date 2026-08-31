@@ -1091,9 +1091,9 @@ Retorno: JSONB
 
 Acceso: Usuario activo; service_role.
 
-Comportamiento: Devuelve el avance de cada cliente desde `configuracion_sistema.fidelidad_inicia_en`. Cuenta servicios completados sin cupón o con cupón reutilizable y excluye cualquier cupón de uso único.
+Comportamiento: Devuelve el avance almacenado de cada cliente desde `fidelidad_clientes`, representado como `MOD(creditos_acumulados, servicios_requeridos_cupon)`.
 
-La tabla `fidelidad_clientes` conserva los créditos acumulados para lecturas rápidas; sus inserciones y actualizaciones están limitadas a administradores y propietarios. `fidelidad_ajustes` registra los cambios manuales hechos por administradores o propietarios. El progreso visible sigue siendo `MOD(creditos_acumulados, servicios_requeridos_cupon)` y los servicios completados actualizan el valor mediante un trigger.
+La tabla `fidelidad_clientes` es la fuente de verdad de los créditos acumulados. `fidelidad_ajustes` registra los cambios manuales hechos por administradores o propietarios. El progreso visible y la generación automática de cupones usan `MOD(creditos_acumulados, servicios_requeridos_cupon)`, y los servicios completados actualizan el valor mediante un trigger.
 
 Ajustar fidelidad — clientes_fidelidad_actualizar
 
@@ -1113,7 +1113,7 @@ Retorno: JSONB
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Devuelve únicamente los clientes cuyo progreso almacenado difiere del progreso calculado con servicios elegibles. Es una consulta de solo lectura y no repara datos.
+Comportamiento: Devuelve únicamente los clientes cuyo progreso almacenado difiere del progreso calculado con servicios elegibles. Es una revisión manual de consistencia; la tabla `fidelidad_clientes` continúa siendo la fuente de verdad y esta función no repara ni sobrescribe datos.
 
 mascotas — Mascotas
 
