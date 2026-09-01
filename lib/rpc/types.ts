@@ -278,6 +278,8 @@ export type ConfiguracionSistemaRow = {
   habilitar_calificaciones: boolean;
   servicios_requeridos_cupon: number;
   vigencia_cupon_automatico_dias: number;
+  fidelidad_dias_para_completar: number;
+  fidelidad_dias_inactividad: number | null;
   fidelidad_inicia_en: DateString;
 };
 
@@ -289,6 +291,8 @@ export type ConfiguracionSistemaUpdateParams = {
   p_habilitar_calificaciones: boolean;
   p_servicios_requeridos_cupon: number;
   p_vigencia_cupon_automatico_dias: number;
+  p_fidelidad_dias_para_completar: number;
+  p_fidelidad_dias_inactividad: number | null;
 };
 
 export type CalificacionGroomerInsertParams = {
@@ -416,13 +420,19 @@ export type CuponUpdateParams = CuponInsertParams;
 
 export type ClienteProgresoFidelidadRow = {
   cliente_id: number;
+  servicio_id: number;
+  servicio_nombre: string;
   completados: number;
   requeridos: number;
+  primer_progreso_en: DateString | null;
+  ultimo_progreso_en: DateString | null;
 };
 
 export type ClienteFidelidadReconciliacionRow = {
   cliente_id: number;
   cliente_nombre: string;
+  servicio_id: number;
+  servicio_nombre: string;
   actual: number;
   esperado: number;
   servicios_completados: number;

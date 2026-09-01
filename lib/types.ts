@@ -42,8 +42,14 @@ export type Customer = {
   whatsappOptIn: boolean;
   smsOptIn?: boolean;
   notes: string;
-  loyaltyProgress?: number;
-  loyaltyRequired?: number;
+  loyaltyProgress?: LoyaltyProgress[];
+};
+
+export type LoyaltyProgress = {
+  serviceId: number;
+  serviceName: string;
+  completed: number;
+  required: number;
 };
 
 export type Pet = {

@@ -44,8 +44,8 @@ export function clientesProgresoFidelidadListar() {
   return rpcCall<ClienteProgresoFidelidadRow[]>("clientes_progreso_fidelidad_listar");
 }
 
-export function clientesFidelidadActualizar(p_cliente_id: number, p_completados: number, p_motivo: string) {
-  return rpcCall<Record<string, unknown>>("clientes_fidelidad_actualizar", { p_cliente_id, p_completados, p_motivo });
+export function clientesFidelidadActualizar(p_cliente_id: number, p_servicio_id: number, p_completados: number, p_motivo: string) {
+  return rpcCall<Record<string, unknown>>("clientes_fidelidad_actualizar", { p_cliente_id, p_servicio_id, p_completados, p_motivo });
 }
 
 export function clientesFidelidadReconciliar() {

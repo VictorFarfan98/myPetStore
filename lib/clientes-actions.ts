@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { clientesActualizar, clientesBuscarListar, clientesEliminar, clientesFidelidadActualizar, clientesFidelidadReconciliar, clientesInsertar, clientesListar, clientesProgresoFidelidadListar } from "@/lib/rpc/clientes";
 import { unwrapRpcResult } from "@/lib/rpc/core";
 import type { ClientesData } from "@/lib/types";
-import type { ClienteFidelidadReconciliacionRow } from "@/lib/rpc/types";
+import type { ClienteFidelidadReconciliacionRow, ClienteProgresoFidelidadRow } from "@/lib/rpc/types";
 import { toE164 } from "@/lib/phone";
 import { createUserSupabaseClient } from "@/lib/supabase/server";
 
@@ -22,11 +22,16 @@ export async function getClientes(page = 1, pageSize = 20, query = ""): Promise<
     ? await supabase.from("mascotas").select("id, cliente_id, nombre, raza").in("cliente_id", customerIds).eq("activo", true)
     : { data: [], error: null };
   if (mascotasResult.error) throw new Error("No se pudieron cargar las mascotas de los clientes.");
-  const progreso = new Map(unwrapRpcResult(progresoResult).map((row) => [row.cliente_id, row]));
+  const progreso = new Map<number, ClienteProgresoFidelidadRow[]>();
+  unwrapRpcResult(progresoResult).forEach((row) => {
+    const rows = progreso.get(row.cliente_id) ?? [];
+    rows.push(row);
+    progreso.set(row.cliente_id, rows);
+  });
 
   return {
     customers: clientes.filter((cliente) => cliente.activo).map((cliente) => {
-      const loyalty = progreso.get(cliente.id);
+      const loyalty = progreso.get(cliente.id) ?? [];
       return {
         id: cliente.id,
         name: cliente.nombre,
@@ -35,8 +40,12 @@ export async function getClientes(page = 1, pageSize = 20, query = ""): Promise<
         whatsappOptIn: cliente.whatsapp_opt_in,
         smsOptIn: cliente.sms_opt_in,
         notes: cliente.notas?.trim() ?? "",
-        loyaltyProgress: loyalty?.completados ?? 0,
-        loyaltyRequired: loyalty?.requeridos ?? 5
+        loyaltyProgress: loyalty.map((item) => ({
+          serviceId: item.servicio_id,
+          serviceName: item.servicio_nombre,
+          completed: item.completados,
+          required: item.requeridos
+        }))
       };
     }),
     pets: (mascotasResult.data ?? []).map((mascota) => ({
@@ -126,13 +135,14 @@ export async function deleteCliente(formData: FormData) {
 
 export async function updateClienteFidelidad(formData: FormData) {
   const clienteId = Number(formData.get("cliente_id"));
+  const servicioId = Number(formData.get("servicio_id"));
   const completados = Number(formData.get("completados"));
   const motivo = text(formData, "motivo");
-  if (!Number.isInteger(clienteId) || clienteId < 1 || !Number.isInteger(completados) || completados < 0 || !motivo) {
+  if (!Number.isInteger(clienteId) || clienteId < 1 || !Number.isInteger(servicioId) || servicioId < 1 || !Number.isInteger(completados) || completados < 0 || !motivo) {
     return { error: "Ingresa un cliente, progreso y motivo válidos." };
   }
 
-  const result = await clientesFidelidadActualizar(clienteId, completados, motivo);
+  const result = await clientesFidelidadActualizar(clienteId, servicioId, completados, motivo);
   if (result.error) {
     if (result.error.code === "PV001") return { error: "El progreso o motivo no son válidos." };
     if (result.error.code === "PN001") return { error: "El cliente no existe." };

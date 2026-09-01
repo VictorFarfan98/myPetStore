@@ -1104,19 +1104,19 @@ Retorno: JSONB
 
 Acceso: Usuario activo; service_role.
 
-Comportamiento: Devuelve el avance almacenado de cada cliente desde `fidelidad_clientes`, representado como `MOD(creditos_acumulados, servicios_requeridos_cupon)`.
+Comportamiento: Devuelve el avance de cada cliente por servicio principal. Si venció la ventana de `fidelidad_dias_para_completar` o la ventana opcional de inactividad, devuelve `completados = 0` sin modificar datos.
 
-La tabla `fidelidad_clientes` es la fuente de verdad de los créditos acumulados. `fidelidad_ajustes` registra los cambios manuales hechos por administradores o propietarios. El progreso visible y la generación automática de cupones usan `MOD(creditos_acumulados, servicios_requeridos_cupon)`, y los servicios completados actualizan el valor mediante un trigger.
+La tabla `fidelidad_clientes_servicios` es la fuente de verdad del progreso por cliente y servicio. `fidelidad_ajustes` registra los cambios manuales hechos por administradores o propietarios. Los servicios completados actualizan el progreso mediante un trigger; al alcanzar el umbral se genera un cupón de 100% vinculado al mismo servicio.
 
 Ajustar fidelidad — clientes_fidelidad_actualizar
 
-Firma: clientes_fidelidad_actualizar(p_cliente_id BIGINT, p_completados INTEGER, p_motivo TEXT)
+Firma: clientes_fidelidad_actualizar(p_cliente_id BIGINT, p_servicio_id BIGINT, p_completados INTEGER, p_motivo TEXT)
 
-Retorno: public.fidelidad_clientes
+Retorno: public.fidelidad_clientes_servicios
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Ajusta el progreso visible del cliente, conserva el historial en `fidelidad_ajustes` y registra auditoría. No modifica servicios ni cupones.
+Comportamiento: Ajusta el progreso visible del cliente para un servicio específico, conserva el historial en `fidelidad_ajustes` y registra auditoría. No modifica servicios ni cupones.
 
 Reconciliar fidelidad — clientes_fidelidad_reconciliar
 
@@ -1126,7 +1126,7 @@ Retorno: JSONB
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Devuelve únicamente los clientes cuyo progreso almacenado difiere del progreso calculado con servicios elegibles. Es una revisión manual de consistencia; la tabla `fidelidad_clientes` continúa siendo la fuente de verdad y esta función no repara ni sobrescribe datos.
+Comportamiento: Devuelve únicamente las parejas cliente-servicio cuyo progreso almacenado difiere del progreso calculado con servicios elegibles y ventanas de tiempo. Es una revisión manual de consistencia; esta función no repara ni sobrescribe datos.
 
 mascotas — Mascotas
 
@@ -1792,7 +1792,7 @@ Retorno: public.cupones
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Inserta un cupón manual y registra al usuario creador. Cliente, servicio y expiración pueden ser NULL para promociones globales, aplicables a cualquier servicio o indefinidas.
+Comportamiento: Inserta un cupón manual y registra al usuario creador. Cliente, servicio y expiración pueden ser NULL para promociones globales, aplicables a cualquier servicio o indefinidas. Los cupones automáticos de fidelidad siempre quedan vinculados al servicio que completó el hito.
 
 Obtener por ID — cupones_obtener_por_id
 
@@ -2348,13 +2348,13 @@ Comportamiento: Devuelve la única fila de configuración del sistema (id = 1).
 
 Actualizar configuración — configuracion_sistema_actualizar
 
-Firma: configuracion_sistema_actualizar(p_foto_antes_requerida BOOLEAN, p_foto_despues_requerida BOOLEAN, p_dias_anticipacion_recordatorio INTEGER, p_metodo_pago_cupon_id BIGINT, p_habilitar_calificaciones BOOLEAN, p_servicios_requeridos_cupon INTEGER, p_vigencia_cupon_automatico_dias INTEGER)
+Firma: configuracion_sistema_actualizar(p_foto_antes_requerida BOOLEAN, p_foto_despues_requerida BOOLEAN, p_dias_anticipacion_recordatorio INTEGER, p_metodo_pago_cupon_id BIGINT, p_habilitar_calificaciones BOOLEAN, p_servicios_requeridos_cupon INTEGER, p_vigencia_cupon_automatico_dias INTEGER, p_fidelidad_dias_para_completar INTEGER, p_fidelidad_dias_inactividad INTEGER)
 
 Retorno: public.configuracion_sistema
 
 Acceso: Administrador o propietario; service_role.
 
-Comportamiento: Actualiza completamente la configuración global, incluyendo el umbral de fidelidad y los días de vigencia del cupón automático. El programa inicia en `fidelidad_inicia_en`, establecido por la migración, por lo que no cuenta servicios históricos.
+Comportamiento: Actualiza completamente la configuración global, incluyendo el umbral de fidelidad, la vigencia del cupón automático, los días para completar un hito de fidelidad y los días de inactividad. `p_fidelidad_dias_inactividad` puede ser `NULL` para desactivar el reinicio por inactividad. El programa inicia en `fidelidad_inicia_en`, establecido por la migración, por lo que no cuenta servicios históricos.
 
 Reportes
 

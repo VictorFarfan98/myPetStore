@@ -8,7 +8,10 @@ export async function updateConfiguracionSistema(formData: FormData) {
   const metodoPagoId = Number(formData.get("metodo_pago_cupon_id"));
   const serviciosRequeridos = Number(formData.get("servicios_requeridos_cupon"));
   const vigenciaCupon = Number(formData.get("vigencia_cupon_automatico_dias"));
-  if (![dias, metodoPagoId, serviciosRequeridos, vigenciaCupon].every((value) => Number.isInteger(value) && value > 0)) {
+  const fidelidadDiasParaCompletar = Number(formData.get("fidelidad_dias_para_completar"));
+  const inactividadRaw = formData.get("fidelidad_dias_inactividad");
+  const fidelidadDiasInactividad = inactividadRaw === null || String(inactividadRaw).trim() === "" ? null : Number(inactividadRaw);
+  if (![dias, metodoPagoId, serviciosRequeridos, vigenciaCupon, fidelidadDiasParaCompletar].every((value) => Number.isInteger(value) && value > 0) || (fidelidadDiasInactividad !== null && (!Number.isInteger(fidelidadDiasInactividad) || fidelidadDiasInactividad <= 0))) {
     return { error: "Ingresa valores numéricos y método de pago válidos." };
   }
 
@@ -19,7 +22,9 @@ export async function updateConfiguracionSistema(formData: FormData) {
     p_metodo_pago_cupon_id: metodoPagoId,
     p_habilitar_calificaciones: formData.get("habilitar_calificaciones") === "on",
     p_servicios_requeridos_cupon: serviciosRequeridos,
-    p_vigencia_cupon_automatico_dias: vigenciaCupon
+    p_vigencia_cupon_automatico_dias: vigenciaCupon,
+    p_fidelidad_dias_para_completar: fidelidadDiasParaCompletar,
+    p_fidelidad_dias_inactividad: fidelidadDiasInactividad
   });
 
   if (result.error) {
