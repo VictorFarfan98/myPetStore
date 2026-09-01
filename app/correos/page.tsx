@@ -3,6 +3,7 @@ import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { clientesBuscarListar, clientesListar, clientesObtenerPorId } from "@/lib/rpc/clientes";
 import { notificacionesEmailListar } from "@/lib/rpc/notificaciones_email";
+import { requireBackOfficeAccess } from "@/lib/access";
 import nextDynamic from "next/dynamic";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ function validDate(value?: string) {
 }
 
 export default async function CorreosPage({ searchParams }: { searchParams: Promise<{ page?: string; desde?: string; hasta?: string; cliente_id?: string; cliente_q?: string }> }) {
+  await requireBackOfficeAccess();
   const params = await searchParams;
   const pageSize = 25;
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);

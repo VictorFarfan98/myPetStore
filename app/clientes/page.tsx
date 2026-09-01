@@ -2,7 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { getClientes } from "@/lib/clientes-actions";
-import { usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
+import { requireBackOfficeAccess } from "@/lib/access";
 import nextDynamic from "next/dynamic";
 
 export const dynamic = "force-dynamic";
@@ -10,12 +10,13 @@ export const dynamic = "force-dynamic";
 const ClientesBrowser = nextDynamic(() => import("@/components/clientes-browser").then((module) => module.ClientesBrowser), { loading: () => <div className="mt-6 h-96 animate-pulse rounded-lg bg-slate-100" /> });
 
 export default async function ClientesPage({ searchParams }: { searchParams: Promise<{ page?: string; q?: string }> }) {
+  const profile = await requireBackOfficeAccess();
   const params = await searchParams;
   const pageSize = 20;
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const query = params.q?.trim().slice(0, 100) ?? "";
-  const [data, profile] = await Promise.all([getClientes(page, pageSize, query), usuariosObtenerPerfilActual()]);
   const canManageFidelity = ["administrador", "propietario"].includes(String(profile.data?.rol));
+  const data = await getClientes(page, pageSize, query);
 
   return (
     <AppShell>

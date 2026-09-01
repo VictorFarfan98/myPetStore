@@ -7,10 +7,12 @@ import { StatusPill } from "@/components/status-pill";
 import { getAppData } from "@/lib/app-data";
 import { getCompletedByBranch, getCompletedByGroomer, getStatusCounts, todayInGuatemala } from "@/lib/business-rules";
 import { roleLabels, statusLabels } from "@/lib/labels";
+import { requireBackOfficeAccess } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await requireBackOfficeAccess();
   const data = await getAppData();
   const today = todayInGuatemala();
   const todaysAppointments = data.appointments.filter((appointment) =>

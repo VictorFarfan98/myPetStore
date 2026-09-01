@@ -41,10 +41,13 @@ const navItems = [
   { label: "Correos", href: "/correos", icon: Mail }
 ];
 
+const workerRestrictedPaths = ["/", "/mascotas", "/clientes", "/servicios", "/correos"];
+
 export function AppShellClient({ children, role, userName }: { children: ReactNode; role?: string; userName?: string }) {
   const pathname = usePathname();
   const canManageAdmin = role === "administrador" || role === "propietario";
   const canViewReports = canManageAdmin || role === "encargado";
+  const canViewBackOffice = role !== undefined && !["groomer", "driver"].includes(role);
 
   return (
     <div className="min-h-screen bg-cloud">
@@ -57,9 +60,9 @@ export function AppShellClient({ children, role, userName }: { children: ReactNo
             <p className="text-base font-semibold text-white">Miranda&apos;s Pet Boutique</p>
           </div>
         </Link>
-        {userName && <p className="mt-4 px-2 text-sm font-medium text-slate-300">Bienvenido {userName}</p>}
+        {userName && <p className="mt-4 px-2 text-sm font-medium text-slate-300">Hola {userName}</p>}
         <nav className="mt-8 space-y-1">
-          {navItems.filter((item) => (item.href === "/reportes" ? canViewReports : !["/sucursales", "/equipo", "/configuracion", "/cupones", "/paquetes", "/auditorias"].includes(item.href) || canManageAdmin)).map((item) => {
+          {navItems.filter((item) => (item.href === "/reportes" ? canViewReports : workerRestrictedPaths.includes(item.href) ? canViewBackOffice : !["/sucursales", "/equipo", "/configuracion", "/cupones", "/paquetes", "/auditorias"].includes(item.href) || canManageAdmin)).map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (
