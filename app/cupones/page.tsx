@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { CuponesBrowser } from "@/components/cupones-browser";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { clientesListarTodos } from "@/lib/rpc/clientes";
 import { cuponesListarTodos } from "@/lib/rpc/cupones";
 import { serviciosListarTodos } from "@/lib/rpc/servicios";
 import { usuariosListarTodos, usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
+import nextDynamic from "next/dynamic";
+
+const CuponesBrowser = nextDynamic(() => import("@/components/cupones-browser").then((module) => module.CuponesBrowser), { loading: () => <div className="mt-6 h-[36rem] animate-pulse rounded-lg bg-slate-100" /> });
 
 export const dynamic = "force-dynamic";
 

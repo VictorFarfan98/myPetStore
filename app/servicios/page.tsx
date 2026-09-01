@@ -1,15 +1,18 @@
 import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
-import { ServiciosBrowser } from "@/components/servicios-browser";
-import { PreciosServiciosBrowser } from "@/components/precios-servicios-browser";
-import { CatalogBrowser } from "@/components/catalog-browser";
 import { preciosServiciosListarTodos } from "@/lib/rpc/precios_servicios";
 import { serviciosListarTodos } from "@/lib/rpc/servicios";
 import { tamanosListarTodos } from "@/lib/rpc/tamanos";
 import { createTamano, deleteTamano, updateTamano } from "@/lib/tamanos-actions";
 import { usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
 import { redirect } from "next/navigation";
+
+import nextDynamic from "next/dynamic";
+
+const ServiciosBrowser = nextDynamic(() => import("@/components/servicios-browser").then((module) => module.ServiciosBrowser), { loading: () => <div className="mt-6 h-64 animate-pulse rounded-lg bg-slate-100" /> });
+const PreciosServiciosBrowser = nextDynamic(() => import("@/components/precios-servicios-browser").then((module) => module.PreciosServiciosBrowser), { loading: () => <div className="mt-6 h-64 animate-pulse rounded-lg bg-slate-100" /> });
+const CatalogBrowser = nextDynamic(() => import("@/components/catalog-browser").then((module) => module.CatalogBrowser), { loading: () => <div className="mt-6 h-64 animate-pulse rounded-lg bg-slate-100" /> });
 
 export const dynamic = "force-dynamic";
 

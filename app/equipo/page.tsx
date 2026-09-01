@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { EquipoBrowser } from "@/components/equipo-browser";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { peluquerosListarTodos } from "@/lib/rpc/peluqueros";
@@ -8,6 +7,9 @@ import { sucursalesListarTodos } from "@/lib/rpc/sucursales";
 import { usuariosListarTodos } from "@/lib/rpc/usuarios";
 import { usuariosSucursalesListarTodos } from "@/lib/rpc/usuarios_sucursales";
 import { usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
+import nextDynamic from "next/dynamic";
+
+const EquipoBrowser = nextDynamic(() => import("@/components/equipo-browser").then((module) => module.EquipoBrowser), { loading: () => <div className="mt-6 h-[36rem] animate-pulse rounded-lg bg-slate-100" /> });
 
 export const dynamic = "force-dynamic";
 

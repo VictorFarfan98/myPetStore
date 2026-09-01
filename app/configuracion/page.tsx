@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { ConfiguracionSistemaBrowser } from "@/components/configuracion-sistema-browser";
-import { CatalogBrowser } from "@/components/catalog-browser";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { configuracionSistemaObtener } from "@/lib/rpc/configuracion_sistema";
 import { createMetodoPago, deleteMetodoPago, updateMetodoPago } from "@/lib/metodos-pago-actions";
 import { metodosPagoListarTodos } from "@/lib/rpc/metodos_pago";
 import { usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
+import nextDynamic from "next/dynamic";
+
+const ConfiguracionSistemaBrowser = nextDynamic(() => import("@/components/configuracion-sistema-browser").then((module) => module.ConfiguracionSistemaBrowser), { loading: () => <div className="mt-6 h-72 animate-pulse rounded-lg bg-slate-100" /> });
+const CatalogBrowser = nextDynamic(() => import("@/components/catalog-browser").then((module) => module.CatalogBrowser), { loading: () => <div className="mt-6 h-64 animate-pulse rounded-lg bg-slate-100" /> });
 
 export const dynamic = "force-dynamic";
 

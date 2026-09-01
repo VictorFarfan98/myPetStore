@@ -2,11 +2,13 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
-import { PaquetesBrowser } from "@/components/paquetes-browser";
 import { clientesListarTodos } from "@/lib/rpc/clientes";
 import { paquetesListar } from "@/lib/rpc/paquetes";
 import { serviciosListarTodos } from "@/lib/rpc/servicios";
 import { usuariosListarTodos, usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
+import nextDynamic from "next/dynamic";
+
+const PaquetesBrowser = nextDynamic(() => import("@/components/paquetes-browser").then((module) => module.PaquetesBrowser), { loading: () => <div className="mt-6 h-[36rem] animate-pulse rounded-lg bg-slate-100" /> });
 
 export const dynamic = "force-dynamic";
 

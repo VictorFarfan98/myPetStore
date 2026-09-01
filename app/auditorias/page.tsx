@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { AuditoriasBrowser } from "@/components/auditorias-browser";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { todayInGuatemala } from "@/lib/business-rules";
 import { auditoriasListarPorDia } from "@/lib/rpc/auditorias";
 import { sucursalesListarTodos } from "@/lib/rpc/sucursales";
 import { usuariosListarTodos, usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
+import nextDynamic from "next/dynamic";
+
+const AuditoriasBrowser = nextDynamic(() => import("@/components/auditorias-browser").then((module) => module.AuditoriasBrowser), { loading: () => <div className="mt-6 h-[36rem] animate-pulse rounded-lg bg-slate-100" /> });
 
 export const dynamic = "force-dynamic";
 

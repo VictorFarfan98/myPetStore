@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
-import { SucursalesBrowser } from "@/components/sucursales-browser";
 import { sucursalesListarTodos } from "@/lib/rpc/sucursales";
 import { usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
+import nextDynamic from "next/dynamic";
+
+const SucursalesBrowser = nextDynamic(() => import("@/components/sucursales-browser").then((module) => module.SucursalesBrowser), { loading: () => <div className="mt-6 h-64 animate-pulse rounded-lg bg-slate-100" /> });
 
 export const dynamic = "force-dynamic";
 
