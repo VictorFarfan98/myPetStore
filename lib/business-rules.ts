@@ -2,11 +2,7 @@ import type {
   AppData,
   Appointment,
   AppointmentStatus,
-  Branch,
-  GroomingRecord,
-  Pet,
-  Service,
-  User
+  Service
 } from "./types";
 import { statusLabels } from "./labels";
 
@@ -85,16 +81,14 @@ export function buildReminderMessage(args: {
 }
 
 export function getAppointmentDetails(data: AppData, appointment: Appointment) {
-  const branch = data.branches.find((item) => item.id === appointment.branchId) as Branch;
-  const pet = data.pets.find((item) => item.id === appointment.petId) as Pet;
-  const customer = data.customers.find((item) => item.id === pet.customerId);
-  const groomer = data.users.find((item) => item.role === "groomer" && item.id === appointment.groomerId) as User;
+  const branch = data.branches.find((item) => item.id === appointment.branchId);
+  const pet = data.pets.find((item) => item.id === appointment.petId);
+  const customer = pet ? data.customers.find((item) => item.id === pet.customerId) : undefined;
+  const groomer = data.users.find((item) => item.role === "groomer" && item.id === appointment.groomerId);
   const services = appointment.serviceIds
     .map((serviceId) => data.services.find((item) => item.id === serviceId))
-    .filter(Boolean) as Service[];
-  const groomingRecord = data.groomingRecords.find(
-    (record) => record.appointmentId === appointment.id
-  ) as GroomingRecord | undefined;
+    .filter((service): service is Service => Boolean(service));
+  const groomingRecord = data.groomingRecords.find((record) => record.appointmentId === appointment.id);
 
   return { branch, pet, customer, groomer, services, groomingRecord };
 }

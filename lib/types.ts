@@ -1,4 +1,5 @@
-export type Role = "manager" | "staff" | "groomer";
+export type Role = "manager" | "staff" | "groomer" | "driver";
+export type SystemRole = "administrador" | "propietario" | "encargado" | "groomer" | "driver";
 
 export type AppointmentStatus =
   | "scheduled"
@@ -167,6 +168,8 @@ export type ReminderLog = {
 };
 
 export type AppData = {
+  currentUserRole?: SystemRole;
+  currentGroomerId?: number;
   ratingsEnabled?: boolean;
   branches: Branch[];
   users: User[];

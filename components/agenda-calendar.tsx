@@ -100,16 +100,18 @@ function buildEvent(data: AppData, appointment: Appointment): GroomingCalendarEv
   const { branch, pet, services, groomer } = getAppointmentDetails(data, appointment);
   return {
     id: appointment.id,
-    title: `${pet.name} · ${groomer.name} · ${branch.name} · ${services.map((service) => service.name).join(", ")}`,
+    title: `${pet?.name ?? "Mascota no disponible"} · ${groomer?.name ?? "Groomer no asignado"} · ${branch?.name ?? "Sucursal no disponible"} · ${services.map((service) => service.name).join(", ") || "Servicio no disponible"}`,
     start: new Date(appointment.scheduledStart),
     end: new Date(appointment.scheduledEnd),
     appointment,
-    groomerColor: groomer.calendarColor
+    groomerColor: groomer?.calendarColor
   };
 }
 
 export function AgendaCalendar({ data }: { data: AppData }) {
   const router = useRouter();
+  const isWorker = data.currentUserRole === "groomer" || data.currentUserRole === "driver";
+  const isGroomer = data.currentUserRole === "groomer";
   const [isRefreshing, startRefreshing] = useTransition();
   const [selectedBranchId, setSelectedBranchId] = useState<number | "all">("all");
   const [selectedGroomerId, setSelectedGroomerId] = useState<number | "all">("all");
@@ -119,15 +121,16 @@ export function AgendaCalendar({ data }: { data: AppData }) {
 
   const selectedBranch = data.branches.find((branch) => branch.id === selectedBranchId);
   const groomers = data.users.filter(
-    (user) => user.role === "groomer" && (selectedBranchId === "all" || user.branchIds.includes(selectedBranchId))
+    (user) => user.role === "groomer" && (!isGroomer || user.id === data.currentGroomerId) && (selectedBranchId === "all" || user.branchIds.includes(selectedBranchId))
   );
   const events = useMemo(
     () =>
       data.appointments
         .filter((appointment) => selectedBranchId === "all" || appointment.branchId === selectedBranchId)
+        .filter((appointment) => !isGroomer || appointment.groomerId === data.currentGroomerId)
         .filter((appointment) => selectedGroomerId === "all" || appointment.groomerId === selectedGroomerId)
         .map((appointment) => buildEvent(data, appointment)),
-    [data, selectedBranchId, selectedGroomerId]
+    [data, isGroomer, selectedBranchId, selectedGroomerId]
   );
 
   const calendarEventStyle: EventPropGetter<GroomingCalendarEvent> = (event) => ({
@@ -228,14 +231,14 @@ export function AgendaCalendar({ data }: { data: AppData }) {
               value={dateForInput(selectedDate)}
               onChange={(event) => setSelectedDate(new Date(`${event.target.value}T12:00:00-06:00`))}
             />
-            <button
+            {!isWorker && <button
               className="focus-ring inline-flex h-10 items-center gap-2 rounded-lg bg-brand-black px-4 text-sm font-semibold text-white shadow-panel transition hover:bg-brand-black"
               type="button"
               onClick={() => openAppointmentModal(atHour(selectedDate, 9))}
             >
               <CalendarPlus className="h-4 w-4" aria-hidden="true" />
               Agendar cita
-            </button>
+            </button>}
           </div>
         </div>
       </header>
@@ -272,11 +275,11 @@ export function AgendaCalendar({ data }: { data: AppData }) {
             }}
             min={atHour(selectedDate, 8)}
             onNavigate={(date) => setSelectedDate(date)}
-            onSelectEvent={(event) => openAppointmentModal(event.start, event.appointment)}
-            onSelectSlot={(slotInfo: SlotInfo) => openAppointmentModal(slotInfo.start)}
+            onSelectEvent={(event) => { if (!isWorker) openAppointmentModal(event.start, event.appointment); }}
+            onSelectSlot={(slotInfo: SlotInfo) => { if (!isWorker) openAppointmentModal(slotInfo.start); }}
             onView={(view) => setSelectedView(view)}
             popup
-            selectable
+            selectable={!isWorker}
             startAccessor="start"
             step={30}
             timeslots={2}
@@ -296,7 +299,7 @@ export function AgendaCalendar({ data }: { data: AppData }) {
         </div>
       </div>
 
-      {modalState && (
+      {modalState && !isWorker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4">
           <div className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-lg bg-white p-5 shadow-2xl">
             <div className="mb-4 flex items-start justify-between gap-3 border-b border-slate-200 pb-4">

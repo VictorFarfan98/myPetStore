@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { reportesPeluquerosObtener, reportesSucursalesObtener } from "@/lib/rpc/reportes";
 import type { ReportePeluqueroRow, ReporteSucursalRow } from "@/lib/rpc/types";
+import { usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
 
 const money = (value: number) => value.toLocaleString("es-GT", { style: "currency", currency: "GTQ" });
 
@@ -77,6 +78,8 @@ export const dynamic = "force-dynamic";
 export default async function ReportePage({ params }: { params: Promise<{ report: string }> }) {
   const { report } = await params;
   if (report !== "groomers" && report !== "sucursales") notFound();
+  const profile = await usuariosObtenerPerfilActual();
+  if (profile.error || !["administrador", "propietario", "encargado"].includes(String(profile.data?.rol))) redirect("/");
 
   const action = <Link href="/reportes" className="focus-ring inline-flex items-center gap-2 text-sm font-semibold text-jade"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Todos los reportes</Link>;
 

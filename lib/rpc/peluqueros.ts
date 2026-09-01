@@ -33,3 +33,6 @@ export function peluquerosEliminar(p_id: number) {
   return rpcCall<PeluqueroRow>("peluqueros_eliminar", { p_id });
 }
 
+export function peluquerosVincularUsuario(p_peluquero_id: number, p_usuario_id: string | null) {
+  return rpcCall<PeluqueroRow>("peluqueros_vincular_usuario", { p_peluquero_id, p_usuario_id });
+}

@@ -151,6 +151,7 @@ export type PeluqueroRow = {
   telefono: string | null;
   color_calendario: string | null;
   activo: boolean;
+  usuario_id: string | null;
 };
 
 export type PeluqueroInsertParams = {
@@ -653,6 +654,10 @@ export type PagosReemplazarListaParams = {
   p_registro_servicio_id: number;
   p_pagos: Array<{ metodo_pago_id: number; monto: string }>;
   p_motivo?: string | null;
+};
+
+export type PagosRegistroCeroAutomaticoParams = {
+  p_registro_servicio_id: number;
 };
 
 export type CitasReprogramarParams = {

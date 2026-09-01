@@ -9,7 +9,7 @@ import {
   registrosServicioEliminar,
   registrosServicioIniciar
 } from "@/lib/rpc/registros_servicio";
-import { pagosReemplazarLista } from "@/lib/rpc/pagos";
+import { pagosRegistrarCeroAutomatico } from "@/lib/rpc/pagos";
 import { sendNewServiceCompletedEmail } from "@/lib/email/delivery";
 
 const conditionFields = [
@@ -164,7 +164,7 @@ export async function saveHoja(formData: FormData) {
     });
     if (photos.error) return { error: errorMessage(photos.error) };
     if (input.p_firma_entrega_url && recordId && Number(result.data?.monto_final) === 0) {
-      const payment = await pagosReemplazarLista({ p_registro_servicio_id: recordId, p_pagos: [], p_motivo: null });
+      const payment = await pagosRegistrarCeroAutomatico({ p_registro_servicio_id: recordId });
       if (payment.error) return { error: "No se pudo completar automáticamente la hoja de servicio." };
     }
     if (input.p_firma_entrega_url && recordId) await sendNewServiceCompletedEmail(recordId);

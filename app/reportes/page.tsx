@@ -3,6 +3,8 @@ import { ArrowRight, MapPin, Scissors } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
+import { usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
+import { redirect } from "next/navigation";
 
 const reports = [
   {
@@ -21,7 +23,9 @@ const reports = [
 
 export const dynamic = "force-dynamic";
 
-export default function ReportesPage() {
+export default async function ReportesPage() {
+  const profile = await usuariosObtenerPerfilActual();
+  if (profile.error || !["administrador", "propietario", "encargado"].includes(String(profile.data?.rol))) redirect("/");
   return (
     <AppShell>
       <PageContainer>

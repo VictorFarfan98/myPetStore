@@ -1,6 +1,8 @@
 import type { AppData } from "./types";
 
 export const emptyAppData: AppData = {
+  currentUserRole: undefined,
+  currentGroomerId: undefined,
   ratingsEnabled: true,
   branches: [],
   users: [],

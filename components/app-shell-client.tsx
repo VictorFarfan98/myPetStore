@@ -41,9 +41,10 @@ const navItems = [
   { label: "Correos", href: "/correos", icon: Mail }
 ];
 
-export function AppShellClient({ children, role }: { children: ReactNode; role?: string }) {
+export function AppShellClient({ children, role, userName }: { children: ReactNode; role?: string; userName?: string }) {
   const pathname = usePathname();
   const canManageAdmin = role === "administrador" || role === "propietario";
+  const canViewReports = canManageAdmin || role === "encargado";
 
   return (
     <div className="min-h-screen bg-cloud">
@@ -56,8 +57,9 @@ export function AppShellClient({ children, role }: { children: ReactNode; role?:
             <p className="text-base font-semibold text-white">Miranda&apos;s Pet Boutique</p>
           </div>
         </Link>
+        {userName && <p className="mt-4 px-2 text-sm font-medium text-slate-300">Bienvenido {userName}</p>}
         <nav className="mt-8 space-y-1">
-          {navItems.filter((item) => !["/sucursales", "/equipo", "/configuracion", "/cupones", "/paquetes", "/auditorias"].includes(item.href) || canManageAdmin).map((item) => {
+          {navItems.filter((item) => (item.href === "/reportes" ? canViewReports : !["/sucursales", "/equipo", "/configuracion", "/cupones", "/paquetes", "/auditorias"].includes(item.href) || canManageAdmin)).map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             return (

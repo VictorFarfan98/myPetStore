@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { PagoRow, PagosReemplazarListaParams } from "./types";
+import type { PagoRow, PagosRegistroCeroAutomaticoParams, PagosReemplazarListaParams } from "./types";
 import { rpcCall } from "./core";
 
 export function pagosObtenerPorId(p_id: number) {
@@ -23,4 +23,8 @@ export function pagosListarTodos(p_limite: number | null = null, p_offset = 0) {
 
 export function pagosReemplazarLista(params: PagosReemplazarListaParams) {
   return rpcCall<Record<string, unknown>>("pagos_reemplazar_lista", params);
+}
+
+export function pagosRegistrarCeroAutomatico(params: PagosRegistroCeroAutomaticoParams) {
+  return rpcCall<Record<string, unknown>>("pagos_registro_cero_automatico", params);
 }

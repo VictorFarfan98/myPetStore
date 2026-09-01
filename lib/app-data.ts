@@ -22,7 +22,7 @@ import type {
   RpcListEnvelope,
   RpcResult
 } from "./rpc/types";
-import type { AppData, AppointmentSource, AppointmentStatus, PetSize, Role, Species } from "./types";
+import type { AppData, AppointmentSource, AppointmentStatus, PetSize, Role, Species, SystemRole } from "./types";
 
 type PeluqueroRow = {
   id: number;
@@ -30,6 +30,7 @@ type PeluqueroRow = {
   telefono: string | null;
   color_calendario: string | null;
   activo: boolean;
+  usuario_id: string | null;
 };
 
 type LoadParams<T> = {
@@ -66,6 +67,8 @@ function normalizeSize(value: string | null | undefined): PetSize {
 
 function normalizeRole(value: string | null | undefined): Role {
   if (value === "encargado") return "staff";
+  if (value === "groomer") return "groomer";
+  if (value === "driver") return "driver";
   return "manager";
 }
 
@@ -170,7 +173,8 @@ function buildUsers(args: {
     .filter((user) => user.activo)
     .sort((a, b) => a.nombre_usuario.localeCompare(b.nombre_usuario))
     .map((user) => {
-      const id = args.employeeIdMap.get(user.id) ?? 0;
+      const linkedGroomer = args.peluqueros.find((row) => row.usuario_id === user.id);
+      const id = linkedGroomer?.id ?? args.employeeIdMap.get(user.id) ?? 0;
 
       return {
         id,
@@ -181,14 +185,14 @@ function buildUsers(args: {
         branchIds:
           user.rol === "administrador" || user.rol === "propietario"
             ? args.activeBranchIds
-            : employeeBranchMap.get(id) ?? [],
+            : employeeBranchMap.get(args.employeeIdMap.get(user.id) ?? id) ?? [],
         active: user.activo,
-        calendarColor: undefined
+        calendarColor: linkedGroomer?.color_calendario ?? undefined
       };
     });
 
   const groomers = args.peluqueros
-    .filter((row) => row.activo)
+    .filter((row) => row.activo && !args.users.some((user) => user.id === row.usuario_id))
     .sort((a, b) => a.nombre.localeCompare(b.nombre))
     .map((row, index) => {
       const id = args.groomerIdMap.get(row.id) ?? 0;
@@ -339,7 +343,8 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       registrosResult,
       paymentsResult,
       reminderLogsResult,
-      configResult
+      configResult,
+      profileResult
     ] = await Promise.all([
       rpcCall<RpcListEnvelope<SucursalRow>>(RPC_NAMES.branchesList, { p_limite: null, p_offset: 0 }, supabase),
       rpcCall<RpcListEnvelope<UsuarioRow>>(RPC_NAMES.usersList, { p_limite: null, p_offset: 0 }, supabase),
@@ -359,7 +364,8 @@ export async function getAppData(options: { recordsLimit?: number | null; record
       }, supabase),
       options.paymentsForRecords ? Promise.resolve<RpcResult<RpcListEnvelope<PagoRow>>>({ data: { datos: [], total: 0, limite: 0, offset: 0 }, error: null }) : rpcCall<RpcListEnvelope<PagoRow>>(RPC_NAMES.paymentsList, { p_limite: null, p_offset: 0 }, supabase),
       options.includeReminderLogs === false ? Promise.resolve<RpcResult<RpcListEnvelope<RecordatorioCitaRow>>>({ data: { datos: [], total: 0, limite: 0, offset: 0 }, error: null }) : rpcCall<RpcListEnvelope<RecordatorioCitaRow>>(RPC_NAMES.reminderLogsList, { p_limite: null, p_offset: 0 }, supabase),
-      rpcCall<ConfiguracionSistemaRow>(RPC_NAMES.systemConfigGet, {}, supabase)
+      rpcCall<ConfiguracionSistemaRow>(RPC_NAMES.systemConfigGet, {}, supabase),
+      rpcCall<Record<string, unknown>>("usuarios_obtener_perfil_actual", {}, supabase)
     ]);
 
     const branches = must(branchesResult, "branches").filter((branch) => branch.activo).map(mapBranch);
@@ -384,6 +390,9 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     }
     const reminderLogs = must(reminderLogsResult, "recordatorios_citas");
     const config = mustRow(configResult, "configuracion_sistema");
+    const profile = profileResult.data ?? {};
+    const currentUserRole = String(profile.rol ?? "") as SystemRole;
+    const currentGroomerId = Number(profile.peluquero_id);
 
     const sizeById = new Map(tamanos.map((row) => [row.id, row.nombre]));
     const customerNameByPetId = new Map<number, string>();
@@ -465,6 +474,8 @@ export async function getAppData(options: { recordsLimit?: number | null; record
     }));
 
     return {
+      currentUserRole,
+      currentGroomerId: Number.isInteger(currentGroomerId) && currentGroomerId > 0 ? currentGroomerId : undefined,
       ratingsEnabled: config.habilitar_calificaciones,
       branches,
       users: appUsers,

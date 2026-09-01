@@ -3,7 +3,8 @@ import type { AppointmentSource, AppointmentStatus, PetSize, Role, Species } fro
 export const roleLabels: Record<Role, string> = {
   manager: "Gerencia",
   staff: "Atencion",
-  groomer: "Groomer"
+  groomer: "Groomer",
+  driver: "Driver"
 };
 
 export const statusLabels: Record<AppointmentStatus, string> = {

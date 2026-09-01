@@ -33,6 +33,16 @@ Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
 
 Most pages now read through `lib/app-data.ts`, which loads live data through Supabase RPC.
 
+## Roles operativos
+
+La migración `supabase/migrations/20260831000700_add_worker_roles_and_access.sql` agrega los roles `groomer` y `driver`. Ambos se asignan a una sola sucursal, pueden consultar y editar Hojas sin registrar pagos, y tienen Agenda de solo lectura. El groomer ve sus Hojas y citas asignadas, incluso cuando presta apoyo en otra sucursal; el driver ve todas las Hojas y citas de su sucursal.
+
+La migración `supabase/migrations/20260901000000_fix_user_profile_creation_permissions.sql` corrige la validación del UUID de Auth al crear perfiles desde Equipo sin exponer permisos sobre `auth.users`.
+
+Los reportes solo están disponibles para `administrador`, `propietario` y `encargado`. Los pagos solo pueden registrarlos esos roles, excepto el pago automático de Q0 generado por un cupón automático del 100%.
+
+Para incorporar una persona: crea primero su usuario en Supabase Auth, copia el UUID y usa Equipo para crear el perfil, asignar la sucursal y, para un groomer, vincular el registro de groomista existente.
+
 ## Notificaciones de servicio completado
 
 La migración `supabase/migrations/20260831000200_add_email_notifications.sql` crea el historial idempotente de correos y sus RPC protegidas. La ruta `/correos` permite consultar por rango de fechas o cliente y reintentar envíos fallidos respetando el acceso a sucursales.
