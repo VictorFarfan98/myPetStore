@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { clientesListarTodos } from "@/lib/rpc/clientes";
@@ -26,5 +25,5 @@ export default async function PaquetesPage() {
     throw new Error("No se pudo cargar la administración de paquetes.");
   }
 
-  return <AppShell><PageContainer><PageHeader eyebrow="Ventas y beneficios" title="Paquetes" description="Crea combos de servicios y asígnalos a clientes para generar sus cupones de consumo." /><PaquetesBrowser packages={packages.data} customers={customers.data.datos} services={services.data.datos.filter((service) => service.activo && !service.es_adicional)} users={users.data.datos} /></PageContainer></AppShell>;
+  return <PageContainer><PageHeader eyebrow="Ventas y beneficios" title="Paquetes" description="Crea combos de servicios y asígnalos a clientes para generar sus cupones de consumo." /><PaquetesBrowser packages={packages.data} customers={customers.data.datos} services={services.data.datos.filter((service) => service.activo && !service.es_adicional)} users={users.data.datos} /></PageContainer>;
 }

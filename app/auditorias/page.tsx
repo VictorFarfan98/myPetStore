@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { todayInGuatemala } from "@/lib/business-rules";
@@ -31,5 +30,5 @@ export default async function AuditoriasPage({ searchParams }: { searchParams: P
     throw new Error("No se pudieron cargar las auditorías.");
   }
 
-  return <AppShell><PageContainer><PageHeader eyebrow="Administración" title="Auditoría" description="Consulta los cambios registrados en un día específico y busca por entidad, acción, usuario o motivo." /><AuditoriasBrowser key={`${date}:${query}`} rows={audits.data.datos} users={users.data.datos} branches={branches.data.datos} date={date} today={today} query={query} /></PageContainer></AppShell>;
+  return <PageContainer><PageHeader eyebrow="Administración" title="Auditoría" description="Consulta los cambios registrados en un día específico y busca por entidad, acción, usuario o motivo." /><AuditoriasBrowser key={`${date}:${query}`} rows={audits.data.datos} users={users.data.datos} branches={branches.data.datos} date={date} today={today} query={query} /></PageContainer>;
 }

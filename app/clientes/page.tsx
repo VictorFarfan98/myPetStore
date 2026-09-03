@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { getClientes } from "@/lib/clientes-actions";
@@ -19,8 +18,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
   const data = await getClientes(page, pageSize, query);
 
   return (
-    <AppShell>
-      <PageContainer>
+    <PageContainer>
         <PageHeader
           eyebrow="Relacion con clientes"
           title="Clientes"
@@ -28,6 +26,5 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
         />
         <ClientesBrowser key={`${page}:${query}`} canManageFidelity={canManageFidelity} data={data} page={page} initialQuery={query} />
       </PageContainer>
-    </AppShell>
   );
 }

@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { getMascotasPageData } from "@/lib/mascotas-data";
@@ -18,8 +17,7 @@ export default async function MascotasPage({ searchParams }: { searchParams: Pro
   const data = await getMascotasPageData(page, pageSize, query);
 
   return (
-    <AppShell>
-      <PageContainer>
+    <PageContainer>
         <PageHeader
           eyebrow="Expedientes"
           title="Mascotas"
@@ -27,6 +25,5 @@ export default async function MascotasPage({ searchParams }: { searchParams: Pro
         />
         <MascotasBrowser key={`${page}:${query}`} data={data} page={page} initialQuery={query} />
       </PageContainer>
-    </AppShell>
   );
 }

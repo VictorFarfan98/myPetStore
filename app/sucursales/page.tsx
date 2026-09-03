@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { sucursalesListarTodos } from "@/lib/rpc/sucursales";
@@ -16,5 +15,5 @@ export default async function SucursalesPage() {
   const result = await sucursalesListarTodos();
   if (result.error || !result.data) throw new Error("No se pudieron cargar las sucursales.");
 
-  return <AppShell><PageContainer><PageHeader eyebrow="Administración" title="Sucursales" description="Administra las sucursales disponibles para la operación de grooming." /><SucursalesBrowser rows={result.data.datos} /></PageContainer></AppShell>;
+  return <PageContainer><PageHeader eyebrow="Administración" title="Sucursales" description="Administra las sucursales disponibles para la operación de grooming." /><SucursalesBrowser rows={result.data.datos} /></PageContainer>;
 }

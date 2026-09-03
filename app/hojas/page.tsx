@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { getAppData } from "@/lib/app-data";
@@ -21,5 +20,5 @@ export default async function HojasPage({ searchParams }: { searchParams: Promis
   const selectedBranchId = Number.isInteger(branchId) && branchId > 0 ? branchId : null;
   const pageSize = 20;
   const data = await getAppData(history ? { recordsLimit: pageSize, recordsOffset: (page - 1) * pageSize, recordsBranchId: selectedBranchId, includeReminderLogs: false, paymentsForRecords: true } : { includeReminderLogs: false });
-  return <AppShell><PageContainer><PageHeader eyebrow="Operacion diaria" title="Hojas de servicio" description="Gestiona las hojas programadas por fecha y consulta el historial de servicios." /><div className="mt-6"><LazyHojasBrowser data={data} initialView={history ? "history" : "today"} initialDate={selectedDate} initialBranchId={selectedBranchId} historyPage={page} historyPageSize={pageSize} /></div></PageContainer></AppShell>;
+  return <PageContainer><PageHeader eyebrow="Operacion diaria" title="Hojas de servicio" description="Gestiona las hojas programadas por fecha y consulta el historial de servicios." /><div className="mt-6"><LazyHojasBrowser data={data} initialView={history ? "history" : "today"} initialDate={selectedDate} initialBranchId={selectedBranchId} historyPage={page} historyPageSize={pageSize} /></div></PageContainer>;
 }

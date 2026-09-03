@@ -45,6 +45,8 @@ const workerRestrictedPaths = ["/", "/mascotas", "/clientes", "/servicios", "/co
 
 export function AppShellClient({ children, role, userName }: { children: ReactNode; role?: string; userName?: string }) {
   const pathname = usePathname();
+  if (pathname === "/login") return <>{children}</>;
+
   const canManageAdmin = role === "administrador" || role === "propietario";
   const canViewReports = canManageAdmin || role === "encargado";
   const canViewBackOffice = role !== undefined && !["groomer", "driver"].includes(role);

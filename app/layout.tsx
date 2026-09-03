@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
+import { AppShell } from "@/components/app-shell";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./globals.css";
 
@@ -25,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="es-GT">
       <body className={`${plusJakartaSans.variable} ${plusJakartaSans.className}`}>
-        {children}
+        <AppShell>{children}</AppShell>
         <Analytics />
       </body>
     </html>

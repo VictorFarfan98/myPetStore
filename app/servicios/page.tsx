@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { preciosServiciosListarTodos } from "@/lib/rpc/precios_servicios";
@@ -23,8 +22,7 @@ export default async function ServiciosPage() {
   if (services.error || !services.data || prices.error || !prices.data || sizes.error || !sizes.data) throw new Error("No se pudo cargar el catálogo de servicios.");
 
   return (
-    <AppShell>
-      <PageContainer>
+    <PageContainer>
         <PageHeader
           eyebrow="Catalogo operativo"
           title="Servicios"
@@ -35,6 +33,5 @@ export default async function ServiciosPage() {
         <CatalogBrowser rows={sizes.data.datos} title="Clasificaciones por especie" singular="Clasificación" create={createTamano} update={updateTamano} remove={deleteTamano} speciesCatalog />
         <PreciosServiciosBrowser rows={prices.data.datos} services={services.data.datos} sizes={sizes.data.datos} />
       </PageContainer>
-    </AppShell>
   );
 }

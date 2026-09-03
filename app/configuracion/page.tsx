@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { configuracionSistemaObtener } from "@/lib/rpc/configuracion_sistema";
@@ -20,5 +19,5 @@ export default async function ConfiguracionPage() {
   if (config.error || !config.data || paymentMethods.error || !paymentMethods.data) throw new Error("No se pudo cargar la configuración del sistema.");
 
   const activePaymentMethods = paymentMethods.data.datos.filter((method) => method.activo);
-  return <AppShell><PageContainer><PageHeader eyebrow="Administración" title="Configuración" description="Administra las reglas generales de la operación y los recordatorios." /><ConfiguracionSistemaBrowser config={config.data} paymentMethods={activePaymentMethods} /><CatalogBrowser rows={paymentMethods.data.datos} title="Métodos de pago" singular="Método de pago" create={createMetodoPago} update={updateMetodoPago} remove={deleteMetodoPago} /></PageContainer></AppShell>;
+  return <PageContainer><PageHeader eyebrow="Administración" title="Configuración" description="Administra las reglas generales de la operación y los recordatorios." /><ConfiguracionSistemaBrowser config={config.data} paymentMethods={activePaymentMethods} /><CatalogBrowser rows={paymentMethods.data.datos} title="Métodos de pago" singular="Método de pago" create={createMetodoPago} update={updateMetodoPago} remove={deleteMetodoPago} /></PageContainer>;
 }

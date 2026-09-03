@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight, MapPin, Scissors } from "lucide-react";
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { usuariosObtenerPerfilActual } from "@/lib/rpc/usuarios";
@@ -27,8 +26,7 @@ export default async function ReportesPage() {
   const profile = await usuariosObtenerPerfilActual();
   if (profile.error || !["administrador", "propietario", "encargado"].includes(String(profile.data?.rol))) redirect("/");
   return (
-    <AppShell>
-      <PageContainer>
+    <PageContainer>
         <PageHeader
           eyebrow="Medición operativa"
           title="Reportes"
@@ -55,6 +53,5 @@ export default async function ReportesPage() {
           ))}
         </section>
       </PageContainer>
-    </AppShell>
   );
 }

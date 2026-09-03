@@ -1,5 +1,4 @@
 import { CalendarClock, CheckCircle2, ClipboardList, Scissors, ShieldCheck, UsersRound } from "lucide-react";
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
@@ -26,8 +25,7 @@ export default async function DashboardPage() {
   const upcoming = completedByBranch.reduce((total, item) => total + item.upcoming, 0);
 
   return (
-    <AppShell>
-      <PageContainer>
+    <PageContainer>
         <PageHeader
           eyebrow="Operacion de grooming"
           title="Panel"
@@ -113,6 +111,5 @@ export default async function DashboardPage() {
           </div>
         </section>
       </PageContainer>
-    </AppShell>
   );
 }

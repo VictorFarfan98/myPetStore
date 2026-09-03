@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { clientesBuscarListar, clientesListar, clientesObtenerPorId } from "@/lib/rpc/clientes";
@@ -37,5 +36,5 @@ export default async function CorreosPage({ searchParams }: { searchParams: Prom
   const customerRows = [...customers.data.datos];
   if (selectedCustomer.data && !customerRows.some((customer) => customer.id === selectedCustomer.data?.id)) customerRows.unshift(selectedCustomer.data);
 
-  return <AppShell><PageContainer><PageHeader eyebrow="Comunicación" title="Historial de correos" description="Consulta las notificaciones enviadas al completar servicios y reintenta los envíos fallidos." /><EmailHistoryBrowser rows={notifications.data.datos} customers={customerRows} page={page} pageSize={pageSize} total={notifications.data.total} initialFrom={desde ?? ""} initialTo={hasta ?? ""} initialCustomerId={customerId} initialCustomerQuery={customerQuery} /></PageContainer></AppShell>;
+  return <PageContainer><PageHeader eyebrow="Comunicación" title="Historial de correos" description="Consulta las notificaciones enviadas al completar servicios y reintenta los envíos fallidos." /><EmailHistoryBrowser rows={notifications.data.datos} customers={customerRows} page={page} pageSize={pageSize} total={notifications.data.total} initialFrom={desde ?? ""} initialTo={hasta ?? ""} initialCustomerId={customerId} initialCustomerQuery={customerQuery} /></PageContainer>;
 }

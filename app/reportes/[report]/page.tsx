@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
-import { AppShell } from "@/components/app-shell";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { reportesPeluquerosObtener, reportesSucursalesObtener } from "@/lib/rpc/reportes";
@@ -85,9 +84,9 @@ export default async function ReportePage({ params }: { params: Promise<{ report
 
   if (report === "groomers") {
     const result = await reportesPeluquerosObtener();
-    return <AppShell><PageContainer><PageHeader eyebrow="Medición operativa" title="Reporte de groomers" description="Servicios, ingresos por tipo y promedio de calificaciones por groomer." action={action} />{result.error || !result.data ? <ReportError /> : <GroomerReport rows={result.data.datos} />}</PageContainer></AppShell>;
+    return <PageContainer><PageHeader eyebrow="Medición operativa" title="Reporte de groomers" description="Servicios, ingresos por tipo y promedio de calificaciones por groomer." action={action} />{result.error || !result.data ? <ReportError /> : <GroomerReport rows={result.data.datos} />}</PageContainer>;
   }
 
   const result = await reportesSucursalesObtener();
-  return <AppShell><PageContainer><PageHeader eyebrow="Medición operativa" title="Reporte de sucursales" description="Servicios completados y próximas citas por sucursal." action={action} />{result.error || !result.data ? <ReportError /> : <BranchReport rows={result.data.datos} />}</PageContainer></AppShell>;
+  return <PageContainer><PageHeader eyebrow="Medición operativa" title="Reporte de sucursales" description="Servicios completados y próximas citas por sucursal." action={action} />{result.error || !result.data ? <ReportError /> : <BranchReport rows={result.data.datos} />}</PageContainer>;
 }
