@@ -39,6 +39,8 @@ La migración `supabase/migrations/20260831000700_add_worker_roles_and_access.sq
 
 La migración `supabase/migrations/20260901000000_fix_user_profile_creation_permissions.sql` corrige la validación del UUID de Auth al crear perfiles desde Equipo sin exponer permisos sobre `auth.users`.
 
+La migración `supabase/migrations/20260903000000_fix_branch_deactivation_audit_permissions.sql` permite que la desactivación de una sucursal registre correctamente la cancelación automática de citas futuras.
+
 Los reportes solo están disponibles para `administrador`, `propietario` y `encargado`. Los pagos solo pueden registrarlos esos roles, excepto el pago automático de Q0 generado por un cupón automático del 100%.
 
 Para incorporar una persona: crea primero su usuario en Supabase Auth, copia el UUID y usa Equipo para crear el perfil, asignar la sucursal y, para un groomer, vincular el registro de groomista existente.

@@ -65,7 +65,7 @@ export function CatalogBrowser({
       <DataTable rows={rows} columns={[
         { key: "nombre", header: "Nombre", render: (row) => <span className="font-semibold text-ink">{row.nombre}</span> },
         ...(speciesCatalog ? [{ key: "especie", header: "Especie", render: (row: Row) => row.especie === "gato" ? "Gato" : row.especie === "otro" ? "Otro" : "Perro" }] : []),
-        { key: "estado", header: "Estado", render: (row) => <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.activo ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>{row.activo ? "Activo" : "Inactivo"}</span> },
+        { key: "estado", header: "Estado", render: (row) => <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.activo ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>{row.activo ? "Activo" : "Inactivo"}</span> },
         { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" onClick={() => { setEditing(true); setForm({ id: String(row.id), nombre: row.nombre, especie: row.especie ?? "perro", activo: row.activo }); }} type="button">Editar</button><button className="font-semibold text-red-700 hover:underline" onClick={() => deleteRow(row.id)} type="button">Eliminar</button></div> }
       ]} />
     </div>

@@ -46,7 +46,7 @@ export function SucursalesBrowser({ rows }: { rows: SucursalRow[] }) {
           { key: "nombre", header: "Nombre", render: (row) => <span className="font-semibold text-ink">{row.nombre}</span> },
           { key: "direccion", header: "Dirección", render: (row) => row.direccion },
           { key: "telefono", header: "Teléfono", render: (row) => row.telefono },
-          { key: "estado", header: "Estado", render: (row) => <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">{row.activo ? "Activa" : "Inactiva"}</span> },
+          { key: "estado", header: "Estado", render: (row) => <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.activo ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>{row.activo ? "Activa" : "Inactiva"}</span> },
           { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" onClick={() => setForm({ id: String(row.id), nombre: row.nombre, direccion: row.direccion, telefono: row.telefono, activo: row.activo })} type="button">Editar</button><button className="font-semibold text-red-700 hover:underline" onClick={() => remove(row.id)} type="button">Eliminar</button></div> }
         ]} />
       </div>

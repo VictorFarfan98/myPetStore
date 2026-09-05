@@ -700,7 +700,7 @@ FOR EACH ROW EXECUTE FUNCTION public.establecer_actualizado_en();
 
 CREATE FUNCTION public.cancelar_citas_por_sucursal_desactivada()
 RETURNS TRIGGER
-LANGUAGE plpgsql
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
 AS $$
 BEGIN
     IF OLD.activo = TRUE AND NEW.activo = FALSE THEN

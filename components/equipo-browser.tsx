@@ -57,7 +57,7 @@ export function EquipoBrowser({ managers, groomers, branches, assignments }: Pro
         { key: "rol", header: "Rol", render: (row) => ({ administrador: "Administrador", propietario: "Propietario", encargado: "Encargado", groomer: "Groomer", driver: "Driver" }[row.rol] ?? row.rol) },
         { key: "usuario", header: "Usuario", render: (row) => row.nombre_usuario },
         { key: "alcance", header: "Acceso", render: (row) => row.alcance_acceso === "todas_las_sucursales" ? "Todas las sucursales" : "Asignadas" },
-        { key: "estado", header: "Estado", render: (row) => <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">{row.activo ? "Activo" : "Inactivo"}</span> },
+        { key: "estado", header: "Estado", render: (row) => <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.activo ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>{row.activo ? "Activo" : "Inactivo"}</span> },
         { key: "acciones", header: "Acciones", render: (row) => ["encargado", "groomer", "driver"].includes(row.rol) ? <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" onClick={() => setManager({ ...emptyManager, id: row.id, editing: true, nombre: row.nombre, nombre_usuario: row.nombre_usuario, telefono: row.telefono ?? "", rol: row.rol, alcance: row.alcance_acceso, peluquero_id: String(groomers.find((groomer) => groomer.usuario_id === row.id)?.id ?? ""), activo: row.activo, sucursales: managerAssignments(row.id) })} type="button">Editar</button><button className="font-semibold text-red-700 hover:underline" onClick={() => remove("manager", row.id)} type="button">Eliminar</button></div> : "-" }
       ]} />
       <form className="mt-6 grid gap-4 rounded-lg border border-slate-200 bg-cloud/30 p-4 md:grid-cols-2" onSubmit={submitManager}>
@@ -82,7 +82,7 @@ export function EquipoBrowser({ managers, groomers, branches, assignments }: Pro
         { key: "rol", header: "Rol", render: () => "Groomista" },
         { key: "telefono", header: "Teléfono", render: (row) => row.telefono },
         { key: "color", header: "Color", render: (row) => <span className="inline-block h-5 w-5 rounded-full border border-slate-300" style={{ backgroundColor: row.color_calendario ?? "#FFFF00" }} title={row.color_calendario ?? "#FFFF00"} /> },
-        { key: "estado", header: "Estado", render: (row) => <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">{row.activo ? "Activo" : "Inactivo"}</span> },
+        { key: "estado", header: "Estado", render: (row) => <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.activo ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>{row.activo ? "Activo" : "Inactivo"}</span> },
         { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" onClick={() => setGroomer({ id: String(row.id), nombre: row.nombre, telefono: row.telefono ?? "", color: row.color_calendario ?? "#FFFF00", activo: row.activo })} type="button">Editar</button><button className="font-semibold text-red-700 hover:underline" onClick={() => remove("groomer", row.id)} type="button">Eliminar</button></div> }
       ]} />
       <form className="mt-6 grid gap-4 rounded-lg border border-slate-200 bg-cloud/30 p-4 md:grid-cols-2" onSubmit={submitGroomer}>

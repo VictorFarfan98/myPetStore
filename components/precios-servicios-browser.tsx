@@ -57,7 +57,7 @@ export function PreciosServiciosBrowser({ rows, services, sizes }: Props) {
         { key: "precio", header: "Precio", render: (row) => `Q ${Number(row.precio).toFixed(2)}` },
         { key: "promo", header: "Promo", render: (row) => row.precio_promocional ? `Q ${Number(row.precio_promocional).toFixed(2)}` : "—" },
         { key: "duracion", header: "Duración", render: (row) => `${row.duracion_minutos} min` },
-        { key: "estado", header: "Estado", render: (row) => <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.activo ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>{row.activo ? "Activo" : "Inactivo"}</span> },
+        { key: "estado", header: "Estado", render: (row) => <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${row.activo ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>{row.activo ? "Activo" : "Inactivo"}</span> },
         { key: "acciones", header: "Acciones", render: (row) => <div className="flex gap-3"><button className="font-semibold text-jade hover:underline" onClick={() => { setEditing(true); setForm({ servicio_id: String(row.servicio_id), especie: row.especie, tamano_id: String(row.tamano_id), precio: row.precio, precio_promocional: row.precio_promocional ?? "", duracion_minutos: String(row.duracion_minutos), activo: row.activo }); }} type="button">Editar</button><button className="font-semibold text-red-700 hover:underline" onClick={() => remove(row)} type="button">Eliminar</button></div> }
       ]} />
     </div>
